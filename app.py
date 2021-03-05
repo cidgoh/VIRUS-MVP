@@ -2,12 +2,13 @@ import csv
 import os
 
 import dash
-from dash.dependencies import Input, Output
+import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objects as go
+from dash.dependencies import Input, Output
 
-app = dash.Dash(__name__)
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 x = []
 y = []
@@ -68,12 +69,18 @@ heatmap_object = go.Heatmap(
     colorscale="Greys",
     hoverlabel={"font_size": 18},
     hoverinfo="text",
-    text=text
+    text=text,
+    xgap=10,
+    showscale=False
 )
 
 fig = go.Figure(heatmap_object)
 fig.update_xaxes(type="category")
+fig.update_yaxes(visible=False)
 fig.update_layout(font={"size": 18})
+fig.update_layout(width=len(x)*25, autosize=False)
+fig.update_layout(plot_bgcolor="white")
+fig.update_layout(margin={"l": 0, "r": 0})
 
 insertions_trace = go.Scatter(
     x=insertions_x,
@@ -102,17 +109,153 @@ deletions_trace = go.Scatter(
 fig.add_trace(insertions_trace)
 fig.add_trace(deletions_trace)
 
-app.layout = html.Div([
-    dcc.Graph(
-        id="heatmap", figure=fig
-    ),
-    dcc.Graph(id="table")
+# heatmap_x_axis_object = go.Scatter(
+#     y=[1,3,5],
+#     x=[0, 0, 0],
+#     mode="markers+text",
+#     hoverinfo="skip",
+#     text=y,
+#     textposition="middle center",
+#     showlegend=False
+# )
+#
+# left_fig = go.Figure(heatmap_x_axis_object)
+# # left_fig.update_xaxes(tickmode="array", tickvals=[0])
+# left_fig.update_xaxes(visible=False)
+# left_fig.update_yaxes(visible=False)
+# # left_fig.update_layout(plot_bgcolor="white")
+# left_fig.update_layout(font={"size": 18})
+# left_fig.update_xaxes(range=[-0.5, 0.5])
+# left_fig.update_yaxes(range=[0, 6])
+
+heatmap_y_axis_object = go.Heatmap(
+    z=[[0], [0], [0]],
+    x=[1],
+    y=y,
+    showscale=False,
+    hoverinfo="none",
+    colorscale="Greys",
+    zmin=0,
+    zmax=1
+)
+left_fig = go.Figure(heatmap_y_axis_object)
+left_fig.update_layout(font={"size": 18})
+left_fig.update_layout(margin={"l": 0, "r": 0})
+left_fig.update_layout(plot_bgcolor="white")
+left_fig.update_xaxes(visible=False)
+left_fig.update_yaxes(visible=False)
+
+y_axis_trace = go.Scatter(
+    y=y,
+    # x=["foo", "foo", "foo"],
+    x=[0, 0, 0],
+    hoverinfo="skip",
+    mode="markers+text",
+    marker={
+        "color": "white",
+        "size": 1
+    },
+    text=y,
+    textposition="middle center"
+)
+left_fig.add_trace(y_axis_trace)
+
+heatmap_colorbar_object = go.Heatmap(
+    z=[[0], [0], [0]],
+    x=["foo"],
+    y=y,
+    colorscale="Greys"
+)
+right_fig = go.Figure(heatmap_colorbar_object)
+right_fig_trace_selector = {"type": "heatmap"}
+# right_fig.update_traces(showscale=True, selector=right_fig_trace_selector)
+right_fig.update_traces(zmin=0, selector=right_fig_trace_selector)
+right_fig.update_traces(zmax=1, selector=right_fig_trace_selector)
+right_fig.update_traces(xgap=0, selector=right_fig_trace_selector)
+right_fig.update_traces(hoverinfo="skip", selector=right_fig_trace_selector)
+right_fig.update_xaxes(visible=False)
+right_fig.update_yaxes(visible=False)
+# right_fig.update_traces(visible="legendonly", selector=right_fig_trace_selector)
+
+row = html.Div(
+    [
+        dbc.Row(dbc.Col(html.Div("A single column"))),
+        dbc.Row(
+            [
+                dbc.Col(html.Div("One of three columns")),
+                dbc.Col(html.Div("One of three columns")),
+                dbc.Col(html.Div("One of three columns")),
+            ]
+        ),
+    ]
+)
+
+heatmap_row = html.Div([
+    dbc.Row([
+        dbc.Col(
+            html.Div(
+                dcc.Graph(id="heatmap-axis", figure=left_fig),
+                style={"width": "90vw", "overflowX": "hidden"}
+            ),
+            width=1
+        ),
+        dbc.Col(
+            html.Div(
+                dcc.Graph(id="heatmap", figure=fig),
+                style={"overflowX": "scroll"}
+            ),
+            width=10
+        ),
+        dbc.Col(
+            html.Div(
+                dcc.Graph(id="heatmap-color-bar", figure=right_fig),
+                # style={"width": "150px"}
+            ),
+            width=1
+        ),
+    ], no_gutters=True),
 ])
+
+table_row = html.Div([
+    dbc.Row(
+        dbc.Col(
+            dcc.Graph(id="table")
+        ),
+    )
+])
+
+app.layout = dbc.Container([
+    heatmap_row,
+    table_row
+], fluid=True)
+
+# app.layout = html.Div(children=[
+#     html.Div(children=[]),
+#     html.Div(
+#         dcc.Graph(
+#             id="heatmap", figure=fig
+#         ),
+#         style={"overflowX": "scroll"}
+#     ),
+#     html.Div(
+#         dcc.Graph(
+#             id="heatmap-axis", figure=left_fig
+#         ),
+#         style={"width": "300px"}
+#     ),
+#     html.Div(
+#         dcc.Graph(
+#             id="heatmap-color-bar", figure=right_fig
+#         ),
+#         style={"width": "150px"}
+#     ),
+#     dcc.Graph(id="table")
+# ])
 
 
 @app.callback(
      output=Output('table', 'figure'),
-     inputs=[Input('heatmap', 'clickData')])
+     inputs=[Input('heatmap-axis', 'clickData')])
 def display_table(clickData):
     header_vals = ["pos", "ref", "alt", "alt_freq"]
     cell_vals = []
