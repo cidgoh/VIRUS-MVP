@@ -8,6 +8,32 @@ import heatmap_generator
 import table_generator
 
 
+def get_clade_defining_mutations_switch():
+    ret = html.Div([
+        dbc.Row(
+            dbc.Col(
+                dbc.FormGroup([
+                    dbc.Checklist(
+                        options=[{
+                            "label": "Clade defining mutations",
+                            "value": 1
+                        }],
+                        value=[],
+                        id="clade-defining-mutations-switch",
+                        switch=True
+                    )
+                ]),
+                width={
+                    "size": 2
+                }
+            ),
+            justify="end",
+            className="mt-3"
+        )
+    ])
+    return ret
+
+
 def get_heatmap_row_div(data):
     """TODO..."""
     ret = html.Div([
@@ -41,7 +67,7 @@ def get_heatmap_row_div(data):
                 ),
                 width=1
             ),
-        ], no_gutters=True),
+        ], no_gutters=True, className="mt-3"),
     ])
     return ret
 

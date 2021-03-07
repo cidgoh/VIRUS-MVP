@@ -20,7 +20,11 @@ def get_heatmap_center_fig(data):
     })
     ret.update_layout(width=len(data["heatmap_x"]) * 25, autosize=False)
     ret.update_layout(plot_bgcolor="white")
-    ret.update_layout(margin={"l": 0, "r": 0})
+    ret.update_layout(margin={
+        "l": 0,
+        "r": 0,
+        "t": 0
+    })
 
     return ret
 
@@ -90,7 +94,8 @@ def get_heatmap_left_fig(data):
     ret.update_layout(font={"size": 18})
     ret.update_layout(margin={
         "l": 0,
-        "r": 0
+        "r": 0,
+        "t": 0
     })
     ret.update_layout(plot_bgcolor="white")
     ret.update_xaxes(visible=False)
@@ -139,6 +144,11 @@ def get_heatmap_right_fig(data):
     ret.update_layout(font={"size": 18})
     ret.update_xaxes(visible=False)
     ret.update_yaxes(visible=False)
+    ret.update_layout(margin={
+        "l": 0,
+        "r": 0,
+        "t": 0
+    })
     return ret
 
 
