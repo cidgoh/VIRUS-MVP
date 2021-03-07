@@ -39,7 +39,8 @@ def get_data():
         "insertions_x": get_insertions_x(parsed_files),
         "insertions_y": get_insertions_y(parsed_files),
         "deletions_x": get_deletions_x(parsed_files),
-        "deletions_y": get_deletions_y(parsed_files)
+        "deletions_y": get_deletions_y(parsed_files),
+        "tables": get_tables(parsed_files)
     }
     return data
 
@@ -138,4 +139,22 @@ def get_deletions_y(parsed_files):
         for pos in parsed_files[strain]:
             if parsed_files[strain][pos]["mutation_type"] == "deletion":
                 ret.append(strain)
+    return ret
+
+
+def get_tables(parsed_files):
+    """TODO..."""
+    ret = {}
+    for strain in parsed_files:
+        pos_col = []
+        ref_col = []
+        alt_col = []
+        alt_freq_col = []
+        for pos in parsed_files[strain]:
+            pos_col.append(pos)
+            cell_data = parsed_files[strain][pos]
+            ref_col.append(cell_data["ref"])
+            alt_col.append(cell_data["alt"])
+            alt_freq_col.append(cell_data["alt_freq"])
+        ret[strain] = [pos_col, ref_col, alt_col, alt_freq_col]
     return ret
