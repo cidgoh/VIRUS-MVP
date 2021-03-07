@@ -109,25 +109,6 @@ deletions_trace = go.Scatter(
 fig.add_trace(insertions_trace)
 fig.add_trace(deletions_trace)
 
-# heatmap_x_axis_object = go.Scatter(
-#     y=[1,3,5],
-#     x=[0, 0, 0],
-#     mode="markers+text",
-#     hoverinfo="skip",
-#     text=y,
-#     textposition="middle center",
-#     showlegend=False
-# )
-#
-# left_fig = go.Figure(heatmap_x_axis_object)
-# # left_fig.update_xaxes(tickmode="array", tickvals=[0])
-# left_fig.update_xaxes(visible=False)
-# left_fig.update_yaxes(visible=False)
-# # left_fig.update_layout(plot_bgcolor="white")
-# left_fig.update_layout(font={"size": 18})
-# left_fig.update_xaxes(range=[-0.5, 0.5])
-# left_fig.update_yaxes(range=[0, 6])
-
 heatmap_y_axis_object = go.Heatmap(
     z=[[0], [0], [0]],
     x=[1],
@@ -168,14 +149,12 @@ heatmap_colorbar_object = go.Heatmap(
 )
 right_fig = go.Figure(heatmap_colorbar_object)
 right_fig_trace_selector = {"type": "heatmap"}
-# right_fig.update_traces(showscale=True, selector=right_fig_trace_selector)
 right_fig.update_traces(zmin=0, selector=right_fig_trace_selector)
 right_fig.update_traces(zmax=1, selector=right_fig_trace_selector)
 right_fig.update_traces(xgap=0, selector=right_fig_trace_selector)
 right_fig.update_traces(hoverinfo="skip", selector=right_fig_trace_selector)
 right_fig.update_xaxes(visible=False)
 right_fig.update_yaxes(visible=False)
-# right_fig.update_traces(visible="legendonly", selector=right_fig_trace_selector)
 
 row = html.Div(
     [
@@ -209,7 +188,6 @@ heatmap_row = html.Div([
         dbc.Col(
             html.Div(
                 dcc.Graph(id="heatmap-color-bar", figure=right_fig),
-                # style={"width": "150px"}
             ),
             width=1
         ),
@@ -229,33 +207,9 @@ app.layout = dbc.Container([
     table_row
 ], fluid=True)
 
-# app.layout = html.Div(children=[
-#     html.Div(children=[]),
-#     html.Div(
-#         dcc.Graph(
-#             id="heatmap", figure=fig
-#         ),
-#         style={"overflowX": "scroll"}
-#     ),
-#     html.Div(
-#         dcc.Graph(
-#             id="heatmap-axis", figure=left_fig
-#         ),
-#         style={"width": "300px"}
-#     ),
-#     html.Div(
-#         dcc.Graph(
-#             id="heatmap-color-bar", figure=right_fig
-#         ),
-#         style={"width": "150px"}
-#     ),
-#     dcc.Graph(id="table")
-# ])
-
-
 @app.callback(
      output=Output('table', 'figure'),
-     inputs=[Input('heatmap-axis', 'clickData')])
+     inputs=[Input('heatmap', 'clickData')])
 def display_table(clickData):
     header_vals = ["pos", "ref", "alt", "alt_freq"]
     cell_vals = []
