@@ -17,10 +17,12 @@ app.layout = dbc.Container([
     div_generator.get_table_row_div(data)
 ], fluid=True)
 
+
 @app.callback(
      output=Output('table', 'figure'),
      inputs=[Input('heatmap-center-fig', 'clickData')])
 def display_table(clickData):
+    """TODO..."""
     if clickData is None:
         table_strain = data["heatmap_y"][0]
     else:
