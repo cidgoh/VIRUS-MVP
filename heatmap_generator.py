@@ -3,6 +3,22 @@
 import plotly.graph_objects as go
 
 
+def get_color_scale():
+    """TODO..."""
+    ret = [
+        [0, "#f7fbff"],
+        [1/8, "#deebf7"],
+        [2/8, "#c6dbef"],
+        [3/8, "#9ecae1"],
+        [4/8, "#6baed6"],
+        [5/8, "#4292c6"],
+        [6/8, "#2171b5"],
+        [7/8, "#08519c"],
+        [1, "#08306b"]
+    ]
+    return ret
+
+
 def get_heatmap_center_fig(data):
     """TODO..."""
     heatmap_center_base_obj = get_heatmap_center_base_obj(data)
@@ -35,7 +51,7 @@ def get_heatmap_center_base_obj(data):
         x=data["heatmap_x"],
         y=data["heatmap_y"],
         z=data["heatmap_z"],
-        colorscale="Greys",
+        colorscale=get_color_scale(),
         zmin=0,
         zmax=1,
         hoverlabel={
@@ -142,6 +158,7 @@ def get_heatmap_right_fig(data):
     heatmap_right_base_obj = get_heatmap_right_base_obj(data)
     ret = go.Figure(heatmap_right_base_obj)
     ret.update_layout(font={"size": 18})
+    ret.update_layout(plot_bgcolor="white")
     ret.update_xaxes(visible=False)
     ret.update_yaxes(visible=False)
     ret.update_layout(margin={
@@ -158,7 +175,10 @@ def get_heatmap_right_base_obj(data):
         x=["foo"],
         y=data["heatmap_y"],
         z=[[0] for _ in data["heatmap_y"]],
-        colorscale="Greys",
+        colorscale=get_color_scale(),
+        colorbar={
+            "x": -2
+        },
         zmin=0,
         zmax=1,
         hoverinfo="none"

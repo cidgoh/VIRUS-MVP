@@ -44,9 +44,9 @@ def get_heatmap_row_div(data):
                         id="heatmap-left-fig",
                         figure=heatmap_generator.get_heatmap_left_fig(data)
                     ),
-                    style={"width": "90vw", "overflowX": "hidden"}
+                    style={"width": "90vw"}
                 ),
-                width=1
+                width=1, style={"overflowX": "hidden"}
             ),
             dbc.Col(
                 html.Div(
@@ -64,8 +64,9 @@ def get_heatmap_row_div(data):
                         id="heatmap-right-fig",
                         figure=heatmap_generator.get_heatmap_right_fig(data)
                     ),
+                    style={"width": "90vw"}
                 ),
-                width=1
+                width=1, style={"overflowX": "hidden"}
             ),
         ], no_gutters=True, className="mt-3"),
     ])
