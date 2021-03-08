@@ -38,7 +38,8 @@ def display_table(clickData):
     prevent_initial_call=True
 )
 def on_form_change(switches_value):
-    if len(switches_value) >0:
+    """TODO..."""
+    if len(switches_value) >  0:
         return heatmap_generator.get_heatmap_center_fig(data)
     else:
         return heatmap_generator.get_heatmap_center_fig(data)
