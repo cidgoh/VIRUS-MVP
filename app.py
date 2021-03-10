@@ -3,18 +3,79 @@
 import dash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
+import dash_html_components as html
+import dash_core_components as dcc
+import plotly.graph_objects as go
+import csv
 
 from data_parser import get_data
 import div_generator
 import heatmap_generator
 import table_generator
+from collections import OrderedDict
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 data = get_data("data")
 clade_defining_mutations_data = get_data("clade_defining_mutations_data")
 
+bar = go.Bar(
+    x=[10],
+    y=[1],
+    orientation="h"
+)
+bar2 = go.Bar(
+    x=[20],
+    y=[1],
+    orientation="h"
+)
+bars_dict = OrderedDict()
+with open("reference_genome_map.tsv") as fp:
+    reader = csv.DictReader(fp, delimiter="\t")
+    for row in reader:
+        region = row["region"]
+        start = int(row["start"])
+        end = int(row["end"])
+        closest_x = None
+        for x in data["heatmap_x"]:
+            if start <= x <= end:
+                closest_x = x
+        if closest_x is not None:
+            bars_dict[region] = closest_x
+
+bar_objs = []
+color = True
+for region in reversed(bars_dict):
+    bar_obj = go.Bar(
+        x=[bars_dict[region]],
+        y=[1],
+        orientation="h",
+        marker={
+            "color": "lightgrey" if color else "white",
+            "line": {"color": "black", "width": 2}
+        },
+        text=[region],
+        textposition="inside"
+        # textposition="auto"
+    )
+    bar_objs.append(bar_obj)
+    color = not color
+
+fig = go.Figure(bar_objs)
+fig.update_layout(barmode="overlay", font={"size": 18})
+fig.update_xaxes(type="category", categoryorder="array", categoryarray=data["heatmap_x"])
+
 app.layout = dbc.Container([
+    html.Div([
+        dbc.Row(
+            dbc.Col(
+                dcc.Graph(
+                    id="foo",
+                    figure=fig
+                ),
+            )
+        )
+    ]),
     div_generator.get_clade_defining_mutations_switch(),
     div_generator.get_heatmap_row_div(data),
     div_generator.get_table_row_div(data)
