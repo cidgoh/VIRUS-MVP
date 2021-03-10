@@ -13,57 +13,79 @@ import div_generator
 import heatmap_generator
 import table_generator
 from collections import OrderedDict
+from plotly.subplots import make_subplots
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 data = get_data("data")
 clade_defining_mutations_data = get_data("clade_defining_mutations_data")
 
-bar = go.Bar(
-    x=[10],
-    y=[1],
-    orientation="h"
-)
-bar2 = go.Bar(
-    x=[20],
-    y=[1],
-    orientation="h"
-)
-bars_dict = OrderedDict()
-with open("reference_genome_map.tsv") as fp:
-    reader = csv.DictReader(fp, delimiter="\t")
-    for row in reader:
-        region = row["region"]
-        start = int(row["start"])
-        end = int(row["end"])
-        closest_x = None
-        for x in data["heatmap_x"]:
-            if start <= x <= end:
-                closest_x = x
-        if closest_x is not None:
-            bars_dict[region] = closest_x
+fig = make_subplots(rows=2, cols=1, shared_xaxes=True, row_heights=[0.1, 0.9], vertical_spacing=0.05)
 
-bar_objs = []
-color = True
-for region in reversed(bars_dict):
-    bar_obj = go.Bar(
-        x=[bars_dict[region]],
-        y=[1],
-        orientation="h",
-        marker={
-            "color": "lightgrey" if color else "white",
-            "line": {"color": "black", "width": 2}
-        },
-        text=[region],
-        textposition="inside"
-        # textposition="auto"
-    )
-    bar_objs.append(bar_obj)
-    color = not color
+# bar = go.Bar(
+#     x=[10],
+#     y=[1],
+#     orientation="h"
+# )
+# bar2 = go.Bar(
+#     x=[20],
+#     y=[1],
+#     orientation="h"
+# )
+# bars_dict = OrderedDict()
+# with open("reference_genome_map.tsv") as fp:
+#     reader = csv.DictReader(fp, delimiter="\t")
+#     for row in reader:
+#         region = row["region"]
+#         start = int(row["start"])
+#         end = int(row["end"])
+#         closest_x = None
+#         for x in data["heatmap_x"]:
+#             if start <= x <= end:
+#                 closest_x = x
+#         if closest_x is not None:
+#             bars_dict[region] = closest_x
+#
+# bar_objs = []
+# color = True
+# for region in reversed(bars_dict):
+#     bar_obj = go.Bar(
+#         x=[bars_dict[region]],
+#         y=[1],
+#         orientation="h",
+#         marker={
+#             "color": "lightgrey" if color else "white",
+#             "line": {"color": "black", "width": 2}
+#         },
+#         text=[region],
+#         textposition="auto",
+#         showlegend=False,
+#         hoverinfo="none"
+#     )
+#     bar_objs.append(bar_obj)
+#     color = not color
+#
+# fig = go.Figure(bar_objs)
 
-fig = go.Figure(bar_objs)
+# for bar_obj in bar_objs:
+#     fig.add_trace(bar_obj, row=1, col=1)
+#
+heatmap_obj = heatmap_generator.get_heatmap_center_base_obj(data)
+fig.add_trace(heatmap_obj, row=1, col=1)
+fig.add_trace(heatmap_obj, row=2, col=1)
+#
 fig.update_layout(barmode="overlay", font={"size": 18})
-fig.update_xaxes(type="category", categoryorder="array", categoryarray=data["heatmap_x"])
+# fig.update_xaxes(type="category", categoryorder="array", categoryarray=data["heatmap_x"])
+fig.update_xaxes(type="category")
+fig.update_yaxes(visible=False)
+fig.update_layout(margin={
+    "l": 0,
+    "r": 0,
+    "t": 0,
+    "pad": 0
+})
+fig.update_layout(width=len(data["heatmap_x"]) * 25, autosize=False)
+fig.update_layout(plot_bgcolor="white")
 
 app.layout = dbc.Container([
     html.Div([
