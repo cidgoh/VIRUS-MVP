@@ -194,7 +194,6 @@ def get_heatmap_left_fig(data):
     heatmap_left_base_obj = get_heatmap_left_base_obj(data)
     heatmap_left_labels_obj = get_heatmap_left_labels_obj(data)
 
-    # ret = go.Figure(heatmap_left_base_obj)
     ret.add_trace(heatmap_left_base_obj, row=2, col=1)
     ret.add_trace(heatmap_left_labels_obj, row=2, col=1)
 
@@ -281,6 +280,6 @@ def get_heatmap_right_base_obj(data):
         },
         zmin=0,
         zmax=1,
-        hoverinfo="none",
+        hoverinfo="none"
     )
     return ret
