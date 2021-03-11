@@ -20,7 +20,19 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 data = get_data("data")
 clade_defining_mutations_data = get_data("clade_defining_mutations_data")
 
-fig = make_subplots(rows=2, cols=1, shared_xaxes=True, row_heights=[0.4, 0.6], vertical_spacing=0.05)
+fig = make_subplots(rows=2, cols=1, row_heights=[0.4, 0.6], vertical_spacing=0.05)
+# fig = make_subplots(rows=2, cols=1, shared_xaxes=True, row_heights=[0.4, 0.6], vertical_spacing=0.05)
+
+nan = float("nan")
+
+fig.add_trace(go.Heatmap(
+    x=[0, 25, 150, 300],
+    y=[1],
+    z=[[1, 0, None]],
+    xaxis="x2"
+), row=1, col=1)
+
+fig.add_annotation(x=10, y=1, text="Hello world!", showarrow=False, xref="x", yref="y")
 
 # bars_dict = OrderedDict()
 #
@@ -51,48 +63,47 @@ fig = make_subplots(rows=2, cols=1, shared_xaxes=True, row_heights=[0.4, 0.6], v
 #         text=[region],
 #         textposition="inside",
 #         showlegend=False,
-#         hoverinfo="none"
+#         # hoverinfo="none"
 #     )
 #     bar_objs.append(bar_obj)
 #     color = not color
-
-# fig = go.Figure(bar_objs)
-
+#
 # for bar_obj in bar_objs:
 #     fig.add_trace(bar_obj, row=1, col=1)
 
-fig.update_layout(
-    shapes=[
-        {
-            "type": "rect",
-            "xref": "x1",
-            "yref": "y1",
-            "x0": -0.5,
-            "x1": 1.5,
-            "y0": 0,
-            "y1": 1,
-        }
-    ]
-)
+# fig.update_layout(
+#     shapes=[
+#         {
+#             "type": "rect",
+#             "xref": "x1",
+#             "yref": "y1",
+#             "x0": -0.5,
+#             "x1": 1.5,
+#             "y0": 0,
+#             "y1": 1,
+#         }
+#     ]
+# )
 heatmap_obj = heatmap_generator.get_heatmap_center_base_obj(data)
-# fig.add_trace(heatmap_obj, row=1, col=1)
+# # fig.add_trace(heatmap_obj, row=1, col=1)
 fig.add_trace(heatmap_obj, row=2, col=1)
-#
-fig.update_layout(barmode="overlay", font={"size": 18})
-fig.update_xaxes(type="category", categoryorder="array", categoryarray=data["heatmap_x"])
-# fig.update_xaxes(type="category")
-# fig.update_yaxes(visible=False)
-fig.update_layout(margin={
-    # "l": 0,
-    "r": 0,
-    "t": 0,
-    "pad": 0
-})
+# #
+# fig.update_layout(barmode="overlay", font={"size": 18})
+# fig.update_xaxes(type="category", categoryorder="array", categoryarray=data["heatmap_x"])
+# fig.update_xaxes(tickmode="array", tickvals=data["heatmap_x"])
+fig.update_layout(xaxis2_type="category")
+# # fig.update_yaxes(visible=False)
+# fig.update_layout(margin={
+#     # "l": 0,
+#     "r": 0,
+#     "t": 0,
+#     "pad": 0
+# })
 fig.update_layout(width=len(data["heatmap_x"]) * 25, autosize=False)
-# fig.update_layout(plot_bgcolor="white")
-# fig.update_xaxes(tickvals=data["heatmap_x"])
-xlen = len(data["heatmap_x"])
-fig.update_xaxes(range=[-0.5,xlen-0.5])
+# # fig.update_layout(plot_bgcolor="white")
+# # fig.update_xaxes(tickvals=data["heatmap_x"])
+# xlen = len(data["heatmap_x"])
+# fig.update_xaxes(range=[-0.5,xlen-0.5])
 
 xmin = data["heatmap_x"][0]
 xmax = data["heatmap_x"][-1]
