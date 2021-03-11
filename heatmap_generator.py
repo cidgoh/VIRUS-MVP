@@ -45,8 +45,7 @@ def get_heatmap_center_fig(data):
             x=midpoints[i],
             y=heatmap_center_genes_obj["y"][0],
             text=gene_label,
-            showarrow=False,
-            font={"size": 12}
+            showarrow=False
         )
 
     heatmap_center_base_obj = get_heatmap_center_base_obj(data)
