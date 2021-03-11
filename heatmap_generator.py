@@ -30,6 +30,7 @@ def get_heatmap_center_fig(data):
     ret.add_trace(heatmap_center_deletions_object)
 
     ret.update_xaxes(type="category")
+    ret.update_xaxes(range=[-0.5, len(data["heatmap_x"]) + 0.5])
     ret.update_yaxes(visible=False)
     ret.update_layout(font={
         "size": 18
@@ -39,7 +40,8 @@ def get_heatmap_center_fig(data):
     ret.update_layout(margin={
         "l": 0,
         "r": 0,
-        "t": 0
+        "t": 0,
+        "pad": 0
     })
 
     return ret
@@ -126,7 +128,7 @@ def get_heatmap_left_base_obj(data):
     ret = go.Heatmap(
         x=[1],
         y=data["heatmap_y"],
-        z=[[0] for _ in data["heatmap_y"]],
+        z=[[1] for _ in data["heatmap_y"]],
         showscale=False,
         hoverinfo="none",
         colorscale="Greys",
@@ -140,7 +142,7 @@ def get_heatmap_left_labels_obj(data):
     """TODO..."""
     ret = go.Scatter(
         y=data["heatmap_y"],
-        x=[0, 0, 0],
+        x=[0 for _ in data["heatmap_y"]],
         hoverinfo="skip",
         mode="markers+text",
         marker={
