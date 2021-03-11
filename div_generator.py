@@ -64,7 +64,7 @@ def get_heatmap_row_div(data):
                         id="heatmap-right-fig",
                         figure=heatmap_generator.get_heatmap_right_fig(data)
                     ),
-                    style={"width": "90vw"}
+                    style={"width": "90vw"}, className="ml-3"
                 ),
                 width=1, style={"overflowX": "hidden"}
             ),
