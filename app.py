@@ -3,17 +3,11 @@
 import dash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
-import dash_html_components as html
-import dash_core_components as dcc
-import plotly.graph_objects as go
-import csv
 
 from data_parser import get_data
 import div_generator
 import heatmap_generator
 import table_generator
-from collections import OrderedDict
-from plotly.subplots import make_subplots
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
