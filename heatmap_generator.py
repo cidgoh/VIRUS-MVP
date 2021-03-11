@@ -217,7 +217,7 @@ def get_heatmap_left_base_obj(data):
     ret = go.Heatmap(
         x=[1],
         y=data["heatmap_y"],
-        z=[[0] for _ in data["heatmap_y"]],
+        z=[[1] for _ in data["heatmap_y"]],
         showscale=False,
         hoverinfo="none",
         colorscale="Greys",
@@ -231,7 +231,7 @@ def get_heatmap_left_labels_obj(data):
     """TODO..."""
     ret = go.Scatter(
         y=data["heatmap_y"],
-        x=[0, 0, 0],
+        x=[0 for _ in data["heatmap_y"]],
         hoverinfo="skip",
         mode="markers+text",
         marker={
