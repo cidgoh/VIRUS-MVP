@@ -1,8 +1,6 @@
 """TODO..."""
 
-from collections import OrderedDict
 import csv
-import itertools
 
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -34,14 +32,30 @@ def get_heatmap_center_fig(data):
     )
 
     heatmap_center_genes_obj = get_heatmap_center_genes_obj(data)
-    heatmap_center_base_obj = get_heatmap_center_base_obj(data)
-    heatmap_center_insertions_object = get_heatmap_center_insertions_obj(data)
-    heatmap_center_deletions_object = get_heatmap_center_deletions_obj(data)
-
-    # ret = go.Figure(heatmap_center_base_bottom_obj)
     ret.add_trace(heatmap_center_genes_obj, row=1, col=1)
+    midpoints = []
+    endpoints = heatmap_center_genes_obj["x"]
+    for i, val in enumerate(endpoints[:-1]):
+        midpoint = ((endpoints[i+1] - endpoints[i]) / 2) + endpoints[i]
+        midpoints.append(midpoint)
+    for i, gene_label in enumerate(heatmap_center_genes_obj["text"][0]):
+        ret.add_annotation(
+            xref="x1",
+            yref="y1",
+            x=midpoints[i],
+            y=heatmap_center_genes_obj["y"][0],
+            text=gene_label,
+            showarrow=False,
+            font={"size": 12}
+        )
+
+    heatmap_center_base_obj = get_heatmap_center_base_obj(data)
     ret.add_trace(heatmap_center_base_obj, row=2, col=1)
+
+    heatmap_center_insertions_object = get_heatmap_center_insertions_obj(data)
     ret.add_trace(heatmap_center_insertions_object, row=2, col=1)
+
+    heatmap_center_deletions_object = get_heatmap_center_deletions_obj(data)
     ret.add_trace(heatmap_center_deletions_object, row=2, col=1)
 
     ret.update_layout(xaxis1_visible=False)
@@ -59,22 +73,6 @@ def get_heatmap_center_fig(data):
         "t": 0,
         "pad": 0
     })
-
-    midpoints = []
-    endpoints = heatmap_center_genes_obj["x"]
-    for i, val in enumerate(endpoints[:-1]):
-        midpoint = ((endpoints[i+1] - endpoints[i]) / 2) + endpoints[i]
-        midpoints.append(midpoint)
-    for i, gene_label in enumerate(heatmap_center_genes_obj["text"][0]):
-        ret.add_annotation(
-            xref="x1",
-            yref="y1",
-            x=midpoints[i],
-            y=heatmap_center_genes_obj["y"][0],
-            text=gene_label,
-            showarrow=False,
-            font={"size": 12}
-        )
 
     return ret
 
