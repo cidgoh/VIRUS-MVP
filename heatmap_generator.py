@@ -1,5 +1,9 @@
 """TODO..."""
 
+from collections import OrderedDict
+import csv
+import itertools
+
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -25,15 +29,18 @@ def get_heatmap_center_fig(data):
     ret = make_subplots(rows=2, cols=1)
 
     heatmap_center_base_obj = get_heatmap_center_base_obj(data)
+    heatmap_center_genes_obj = get_heatmap_center_genes_obj(data)
     heatmap_center_insertions_object = get_heatmap_center_insertions_obj(data)
     heatmap_center_deletions_object = get_heatmap_center_deletions_obj(data)
 
-    # ret = go.Figure(heatmap_center_base_obj)
+    # ret = go.Figure(heatmap_center_base_bottom_obj)
+    ret.add_trace(heatmap_center_genes_obj, row=1, col=1)
     ret.add_trace(heatmap_center_base_obj, row=2, col=1)
     ret.add_trace(heatmap_center_insertions_object, row=2, col=1)
     ret.add_trace(heatmap_center_deletions_object, row=2, col=1)
 
-    ret.update_xaxes(type="category")
+    ret.update_layout(xaxis1_visible=False)
+    ret.update_layout(xaxis2_type="category")
     ret.update_yaxes(visible=False)
     ret.update_layout(font={
         "size": 18
@@ -47,6 +54,38 @@ def get_heatmap_center_fig(data):
     })
 
     return ret
+
+
+def get_heatmap_center_genes_obj(data):
+    """TODO..."""
+    reference_genome = {}
+    with open("reference_genome_map.tsv") as fp:
+        reader = csv.DictReader(fp, delimiter="\t")
+        for row in reader:
+            region = row["region"]
+            start = int(row["start"])
+            end = int(row["end"])
+            reference_genome[region] = {"start": start, "end": end}
+
+    heatmap_x_genes = []
+    for heatmap_x_val in data["heatmap_x"]:
+        for region in reference_genome:
+            start = reference_genome[region]["start"]
+            end = reference_genome[region]["end"]
+            if start <= heatmap_x_val <= end:
+                heatmap_x_genes.append(region)
+                break
+
+    # gene_edges_x = [0]
+    # labels = []
+    # last_label_seen = "foo"
+    # for i, heatmap_x_gene in enumerate(heatmap_x_genes):
+    #     if last_label_seen != heatmap_x_gene:
+    #         gene_edges_x.append(i+1)
+    #         labels.append(heatmap_x_gene)
+    #     ...
+
+    return {}
 
 
 def get_heatmap_center_base_obj(data):
