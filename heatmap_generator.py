@@ -1,6 +1,7 @@
 """TODO..."""
 
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 
 def get_color_scale():
@@ -21,13 +22,16 @@ def get_color_scale():
 
 def get_heatmap_center_fig(data):
     """TODO..."""
+    ret = make_subplots(rows=2, cols=1)
+
     heatmap_center_base_obj = get_heatmap_center_base_obj(data)
     heatmap_center_insertions_object = get_heatmap_center_insertions_obj(data)
     heatmap_center_deletions_object = get_heatmap_center_deletions_obj(data)
 
-    ret = go.Figure(heatmap_center_base_obj)
-    ret.add_trace(heatmap_center_insertions_object)
-    ret.add_trace(heatmap_center_deletions_object)
+    # ret = go.Figure(heatmap_center_base_obj)
+    ret.add_trace(heatmap_center_base_obj, row=2, col=1)
+    ret.add_trace(heatmap_center_insertions_object, row=2, col=1)
+    ret.add_trace(heatmap_center_deletions_object, row=2, col=1)
 
     ret.update_xaxes(type="category")
     ret.update_yaxes(visible=False)
@@ -101,11 +105,14 @@ def get_heatmap_center_deletions_obj(data):
 
 def get_heatmap_left_fig(data):
     """TODO..."""
+    ret = make_subplots(rows=2, cols=1)
+
     heatmap_left_base_obj = get_heatmap_left_base_obj(data)
     heatmap_left_labels_obj = get_heatmap_left_labels_obj(data)
 
-    ret = go.Figure(heatmap_left_base_obj)
-    ret.add_trace(heatmap_left_labels_obj)
+    # ret = go.Figure(heatmap_left_base_obj)
+    ret.add_trace(heatmap_left_base_obj, row=2, col=1)
+    ret.add_trace(heatmap_left_labels_obj, row=2, col=1)
 
     ret.update_layout(font={"size": 18})
     ret.update_layout(margin={
@@ -155,8 +162,12 @@ def get_heatmap_left_labels_obj(data):
 
 def get_heatmap_right_fig(data):
     """TODO..."""
+    ret = make_subplots(rows=2, cols=1)
+
     heatmap_right_base_obj = get_heatmap_right_base_obj(data)
-    ret = go.Figure(heatmap_right_base_obj)
+    # ret = go.Figure(heatmap_right_base_obj)
+
+    ret.add_trace(heatmap_right_base_obj, row=2, col=1)
     ret.update_layout(font={"size": 18})
     ret.update_layout(plot_bgcolor="white")
     ret.update_xaxes(visible=False)
@@ -177,10 +188,11 @@ def get_heatmap_right_base_obj(data):
         z=[[0] for _ in data["heatmap_y"]],
         colorscale=get_color_scale(),
         colorbar={
-            "x": -2
+            "x": -2,
+            "y": 0
         },
         zmin=0,
         zmax=1,
-        hoverinfo="none"
+        hoverinfo="none",
     )
     return ret
