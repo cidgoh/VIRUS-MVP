@@ -39,13 +39,18 @@ def get_heatmap_center_fig(data):
         midpoint = ((endpoints[i+1] - endpoints[i]) / 2) + endpoints[i]
         midpoints.append(midpoint)
     for i, gene_label in enumerate(heatmap_center_genes_obj["text"][0]):
+        x_start = heatmap_center_genes_obj["x"][i]
+        x_end = heatmap_center_genes_obj["x"][i+1]
+        if (x_end - x_start) < 2:
+            continue
         ret.add_annotation(
             xref="x1",
             yref="y1",
             x=midpoints[i],
             y=heatmap_center_genes_obj["y"][0],
             text=gene_label,
-            showarrow=False
+            showarrow=False,
+            font={"color": "white"}
         )
 
     heatmap_center_base_obj = get_heatmap_center_base_obj(data)
@@ -114,13 +119,23 @@ def get_heatmap_center_genes_obj(data):
     ret = go.Heatmap(
         x=heatmap_center_genes_obj_x,
         y=[1],
-        z=[[i % 2 for i, _ in enumerate(heatmap_center_genes_obj_labels)]],
+        z=[[i * 1/11 for i, _ in enumerate(heatmap_center_genes_obj_labels)]],
         hoverinfo="skip",
         text=[heatmap_center_genes_obj_labels],
         showscale=False,
         colorscale=[
-            [0, "#d9d9d9"],
-            [1, "#f0f0f0"]
+            [0, "black"],
+            [1/11, "#8EBC66"],
+            [2/11, "#E59637"],
+            [3/11, "#5097BA"],
+            [4/11, "#AABD52"],
+            [5/11, "#D9AD3D"],
+            [6/11, "#5097BA"],
+            [7/11, "#DF4327"],
+            [8/11, "#C4B945"],
+            [9/11, "#60AA9E"],
+            [10/11, "#E67030"],
+            [1, "black"]
         ]
     )
 
