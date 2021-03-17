@@ -50,6 +50,17 @@ def get_heatmap_center_fig(data):
     heatmap_center_base_obj = get_heatmap_center_base_obj(data)
     ret.add_trace(heatmap_center_base_obj, row=2, col=1)
 
+    for y, _ in enumerate(heatmap_center_base_obj["y"]):
+        ret.add_shape({
+            "type": "line",
+            "xref": "x2",
+            "yref": "y2",
+            "x0": -0.5,
+            "x1": len(heatmap_center_base_obj["x"]) - 0.5,
+            "y0": y-0.5,
+            "y1": y-0.5
+        })
+
     heatmap_center_insertions_object = get_heatmap_center_insertions_obj(data)
     ret.add_trace(heatmap_center_insertions_object, row=2, col=1)
 
