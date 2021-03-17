@@ -9,15 +9,9 @@ from plotly.subplots import make_subplots
 def get_color_scale():
     """TODO..."""
     ret = [
-        [0, "#f7fbff"],
-        [1/8, "#deebf7"],
-        [2/8, "#c6dbef"],
-        [3/8, "#9ecae1"],
-        [4/8, "#6baed6"],
-        [5/8, "#4292c6"],
-        [6/8, "#2171b5"],
-        [7/8, "#08519c"],
-        [1, "#08306b"]
+        [0, "#fc8d59"],
+        [1/2, "#ffffbf"],
+        [1, "#91bfdb"]
     ]
     return ret
 
@@ -55,6 +49,17 @@ def get_heatmap_center_fig(data):
 
     heatmap_center_base_obj = get_heatmap_center_base_obj(data)
     ret.add_trace(heatmap_center_base_obj, row=2, col=1)
+
+    for y, _ in enumerate(heatmap_center_base_obj["y"]):
+        ret.add_shape({
+            "type": "line",
+            "xref": "x2",
+            "yref": "y2",
+            "x0": -0.5,
+            "x1": len(heatmap_center_base_obj["x"]) - 0.5,
+            "y0": y-0.5,
+            "y1": y-0.5
+        })
 
     heatmap_center_insertions_object = get_heatmap_center_insertions_obj(data)
     ret.add_trace(heatmap_center_insertions_object, row=2, col=1)
@@ -166,9 +171,11 @@ def get_heatmap_center_base_obj(data):
         hoverlabel={
             "font_size": 18
         },
-        hoverinfo="text",
+        hoverongaps=False,
+        hovertemplate="%{text}<extra></extra>",
         text=data["heatmap_cell_text"],
         xgap=10,
+        ygap=10,
         showscale=False
     )
     return ret
@@ -184,7 +191,8 @@ def get_heatmap_center_insertions_obj(data):
         marker={
             "color": "lime",
             "size": 18,
-            "symbol": "cross"
+            "symbol": "cross",
+            "line": {"width": 2}
         },
         showlegend=False
     )
@@ -201,7 +209,8 @@ def get_heatmap_center_deletions_obj(data):
         marker={
             "color": "red",
             "size": 18,
-            "symbol": "x"
+            "symbol": "x",
+            "line": {"width": 2}
         },
         showlegend=False
     )

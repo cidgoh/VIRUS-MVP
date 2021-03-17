@@ -18,6 +18,10 @@ def parse_data_files(dir):
                     ret[strain][pos]["ref"] = row["REF"]
                     ret[strain][pos]["alt"] = row["ALT"]
                     ret[strain][pos]["alt_freq"] = row["ALT_FREQ"]
+                    ret[strain][pos]["ref_codon"] = row["REF_CODON"]
+                    ret[strain][pos]["alt_codon"] = row["ALT_CODON"]
+                    ret[strain][pos]["ref_aa"] = row["REF_AA"]
+                    ret[strain][pos]["alt_aa"] = row["ALT_AA"]
                     if row["ALT"][0] == "+":
                         ret[strain][pos]["mutation_type"] = "insertion"
                     elif row["ALT"][0] == "-":
@@ -90,11 +94,26 @@ def get_heatmap_cell_text(parsed_files):
         for pos in heatmap_x:
             if pos in parsed_files[strain]:
                 cell_data = parsed_files[strain][pos]
-                cell_text_str = "Pos %s; %s to %s; Freq %s"
+                cell_text_str = "<b>Position:</b> %s<br>" \
+                                "<b>Mutation type:</b> %s<br>" \
+                                "<br>" \
+                                "<b>Reference:</b> %s<br>" \
+                                "<b>Alternate:</b> %s<br>" \
+                                "<b>Alternate frequency:</b> %s<br>" \
+                                "<br>" \
+                                "<b>Reference codon:</b> %s<br>" \
+                                "<b>Alternate codon:</b> %s<br>" \
+                                "<b>Reference amino acid:</b> %s<br>" \
+                                "<b>Alternate amino acid:</b> %s"
                 cell_text_params = (pos,
+                                    cell_data["mutation_type"],
                                     cell_data["ref"],
                                     cell_data["alt"],
-                                    cell_data["alt_freq"])
+                                    cell_data["alt_freq"],
+                                    cell_data["ref_codon"],
+                                    cell_data["alt_codon"],
+                                    cell_data["ref_aa"],
+                                    cell_data["alt_aa"])
                 row.append(cell_text_str % cell_text_params)
             else:
                 row.append(None)
@@ -147,14 +166,27 @@ def get_tables(parsed_files):
     ret = {}
     for strain in parsed_files:
         pos_col = []
+        mutation_type_col = []
         ref_col = []
         alt_col = []
         alt_freq_col = []
+        ref_codon_col = []
+        alt_codon_col = []
+        ref_aa_col = []
+        alt_aa_col = []
         for pos in parsed_files[strain]:
             pos_col.append(pos)
             cell_data = parsed_files[strain][pos]
+            mutation_type_col.append(cell_data["mutation_type"])
             ref_col.append(cell_data["ref"])
             alt_col.append(cell_data["alt"])
             alt_freq_col.append(cell_data["alt_freq"])
-        ret[strain] = [pos_col, ref_col, alt_col, alt_freq_col]
+            ref_codon_col.append(cell_data["ref_codon"])
+            alt_codon_col.append(cell_data["alt_codon"])
+            ref_aa_col.append(cell_data["ref_aa"])
+            alt_aa_col.append(cell_data["alt_aa"])
+        ret[strain] = [
+            pos_col, mutation_type_col, ref_col, alt_col, alt_freq_col,
+            ref_codon_col, alt_codon_col, ref_aa_col, alt_aa_col
+        ]
     return ret
