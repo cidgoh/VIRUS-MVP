@@ -190,7 +190,8 @@ def get_heatmap_center_insertions_obj(data):
         marker={
             "color": "lime",
             "size": 18,
-            "symbol": "cross"
+            "symbol": "cross",
+            "line": {"width": 2}
         },
         showlegend=False
     )
@@ -207,7 +208,8 @@ def get_heatmap_center_deletions_obj(data):
         marker={
             "color": "red",
             "size": 18,
-            "symbol": "x"
+            "symbol": "x",
+            "line": {"width": 2}
         },
         showlegend=False
     )
