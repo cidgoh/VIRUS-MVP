@@ -163,6 +163,7 @@ def get_heatmap_center_base_obj(data):
         hoverinfo="text",
         text=data["heatmap_cell_text"],
         xgap=10,
+        ygap=10,
         showscale=False
     )
     return ret
