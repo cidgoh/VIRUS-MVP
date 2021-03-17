@@ -90,7 +90,9 @@ def get_heatmap_cell_text(parsed_files):
         for pos in heatmap_x:
             if pos in parsed_files[strain]:
                 cell_data = parsed_files[strain][pos]
-                cell_text_str = "Pos %s; %s to %s; Freq %s"
+                cell_text_str = "Position: %s<br>" \
+                                "Mutation: %s to %s<br>" \
+                                "Frequency: %s"
                 cell_text_params = (pos,
                                     cell_data["ref"],
                                     cell_data["alt"],

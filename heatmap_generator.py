@@ -171,7 +171,8 @@ def get_heatmap_center_base_obj(data):
         hoverlabel={
             "font_size": 18
         },
-        hoverinfo="text",
+        hoverongaps=False,
+        hovertemplate="%{text}<extra></extra>",
         text=data["heatmap_cell_text"],
         xgap=10,
         ygap=10,
