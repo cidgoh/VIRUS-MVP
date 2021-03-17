@@ -99,7 +99,7 @@ def get_heatmap_cell_text(parsed_files):
                                 "<br>" \
                                 "<b>Reference:</b> %s<br>" \
                                 "<b>Alternate:</b> %s<br>" \
-                                "<b>Frequency:</b> %s<br>" \
+                                "<b>Alternate frequency:</b> %s<br>" \
                                 "<br>" \
                                 "<b>Reference codon:</b> %s<br>" \
                                 "<b>Alternate codon:</b> %s<br>" \
