@@ -166,14 +166,27 @@ def get_tables(parsed_files):
     ret = {}
     for strain in parsed_files:
         pos_col = []
+        mutation_type_col = []
         ref_col = []
         alt_col = []
         alt_freq_col = []
+        ref_codon_col = []
+        alt_codon_col = []
+        ref_aa_col = []
+        alt_aa_col = []
         for pos in parsed_files[strain]:
             pos_col.append(pos)
             cell_data = parsed_files[strain][pos]
+            mutation_type_col.append(cell_data["mutation_type"])
             ref_col.append(cell_data["ref"])
             alt_col.append(cell_data["alt"])
             alt_freq_col.append(cell_data["alt_freq"])
-        ret[strain] = [pos_col, ref_col, alt_col, alt_freq_col]
+            ref_codon_col.append(cell_data["ref_codon"])
+            alt_codon_col.append(cell_data["alt_codon"])
+            ref_aa_col.append(cell_data["ref_aa"])
+            alt_aa_col.append(cell_data["alt_aa"])
+        ret[strain] = [
+            pos_col, mutation_type_col, ref_col, alt_col, alt_freq_col,
+            ref_codon_col, alt_codon_col, ref_aa_col, alt_aa_col
+        ]
     return ret

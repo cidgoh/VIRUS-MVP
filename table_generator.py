@@ -17,7 +17,10 @@ def get_table_fig(data, strain):
 def get_table_obj(data, strain):
     """TODO..."""
     # TODO these should be determined automatically based on data
-    header_vals = ["pos", "ref", "alt", "alt_freq"]
+    header_vals = [
+        "pos", "mutation_type", "ref", "alt", "alt_freq", "ref_codon",
+        "alt_codon", "ref_aa", "alt_aa"
+    ]
     ret = go.Table(
         header={
             "values": ["<b>%s</b>" % e for e in header_vals],
