@@ -116,27 +116,39 @@ def get_heatmap_center_genes_obj(data):
             heatmap_center_genes_obj_labels.append(last_gene_seen)
             last_gene_seen = heatmap_x_gene
 
+    heatmap_center_genes_obj_z = \
+        [[i * 1/11 for i, _ in enumerate(heatmap_center_genes_obj_labels)]]
+
+    heatmap_gene_colors = {
+        "5’ UTR": "black",
+        "ORF1a": "#8EBC66",
+        "ORF1b": "#E59637",
+        "S": "#5097BA",
+        "ORF3a": "#AABD52",
+        "E": "#D9AD3D",
+        "M": "#5097BA",
+        "ORF6": "#DF4327",
+        "ORF7a": "#C4B945",
+        "ORF8": "#60AA9E",
+        "N": "#E67030",
+        "ORF10": "#8EBC66",
+        "3’ UTR": "black"
+    }
+    heatmap_center_genes_obj_colorscale = []
+    for i, label in enumerate(heatmap_center_genes_obj_labels):
+        heatmap_center_genes_obj_colorscale.append([
+            i/(len(heatmap_center_genes_obj_labels) - 1),
+            heatmap_gene_colors[label]
+        ])
+
     ret = go.Heatmap(
         x=heatmap_center_genes_obj_x,
         y=[1],
-        z=[[i * 1/11 for i, _ in enumerate(heatmap_center_genes_obj_labels)]],
+        z=heatmap_center_genes_obj_z,
         hoverinfo="skip",
         text=[heatmap_center_genes_obj_labels],
         showscale=False,
-        colorscale=[
-            [0, "black"],
-            [1/11, "#8EBC66"],
-            [2/11, "#E59637"],
-            [3/11, "#5097BA"],
-            [4/11, "#AABD52"],
-            [5/11, "#D9AD3D"],
-            [6/11, "#5097BA"],
-            [7/11, "#DF4327"],
-            [8/11, "#C4B945"],
-            [9/11, "#60AA9E"],
-            [10/11, "#E67030"],
-            [1, "black"]
-        ]
+        colorscale=heatmap_center_genes_obj_colorscale
     )
 
     return ret
