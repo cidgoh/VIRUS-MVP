@@ -9,15 +9,9 @@ from plotly.subplots import make_subplots
 def get_color_scale():
     """TODO..."""
     ret = [
-        [0, "#f7fbff"],
-        [1/8, "#deebf7"],
-        [2/8, "#c6dbef"],
-        [3/8, "#9ecae1"],
-        [4/8, "#6baed6"],
-        [5/8, "#4292c6"],
-        [6/8, "#2171b5"],
-        [7/8, "#08519c"],
-        [1, "#08306b"]
+        [0, "#fc8d59"],
+        [1/2, "#ffffbf"],
+        [1, "#91bfdb"]
     ]
     return ret
 
