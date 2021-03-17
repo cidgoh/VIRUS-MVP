@@ -18,6 +18,10 @@ def parse_data_files(dir):
                     ret[strain][pos]["ref"] = row["REF"]
                     ret[strain][pos]["alt"] = row["ALT"]
                     ret[strain][pos]["alt_freq"] = row["ALT_FREQ"]
+                    ret[strain][pos]["ref_codon"] = row["REF_CODON"]
+                    ret[strain][pos]["alt_codon"] = row["ALT_CODON"]
+                    ret[strain][pos]["ref_aa"] = row["REF_AA"]
+                    ret[strain][pos]["alt_aa"] = row["ALT_AA"]
                     if row["ALT"][0] == "+":
                         ret[strain][pos]["mutation_type"] = "insertion"
                     elif row["ALT"][0] == "-":
@@ -90,13 +94,26 @@ def get_heatmap_cell_text(parsed_files):
         for pos in heatmap_x:
             if pos in parsed_files[strain]:
                 cell_data = parsed_files[strain][pos]
-                cell_text_str = "Position: %s<br>" \
-                                "Mutation: %s to %s<br>" \
-                                "Frequency: %s"
+                cell_text_str = "<b>Position:</b> %s<br>" \
+                                "<b>Mutation type:</b> %s<br>" \
+                                "<br>" \
+                                "<b>Reference:</b> %s<br>" \
+                                "<b>Alternate:</b> %s<br>" \
+                                "<b>Frequency:</b> %s<br>" \
+                                "<br>" \
+                                "<b>Reference codon:</b> %s<br>" \
+                                "<b>Alternate codon:</b> %s<br>" \
+                                "<b>Reference amino acid:</b> %s<br>" \
+                                "<b>Alternate amino acid:</b> %s"
                 cell_text_params = (pos,
+                                    cell_data["mutation_type"],
                                     cell_data["ref"],
                                     cell_data["alt"],
-                                    cell_data["alt_freq"])
+                                    cell_data["alt_freq"],
+                                    cell_data["ref_codon"],
+                                    cell_data["alt_codon"],
+                                    cell_data["ref_aa"],
+                                    cell_data["alt_aa"])
                 row.append(cell_text_str % cell_text_params)
             else:
                 row.append(None)
