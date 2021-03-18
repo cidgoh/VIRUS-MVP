@@ -38,14 +38,15 @@ def get_data(dir_):
     data = {
         "heatmap_x": get_heatmap_x(parsed_files),
         "heatmap_y": get_heatmap_y(parsed_files),
-        "heatmap_z": get_heatmap_z(parsed_files),
-        "heatmap_cell_text": get_heatmap_cell_text(parsed_files),
         "insertions_x": get_insertions_x(parsed_files),
         "insertions_y": get_insertions_y(parsed_files),
         "deletions_x": get_deletions_x(parsed_files),
         "deletions_y": get_deletions_y(parsed_files),
         "tables": get_tables(parsed_files)
     }
+    data["heatmap_z"] = get_heatmap_z(parsed_files, data["heatmap_x"])
+    data["heatmap_cell_text"] = \
+        get_heatmap_cell_text(parsed_files, data["heatmap_x"])
     return data
 
 
@@ -70,10 +71,9 @@ def get_heatmap_y(parsed_files):
     return ret
 
 
-def get_heatmap_z(parsed_files):
+def get_heatmap_z(parsed_files, heatmap_x):
     """TODO..."""
     ret = []
-    heatmap_x = get_heatmap_x(parsed_files)
     for strain in parsed_files:
         row = []
         for pos in heatmap_x:
@@ -85,10 +85,9 @@ def get_heatmap_z(parsed_files):
     return ret
 
 
-def get_heatmap_cell_text(parsed_files):
+def get_heatmap_cell_text(parsed_files, heatmap_x):
     """TODO..."""
     ret = []
-    heatmap_x = get_heatmap_x(parsed_files)
     for strain in parsed_files:
         row = []
         for pos in heatmap_x:
