@@ -1,5 +1,6 @@
 """TODO..."""
 import csv
+import json
 import os
 
 
@@ -22,6 +23,7 @@ def parse_data_files(dir_):
                     ret[strain][pos]["alt_codon"] = row["ALT_CODON"]
                     ret[strain][pos]["ref_aa"] = row["REF_AA"]
                     ret[strain][pos]["alt_aa"] = row["ALT_AA"]
+                    ret[strain][pos]["gff_feature"] = row["GFF_FEATURE"]
                     if row["ALT"][0] == "+":
                         ret[strain][pos]["mutation_type"] = "insertion"
                     elif row["ALT"][0] == "-":
@@ -46,6 +48,8 @@ def get_data(dir_):
     data["heatmap_z"] = get_heatmap_z(parsed_files, data["heatmap_x"])
     data["heatmap_cell_text"] = \
         get_heatmap_cell_text(parsed_files, data["heatmap_x"])
+    data["heatmap_x_genes"] =\
+        get_heatmap_x_genes(parsed_files, data["heatmap_x"])
     return data
 
 
@@ -59,6 +63,23 @@ def get_heatmap_x(parsed_files):
                 seen.add(pos)
                 ret.append(pos)
     ret.sort()
+    return ret
+
+
+def get_heatmap_x_genes(parsed_files, heatmap_x):
+    """TODO..."""
+    ret = []
+    with open("cds_gene_map.json") as fp:
+        cds_gene_map = json.load(fp)
+    for pos in heatmap_x:
+        for strain in parsed_files:
+            if pos in parsed_files[strain]:
+                cds = parsed_files[strain][pos]["gff_feature"]
+                if cds in cds_gene_map:
+                    ret.append(cds_gene_map[cds])
+                else:
+                    ret.append("")
+                break
     return ret
 
 
