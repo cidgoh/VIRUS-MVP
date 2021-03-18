@@ -3,10 +3,10 @@ import csv
 import os
 
 
-def parse_data_files(dir):
+def parse_data_files(dir_):
     """TODO..."""
     ret = {}
-    with os.scandir(dir) as it:
+    with os.scandir(dir_) as it:
         for entry in it:
             strain = entry.name.split("_")[0]
             ret[strain] = {}
@@ -32,9 +32,9 @@ def parse_data_files(dir):
     return ret
 
 
-def get_data(dir):
+def get_data(dir_):
     """TODO..."""
-    parsed_files = parse_data_files(dir)
+    parsed_files = parse_data_files(dir_)
     data = {
         "heatmap_x": get_heatmap_x(parsed_files),
         "heatmap_y": get_heatmap_y(parsed_files),
