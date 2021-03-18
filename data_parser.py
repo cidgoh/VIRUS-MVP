@@ -28,7 +28,6 @@ def parse_data_files(dir_):
                         ret[strain][pos]["mutation_type"] = "deletion"
                     else:
                         ret[strain][pos]["mutation_type"] = "snp"
-            continue
     return ret
 
 
