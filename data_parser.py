@@ -24,12 +24,34 @@ def parse_data_files(dir_):
                     ret[strain][pos]["ref_aa"] = row["REF_AA"]
                     ret[strain][pos]["alt_aa"] = row["ALT_AA"]
                     ret[strain][pos]["gff_feature"] = row["GFF_FEATURE"]
+                    ret[strain][pos]["mutation_name"] = "n/a"
                     if row["ALT"][0] == "+":
                         ret[strain][pos]["mutation_type"] = "insertion"
                     elif row["ALT"][0] == "-":
                         ret[strain][pos]["mutation_type"] = "deletion"
                     else:
                         ret[strain][pos]["mutation_type"] = "snp"
+
+    with open("VOC clade-defining mutations - gff3.tsv") as fp:
+        reader = csv.DictReader(fp, delimiter="\t")
+        for row in reader:
+            attributes_list = row['#attributes'].split(";")
+            attributes_nested_list = [x.split("=") for x in attributes_list]
+            attributes_dict = {}
+            for attribute_list in attributes_nested_list:
+                if len(attribute_list) >= 2:
+                    attributes_dict[attribute_list[0]] = attribute_list[1]
+
+            if row["#start"] == "":
+                continue
+
+            strain = attributes_dict["voc_name"]
+            pos = int(row["#start"])
+            mutation_name = attributes_dict["Name"]
+            if strain in ret and pos in ret[strain]:
+                if mutation_name != "":
+                    ret[strain][pos]["mutation_name"] = mutation_name
+
     return ret
 
 
@@ -137,7 +159,7 @@ def get_heatmap_cell_text(parsed_files, heatmap_x):
             if pos in parsed_files[strain]:
                 cell_data = parsed_files[strain][pos]
                 cell_text_str = "<b>Position:</b> %s<br>" \
-                                "<b>Mutation type:</b> %s<br>" \
+                                "<b>Mutation name:</b> %s<br>" \
                                 "<br>" \
                                 "<b>Reference:</b> %s<br>" \
                                 "<b>Alternate:</b> %s<br>" \
@@ -148,7 +170,7 @@ def get_heatmap_cell_text(parsed_files, heatmap_x):
                                 "<b>Reference amino acid:</b> %s<br>" \
                                 "<b>Alternate amino acid:</b> %s"
                 cell_text_params = (pos,
-                                    cell_data["mutation_type"],
+                                    cell_data["mutation_name"],
                                     cell_data["ref"],
                                     cell_data["alt"],
                                     cell_data["alt_freq"],
@@ -208,7 +230,7 @@ def get_tables(parsed_files):
     ret = {}
     for strain in parsed_files:
         pos_col = []
-        mutation_type_col = []
+        mutation_name_col = []
         ref_col = []
         alt_col = []
         alt_freq_col = []
@@ -219,7 +241,7 @@ def get_tables(parsed_files):
         for pos in parsed_files[strain]:
             pos_col.append(pos)
             cell_data = parsed_files[strain][pos]
-            mutation_type_col.append(cell_data["mutation_type"])
+            mutation_name_col.append(cell_data["mutation_name"])
             ref_col.append(cell_data["ref"])
             alt_col.append(cell_data["alt"])
             alt_freq_col.append(cell_data["alt_freq"])
@@ -228,7 +250,7 @@ def get_tables(parsed_files):
             ref_aa_col.append(cell_data["ref_aa"])
             alt_aa_col.append(cell_data["alt_aa"])
         ret[strain] = [
-            pos_col, mutation_type_col, ref_col, alt_col, alt_freq_col,
+            pos_col, mutation_name_col, ref_col, alt_col, alt_freq_col,
             ref_codon_col, alt_codon_col, ref_aa_col, alt_aa_col
         ]
     return ret
