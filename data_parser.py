@@ -80,6 +80,29 @@ def get_heatmap_x_genes(parsed_files, heatmap_x):
                 else:
                     ret.append("")
                 break
+
+    # We need to fill in intergenic gaps with last gene seen until vcf
+    # is more accurate.
+    end_3_utr_index = None
+    for i in range(0, len(ret)):
+        if ret[i] != "":
+            if i != 0:
+                end_3_utr_index = i
+            break
+    start_5_utr_index = None
+    for i in range(len(ret) - 1, -1, -1):
+        if ret[i] != "":
+            if i != (len(ret) - 1):
+                start_5_utr_index = i
+            break
+    for i in range(len(ret)):
+        if not end_3_utr_index or i < end_3_utr_index:
+            continue
+        if not start_5_utr_index or i > start_5_utr_index:
+            continue
+        if ret[i] == "":
+            ret[i] = ret[i-1]
+
     return ret
 
 
