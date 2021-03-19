@@ -25,12 +25,31 @@ def parse_data_files(dir_):
                     ret[strain][pos]["alt_aa"] = row["ALT_AA"]
                     ret[strain][pos]["gff_feature"] = row["GFF_FEATURE"]
                     ret[strain][pos]["mutation_name"] = "n/a"
+                    ret[strain][pos]["functions"] = "n/a"
                     if row["ALT"][0] == "+":
                         ret[strain][pos]["mutation_type"] = "insertion"
                     elif row["ALT"][0] == "-":
                         ret[strain][pos]["mutation_type"] = "deletion"
                     else:
                         ret[strain][pos]["mutation_type"] = "snp"
+
+    functional_annotations_dict = {}
+    functional_annotations_tsv_path = \
+        "VOC clade-defining mutations - functional_annotation.tsv"
+    with open(functional_annotations_tsv_path) as fp:
+        reader = csv.DictReader(fp, delimiter="\t")
+        for row in reader:
+            strain = row["lineage"]
+            mutation_name = row["aa_name"]
+            functions = row["function_category"]
+            if functions == "":
+                continue
+            functions = functions.split("|")
+            functions = [x.strip() for x in functions]
+            functions = "<br>".join(functions)
+            if strain not in functional_annotations_dict:
+                functional_annotations_dict[strain] = {}
+            functional_annotations_dict[strain][mutation_name] = functions
 
     with open("VOC clade-defining mutations - gff3.tsv") as fp:
         reader = csv.DictReader(fp, delimiter="\t")
@@ -47,10 +66,13 @@ def parse_data_files(dir_):
 
             strain = attributes_dict["voc_name"]
             pos = int(row["#start"])
-            mutation_name = attributes_dict["Name"]
+            mutation_name = attributes_dict["Alias"]
             if strain in ret and pos in ret[strain]:
                 if mutation_name != "":
                     ret[strain][pos]["mutation_name"] = mutation_name
+                if mutation_name in functional_annotations_dict[strain]:
+                    ret[strain][pos]["functions"] = \
+                        functional_annotations_dict[strain][mutation_name]
 
     return ret
 
@@ -165,19 +187,13 @@ def get_heatmap_cell_text(parsed_files, heatmap_x):
                                 "<b>Alternate:</b> %s<br>" \
                                 "<b>Alternate frequency:</b> %s<br>" \
                                 "<br>" \
-                                "<b>Reference codon:</b> %s<br>" \
-                                "<b>Alternate codon:</b> %s<br>" \
-                                "<b>Reference amino acid:</b> %s<br>" \
-                                "<b>Alternate amino acid:</b> %s"
+                                "<b>Functions:</b> <br>%s<br>"
                 cell_text_params = (pos,
                                     cell_data["mutation_name"],
                                     cell_data["ref"],
                                     cell_data["alt"],
                                     cell_data["alt_freq"],
-                                    cell_data["ref_codon"],
-                                    cell_data["alt_codon"],
-                                    cell_data["ref_aa"],
-                                    cell_data["alt_aa"])
+                                    cell_data["functions"])
                 row.append(cell_text_str % cell_text_params)
             else:
                 row.append(None)
@@ -234,10 +250,7 @@ def get_tables(parsed_files):
         ref_col = []
         alt_col = []
         alt_freq_col = []
-        ref_codon_col = []
-        alt_codon_col = []
-        ref_aa_col = []
-        alt_aa_col = []
+        functions_col = []
         for pos in parsed_files[strain]:
             pos_col.append(pos)
             cell_data = parsed_files[strain][pos]
@@ -245,12 +258,9 @@ def get_tables(parsed_files):
             ref_col.append(cell_data["ref"])
             alt_col.append(cell_data["alt"])
             alt_freq_col.append(cell_data["alt_freq"])
-            ref_codon_col.append(cell_data["ref_codon"])
-            alt_codon_col.append(cell_data["alt_codon"])
-            ref_aa_col.append(cell_data["ref_aa"])
-            alt_aa_col.append(cell_data["alt_aa"])
+            functions_col.append(cell_data["functions"])
         ret[strain] = [
             pos_col, mutation_name_col, ref_col, alt_col, alt_freq_col,
-            ref_codon_col, alt_codon_col, ref_aa_col, alt_aa_col
+            functions_col
         ]
     return ret
