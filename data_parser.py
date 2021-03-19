@@ -1,12 +1,13 @@
 """TODO..."""
 import csv
+import json
 import os
 
 
-def parse_data_files(dir):
+def parse_data_files(dir_):
     """TODO..."""
     ret = {}
-    with os.scandir(dir) as it:
+    with os.scandir(dir_) as it:
         for entry in it:
             strain = entry.name.split("_")[0]
             ret[strain] = {}
@@ -22,30 +23,33 @@ def parse_data_files(dir):
                     ret[strain][pos]["alt_codon"] = row["ALT_CODON"]
                     ret[strain][pos]["ref_aa"] = row["REF_AA"]
                     ret[strain][pos]["alt_aa"] = row["ALT_AA"]
+                    ret[strain][pos]["gff_feature"] = row["GFF_FEATURE"]
                     if row["ALT"][0] == "+":
                         ret[strain][pos]["mutation_type"] = "insertion"
                     elif row["ALT"][0] == "-":
                         ret[strain][pos]["mutation_type"] = "deletion"
                     else:
                         ret[strain][pos]["mutation_type"] = "snp"
-            continue
     return ret
 
 
-def get_data(dir):
+def get_data(dir_):
     """TODO..."""
-    parsed_files = parse_data_files(dir)
+    parsed_files = parse_data_files(dir_)
     data = {
         "heatmap_x": get_heatmap_x(parsed_files),
         "heatmap_y": get_heatmap_y(parsed_files),
-        "heatmap_z": get_heatmap_z(parsed_files),
-        "heatmap_cell_text": get_heatmap_cell_text(parsed_files),
         "insertions_x": get_insertions_x(parsed_files),
         "insertions_y": get_insertions_y(parsed_files),
         "deletions_x": get_deletions_x(parsed_files),
         "deletions_y": get_deletions_y(parsed_files),
         "tables": get_tables(parsed_files)
     }
+    data["heatmap_z"] = get_heatmap_z(parsed_files, data["heatmap_x"])
+    data["heatmap_cell_text"] = \
+        get_heatmap_cell_text(parsed_files, data["heatmap_x"])
+    data["heatmap_x_genes"] =\
+        get_heatmap_x_genes(parsed_files, data["heatmap_x"])
     return data
 
 
@@ -62,6 +66,46 @@ def get_heatmap_x(parsed_files):
     return ret
 
 
+def get_heatmap_x_genes(parsed_files, heatmap_x):
+    """TODO..."""
+    ret = []
+    with open("cds_gene_map.json") as fp:
+        cds_gene_map = json.load(fp)
+    for pos in heatmap_x:
+        for strain in parsed_files:
+            if pos in parsed_files[strain]:
+                cds = parsed_files[strain][pos]["gff_feature"]
+                if cds in cds_gene_map:
+                    ret.append(cds_gene_map[cds])
+                else:
+                    ret.append("")
+                break
+
+    # We need to fill in intergenic gaps with last gene seen until vcf
+    # is more accurate.
+    end_3_utr_index = None
+    for i in range(0, len(ret)):
+        if ret[i] != "":
+            if i != 0:
+                end_3_utr_index = i
+            break
+    start_5_utr_index = None
+    for i in range(len(ret) - 1, -1, -1):
+        if ret[i] != "":
+            if i != (len(ret) - 1):
+                start_5_utr_index = i
+            break
+    for i in range(len(ret)):
+        if not end_3_utr_index or i < end_3_utr_index:
+            continue
+        if not start_5_utr_index or i > start_5_utr_index:
+            continue
+        if ret[i] == "":
+            ret[i] = ret[i-1]
+
+    return ret
+
+
 def get_heatmap_y(parsed_files):
     """TODO..."""
     ret = []
@@ -70,10 +114,9 @@ def get_heatmap_y(parsed_files):
     return ret
 
 
-def get_heatmap_z(parsed_files):
+def get_heatmap_z(parsed_files, heatmap_x):
     """TODO..."""
     ret = []
-    heatmap_x = get_heatmap_x(parsed_files)
     for strain in parsed_files:
         row = []
         for pos in heatmap_x:
@@ -85,10 +128,9 @@ def get_heatmap_z(parsed_files):
     return ret
 
 
-def get_heatmap_cell_text(parsed_files):
+def get_heatmap_cell_text(parsed_files, heatmap_x):
     """TODO..."""
     ret = []
-    heatmap_x = get_heatmap_x(parsed_files)
     for strain in parsed_files:
         row = []
         for pos in heatmap_x:

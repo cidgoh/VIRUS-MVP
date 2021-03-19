@@ -1,6 +1,6 @@
 """TODO..."""
 
-import csv
+import json
 
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -88,32 +88,14 @@ def get_heatmap_center_fig(data):
 
 def get_heatmap_center_genes_obj(data):
     """TODO..."""
-    reference_genome = {}
-    with open("reference_genome_map.tsv") as fp:
-        reader = csv.DictReader(fp, delimiter="\t")
-        for row in reader:
-            region = row["region"]
-            start = int(row["start"])
-            end = int(row["end"])
-            reference_genome[region] = {"start": start, "end": end}
-
-    heatmap_x_genes = []
-    for heatmap_x_val in data["heatmap_x"]:
-        for region in reference_genome:
-            start = reference_genome[region]["start"]
-            end = reference_genome[region]["end"]
-            if start <= heatmap_x_val <= end:
-                heatmap_x_genes.append(region)
-                break
-
     heatmap_center_genes_obj_x = []
     heatmap_center_genes_obj_labels = []
     last_gene_seen = ""
-    for i, heatmap_x_gene in enumerate(heatmap_x_genes):
+    for i, heatmap_x_gene in enumerate(data["heatmap_x_genes"]):
         if i == 0:
             heatmap_center_genes_obj_x.append(i-0.5)
             last_gene_seen = heatmap_x_gene
-        elif i == (len(heatmap_x_genes) - 1):
+        elif i == (len(data["heatmap_x_genes"]) - 1):
             heatmap_center_genes_obj_x.append(i+0.5)
             heatmap_center_genes_obj_labels.append(last_gene_seen)
         elif heatmap_x_gene != last_gene_seen:
@@ -121,30 +103,14 @@ def get_heatmap_center_genes_obj(data):
             heatmap_center_genes_obj_labels.append(last_gene_seen)
             last_gene_seen = heatmap_x_gene
 
-    heatmap_center_genes_obj_z = \
-        [[i * 1/11 for i, _ in enumerate(heatmap_center_genes_obj_labels)]]
-
-    heatmap_gene_colors = {
-        "5’ UTR": "black",
-        "ORF1a": "#8EBC66",
-        "ORF1b": "#E59637",
-        "S": "#5097BA",
-        "ORF3a": "#AABD52",
-        "E": "#D9AD3D",
-        "M": "#5097BA",
-        "ORF6": "#DF4327",
-        "ORF7a": "#C4B945",
-        "ORF8": "#60AA9E",
-        "N": "#E67030",
-        "ORF10": "#8EBC66",
-        "3’ UTR": "black"
-    }
+    heatmap_center_genes_obj_z = [[]]
     heatmap_center_genes_obj_colorscale = []
+    with open("gene_colors.json") as fp:
+        gene_colors = json.load(fp)
     for i, label in enumerate(heatmap_center_genes_obj_labels):
-        heatmap_center_genes_obj_colorscale.append([
-            i/(len(heatmap_center_genes_obj_labels) - 1),
-            heatmap_gene_colors[label]
-        ])
+        mock_z_val = i / (len(heatmap_center_genes_obj_labels) - 1)
+        heatmap_center_genes_obj_z[0].append(mock_z_val)
+        heatmap_center_genes_obj_colorscale.append(gene_colors[label])
 
     ret = go.Heatmap(
         x=heatmap_center_genes_obj_x,
