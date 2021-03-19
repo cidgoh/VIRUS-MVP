@@ -1,7 +1,3 @@
-##gff-version 3								
-##feature-ontology URI=http://purl.obolibrary.org/obo/so/2021-02-16/so.owl								
-##attribute-ontology URI=http://purl.obolibrary.org/obo/go/releases/2021-02-01/go.owl								
-##species NCBI_Taxonomy_URI=http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=2697049								
 #seqid	#source	#type	#start	#end	#score	#strand	#phase	#attributes
 MN908947.3	https://cov-lineages.org/global_report_B.1.1.7.html	SNV	23063	23063	.	+	.	ID=B.1.1.7-N501Y;Name=p.Asn501Tyr;Alias=N501Y;nt_name=g.23063A>T;gene=S;del=A;ins=T;Ontology_term=GO:0031701;mutation_effects=(increased ACE2 affinity, https://www.biorxiv.org/content/10.1101/2021.02.16.431305v1);mutation_type=nonsynonymous;voc_status=VOC;voc_name=B.1.1.7;alt_voc_name=(20I/501Y.V1;501Y.V1;UK variant;VOC 202012/01);clade_defining=true;curator=Madeline;clade_defining=true;curator_orcid=https://orcid.org/0000-0002-0548-891X
 MN908947.3	https://cov-lineages.org/global_report_B.1.1.7.html	SNV	23271	23271	.	+	.	ID=B.1.1.7-A570D;Name=p.Ala570Asp;Alias=A570D;nt_name=g.23271C>A;gene=S;del=C;ins=A;Ontology_term=;mutation_effects=;mutation_type=nonsynonymous;voc_status=VOC;voc_name=B.1.1.7;alt_voc_name=(20I/501Y.V1;501Y.V1;UK variant;VOC 202012/01);clade_defining=true;curator=Anoosha;clade_defining=true;curator_orcid=https://orcid.org/0000-0001-5275-8866
