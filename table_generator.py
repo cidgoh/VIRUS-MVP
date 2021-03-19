@@ -18,8 +18,7 @@ def get_table_obj(data, strain):
     """TODO..."""
     # TODO these should be determined automatically based on data
     header_vals = [
-        "pos", "mutation_name", "ref", "alt", "alt_freq", "ref_codon",
-        "alt_codon", "ref_aa", "alt_aa"
+        "pos", "mutation_name", "ref", "alt", "alt_freq", "functions"
     ]
     ret = go.Table(
         header={
