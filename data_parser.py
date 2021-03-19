@@ -7,6 +7,8 @@ import os
 def parse_data_files(dir_):
     """TODO..."""
     ret = {}
+    with open("cds_gene_map.json") as fp:
+        cds_gene_map = json.load(fp)
     with os.scandir(dir_) as it:
         for entry in it:
             strain = entry.name.split("_")[0]
@@ -23,7 +25,13 @@ def parse_data_files(dir_):
                     ret[strain][pos]["alt_codon"] = row["ALT_CODON"]
                     ret[strain][pos]["ref_aa"] = row["REF_AA"]
                     ret[strain][pos]["alt_aa"] = row["ALT_AA"]
-                    ret[strain][pos]["gff_feature"] = row["GFF_FEATURE"]
+
+                    gff_feature = row["GFF_FEATURE"]
+                    if gff_feature in cds_gene_map:
+                        ret[strain][pos]["gene"] = cds_gene_map[gff_feature]
+                    else:
+                        ret[strain][pos]["gene"] = "n/a"
+
                     ret[strain][pos]["mutation_name"] = "n/a"
                     ret[strain][pos]["functions"] = "n/a"
                     if row["ALT"][0] == "+":
@@ -118,9 +126,9 @@ def get_heatmap_x_genes(parsed_files, heatmap_x):
     for pos in heatmap_x:
         for strain in parsed_files:
             if pos in parsed_files[strain]:
-                cds = parsed_files[strain][pos]["gff_feature"]
-                if cds in cds_gene_map:
-                    ret.append(cds_gene_map[cds])
+                gene = parsed_files[strain][pos]["gene"]
+                if gene != "n/a":
+                    ret.append(gene)
                 else:
                     ret.append("")
                 break
@@ -181,6 +189,7 @@ def get_heatmap_cell_text(parsed_files, heatmap_x):
             if pos in parsed_files[strain]:
                 cell_data = parsed_files[strain][pos]
                 cell_text_str = "<b>Position:</b> %s<br>" \
+                                "<b>Gene:</b> %s<br>" \
                                 "<b>Mutation name:</b> %s<br>" \
                                 "<br>" \
                                 "<b>Reference:</b> %s<br>" \
@@ -189,6 +198,7 @@ def get_heatmap_cell_text(parsed_files, heatmap_x):
                                 "<br>" \
                                 "<b>Functions:</b> <br>%s<br>"
                 cell_text_params = (pos,
+                                    cell_data["gene"],
                                     cell_data["mutation_name"],
                                     cell_data["ref"],
                                     cell_data["alt"],
