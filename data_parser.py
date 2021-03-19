@@ -188,18 +188,19 @@ def get_heatmap_cell_text(parsed_files, heatmap_x):
         for pos in heatmap_x:
             if pos in parsed_files[strain]:
                 cell_data = parsed_files[strain][pos]
-                cell_text_str = "<b>Position:</b> %s<br>" \
+                cell_text_str = "<b>Mutation name: %s</b><br>" \
+                                "<br>" \
+                                "<b>Position:</b> %s<br>" \
                                 "<b>Gene:</b> %s<br>" \
-                                "<b>Mutation name:</b> %s<br>" \
                                 "<br>" \
                                 "<b>Reference:</b> %s<br>" \
                                 "<b>Alternate:</b> %s<br>" \
                                 "<b>Alternate frequency:</b> %s<br>" \
                                 "<br>" \
                                 "<b>Functions:</b> <br>%s<br>"
-                cell_text_params = (pos,
+                cell_text_params = (cell_data["mutation_name"],
+                                    pos,
                                     cell_data["gene"],
-                                    cell_data["mutation_name"],
                                     cell_data["ref"],
                                     cell_data["alt"],
                                     cell_data["alt_freq"],
