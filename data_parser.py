@@ -47,7 +47,7 @@ def parse_data_files(dir_):
 
             strain = attributes_dict["voc_name"]
             pos = int(row["#start"])
-            mutation_name = attributes_dict["Name"]
+            mutation_name = attributes_dict["Alias"]
             if strain in ret and pos in ret[strain]:
                 if mutation_name != "":
                     ret[strain][pos]["mutation_name"] = mutation_name
