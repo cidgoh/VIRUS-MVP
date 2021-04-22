@@ -1,4 +1,10 @@
-"""TODO..."""
+"""Functions that return HTML components rendered by Dash.
+
+These functions do not generate the figures inside the HTML components,
+they call the functions that generate figures, and organize them into
+HTML divs. We are using the dash bootstrap components, so these
+functions return divs in grid format.
+"""
 
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
@@ -9,6 +15,12 @@ import table_generator
 
 
 def get_clade_defining_mutations_switch():
+    """Get Dash HTML component for clade defining mutations switch.
+
+    :return: Dash HTML component with toggle watched by
+        ``on_form_change``.
+    :rtype: html.Div
+    """
     ret = html.Div([
         dbc.Row(
             dbc.Col(
@@ -23,9 +35,7 @@ def get_clade_defining_mutations_switch():
                         switch=True
                     )
                 ]),
-                width={
-                    "size": 2
-                }
+                width=2
             ),
             justify="end",
             className="mt-3"
@@ -35,7 +45,15 @@ def get_clade_defining_mutations_switch():
 
 
 def get_heatmap_row_div(data):
-    """TODO..."""
+    """Get Dash HTML component containing heatmap view.
+
+    This HTML component is a row of several subcomponents, to get the
+    necessary heatmap view.
+
+    :return: Dash HTML component with left, center, and right
+        components producing the overall heatmap view.
+    :rtype: html.Div
+    """
     ret = html.Div([
         dbc.Row([
             dbc.Col(
@@ -74,7 +92,11 @@ def get_heatmap_row_div(data):
 
 
 def get_table_row_div(data):
-    """TODO..."""
+    """Get Dash HTML component containing table view.
+
+    :return: Dash HTML component containing table
+    :rtype: html.Div
+    """
     ret = html.Div([
         dbc.Row(
             dbc.Col(
