@@ -1,18 +1,41 @@
-"""TODO..."""
+"""Functions for obtaining data used in Plotly visualizations.
+
+Entry point is ``get_data``.
+"""
+
 import csv
 import json
 import os
 
 
 def parse_data_files(dir_):
-    """TODO..."""
+    """Parses relevant visualization data from ``dir_``.
+
+    This function assists ``get_data``, which is a function that
+    prepares data in a format suitable for Plotly functions. However,
+    ``parse_data_files`` does not care about Plotly. It simply parses
+    tsv files that are in the format of tsv files found in data/, and
+    puts them into an easy to iterate Dictionary for ``get_data`` to
+    manipulate for Plotly.
+
+    TODO: there is also some data being parsed from some other files.
+        We should obtain that data upstream when the files are
+        generated, so this function can just focus on parsing a folder.
+
+    :param dir_: Path to folder to parse tsv files from
+    :type dir_: str
+    :return: Select column data parsed from tsv files in ``dir_``
+    :rtype: dict
+    """
     ret = {}
     with open("cds_gene_map.json") as fp:
+        # Maps cds info in tsv files to actual genes
         cds_gene_map = json.load(fp)
     with os.scandir(dir_) as it:
         for entry in it:
             strain = entry.name.split("_")[0]
             ret[strain] = {}
+            # Iterate through tsv files in dir_
             with open(entry.path) as fp:
                 reader = csv.DictReader(fp, delimiter="\t")
                 for row in reader:
@@ -54,6 +77,9 @@ def parse_data_files(dir_):
                 continue
             functions = functions.split("|")
             functions = [x.strip() for x in functions]
+            # TODO: This gets formatted in Plotly hover text. In the
+            #  spirit of this function, we should make this a list, and
+            #  format it in ``get_data``.
             functions = "<br>".join(functions)
             if strain not in functional_annotations_dict:
                 functional_annotations_dict[strain] = {}
@@ -86,7 +112,26 @@ def parse_data_files(dir_):
 
 
 def get_data(dir_):
-    """TODO..."""
+    """Get relevant data for Plotly visualizations in this application.
+
+    This will include table data, which is straight forward. But this
+    will also include various information related to the main heatmap,
+    including heatmap x y coordinates for mutations, insertions,
+    deletions, and hover text.
+
+    Basically, this function gives us data to plug into the
+    visualization functions of Plotly.
+
+    This relevant data is parsed from tsv files in the form of the tsv
+    files found in data/. Other folders with similar formats can be
+    parsed too.
+
+    :param dir_: Path to folder to obtain data from
+    :type dir_: str
+    :return: Information on relevant columns in tsv files stored in
+        dir_.
+    :rtype: dict
+    """
     parsed_files = parse_data_files(dir_)
     data = {
         "heatmap_x": get_heatmap_x(parsed_files),
@@ -106,7 +151,15 @@ def get_data(dir_):
 
 
 def get_heatmap_x(parsed_files):
-    """TODO..."""
+    """Get x axis values of heatmap cells.
+
+    These are the nucleotide position of mutations.
+
+    :param parsed_files: ``parse_data_files`` return value
+    :type parsed_files: dict
+    :return: List of x axis values
+    :rtype: list[int]
+    """
     seen = set()
     ret = []
     for strain in parsed_files:
@@ -119,10 +172,16 @@ def get_heatmap_x(parsed_files):
 
 
 def get_heatmap_x_genes(parsed_files, heatmap_x):
-    """TODO..."""
+    """Get gene values corresponding to x axis values in heatmap.
+
+    :param parsed_files: ``parse_data_files`` return value
+    :type parsed_files: dict
+    :param heatmap_x: ``get_heatmap_x`` return value
+    :type heatmap_x: list[int]
+    :return: List of genes for each x in ``heatmap_x``
+    :rtype: list[str]
+    """
     ret = []
-    with open("cds_gene_map.json") as fp:
-        cds_gene_map = json.load(fp)
     for pos in heatmap_x:
         for strain in parsed_files:
             if pos in parsed_files[strain]:
@@ -133,8 +192,8 @@ def get_heatmap_x_genes(parsed_files, heatmap_x):
                     ret.append("")
                 break
 
-    # We need to fill in intergenic gaps with last gene seen until vcf
-    # is more accurate.
+    # TODO: We need to fill in intergenic gaps with last gene seen
+    #  until vcf is more accurate.
     end_3_utr_index = None
     for i in range(0, len(ret)):
         if ret[i] != "":
@@ -159,7 +218,15 @@ def get_heatmap_x_genes(parsed_files, heatmap_x):
 
 
 def get_heatmap_y(parsed_files):
-    """TODO..."""
+    """Get y axis values of heatmap cells.
+
+    These are the VOC strains.
+
+    :param parsed_files: ``parse_data_files`` return value
+    :type parsed_files: dict
+    :return: List of y axis values
+    :rtype: list[str]
+    """
     ret = []
     for strain in parsed_files:
         ret.append(strain)
@@ -167,7 +234,18 @@ def get_heatmap_y(parsed_files):
 
 
 def get_heatmap_z(parsed_files, heatmap_x):
-    """TODO..."""
+    """Get z values of heatmap cells.
+
+    These are the mutation frequencies, and the z values dictate the
+    colours of the heatmap cells.
+
+    :param parsed_files: ``parse_data_files`` return value
+    :type parsed_files: dict
+    :param heatmap_x: ``get_heatmap_x`` return value
+    :type heatmap_x: list[int]
+    :return: List of z values
+    :rtype: list[str]
+    """
     ret = []
     for strain in parsed_files:
         row = []
@@ -181,7 +259,16 @@ def get_heatmap_z(parsed_files, heatmap_x):
 
 
 def get_heatmap_cell_text(parsed_files, heatmap_x):
-    """TODO..."""
+    """Get hover text of heatmap cells.
+
+    :param parsed_files: ``parse_data_files`` return value
+    :type parsed_files: dict
+    :param heatmap_x: ``get_heatmap_x`` return value
+    :type heatmap_x: list[int]
+    :return: List of D3 formatted text values for each x y coordinate
+        in ``heatmap_x``.
+    :rtype: list[str]
+    """
     ret = []
     for strain in parsed_files:
         row = []
@@ -213,7 +300,13 @@ def get_heatmap_cell_text(parsed_files, heatmap_x):
 
 
 def get_insertions_x(parsed_files):
-    """TODO..."""
+    """Get x coordinates of insertion markers to overlay in heatmap.
+
+    :param parsed_files: ``parse_data_files`` return value
+    :type parsed_files: dict
+    :return: List of x coordinate values to display insertion markers
+    :rtype: list[int]
+    """
     ret = []
     for strain in parsed_files:
         for pos in parsed_files[strain]:
@@ -223,7 +316,13 @@ def get_insertions_x(parsed_files):
 
 
 def get_insertions_y(parsed_files):
-    """TODO..."""
+    """Get y coordinates of insertion markers to overlay in heatmap.
+
+    :param parsed_files: ``parse_data_files`` return value
+    :type parsed_files: dict
+    :return: List of y coordinate values to display insertion markers
+    :rtype: list[str]
+    """
     ret = []
     for strain in parsed_files:
         for pos in parsed_files[strain]:
@@ -233,7 +332,13 @@ def get_insertions_y(parsed_files):
 
 
 def get_deletions_x(parsed_files):
-    """TODO..."""
+    """Get x coordinates of deletion markers to overlay in heatmap.
+
+    :param parsed_files: ``parse_data_files`` return value
+    :type parsed_files: dict
+    :return: List of x coordinate values to display insertion markers
+    :rtype: list[int]
+    """
     ret = []
     for strain in parsed_files:
         for pos in parsed_files[strain]:
@@ -243,7 +348,13 @@ def get_deletions_x(parsed_files):
 
 
 def get_deletions_y(parsed_files):
-    """TODO..."""
+    """Get y coordinates of deletion markers to overlay in heatmap.
+
+    :param parsed_files: ``parse_data_files`` return value
+    :type parsed_files: dict
+    :return: List of y coordinate values to display deletion markers
+    :rtype: list[str]
+    """
     ret = []
     for strain in parsed_files:
         for pos in parsed_files[strain]:
@@ -253,7 +364,16 @@ def get_deletions_y(parsed_files):
 
 
 def get_tables(parsed_files):
-    """TODO..."""
+    """Get table column data for each y axis value or strain.
+
+    The columns are represented as lists.
+
+    :param parsed_files: ``parse_data_files`` return value
+    :type parsed_files: dict
+    :return: Dictionary with keys for each strain, and a list of lists
+        values representing columns for each strain.
+    :rtype: dict[str, list[list]]
+    """
     ret = {}
     for strain in parsed_files:
         pos_col = []
