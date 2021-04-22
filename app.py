@@ -1,4 +1,7 @@
-"""TODO..."""
+"""Entry point of the codebase.
+
+This is the Python script that is run to display the visualization.
+"""
 
 import dash
 import dash_bootstrap_components as dbc
@@ -9,7 +12,10 @@ import div_generator
 import heatmap_generator
 import table_generator
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = dash.Dash(__name__,
+                # We can use bootstrap CSS.
+                # https://bit.ly/3tMqY0W for details.
+                external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 data = get_data("data")
 clade_defining_mutations_data = get_data("clade_defining_mutations_data")

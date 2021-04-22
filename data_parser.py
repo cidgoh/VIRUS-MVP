@@ -5,9 +5,27 @@ import os
 
 
 def parse_data_files(dir_):
-    """TODO..."""
+    """Parses relevant visualization data from ``dir_``.
+
+    This function assists ``get_data``, which is a function that
+    prepares data in a format suitable for Plotly functions. However,
+    ``parse_data_files`` does not care about Plotly. It simply parses
+    tsv files that are in the format of tsv files found in data/, and
+    puts them into an easy to iterate Dictionary for ``get_data`` to
+    manipulate for Plotly.
+
+    TODO: there is also some data being parsed from some other files.
+        We should obtain that data upstream when the files are
+        generated, so this function can just focus on parsing a folder.
+
+    :param dir_: Path to folder to parse tsv files from
+    :type dir_: String
+    :return: Select column data parsed from tsv files in ``dir_``
+    :rtype: Dict
+    """
     ret = {}
     with open("cds_gene_map.json") as fp:
+        # Maps cds info in tsv files to actual genes
         cds_gene_map = json.load(fp)
     with os.scandir(dir_) as it:
         for entry in it:
@@ -86,7 +104,26 @@ def parse_data_files(dir_):
 
 
 def get_data(dir_):
-    """TODO..."""
+    """Get relevant data for Plotly visualizations in this application.
+
+    This will include table data, which is straight forward. But this
+    will also include various information related to the main heatmap,
+    including heatmap x y coordinates for mutations, insertions,
+    deletions, and hover text.
+
+    Basically, this function gives us data to plug into the
+    visualization functions of Plotly.
+
+    This relevant data is parsed from tsv files in the form of the tsv
+    files found in data/. Other folders with similar formats can be
+    parsed too.
+
+    :param dir_: Path to folder to obtain data from
+    :type dir_: String
+    :return: Information on relevant columns in tsv files stored in
+        dir_.
+    :rtype: Dict
+    """
     parsed_files = parse_data_files(dir_)
     data = {
         "heatmap_x": get_heatmap_x(parsed_files),
