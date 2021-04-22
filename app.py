@@ -1,6 +1,7 @@
 """Entry point of the codebase.
 
-This is the Python script that is run to display the visualization.
+This is the Python script that is run to launch the visualization
+application.
 """
 
 import dash
