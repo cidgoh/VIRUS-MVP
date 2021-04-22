@@ -1,11 +1,22 @@
-"""TODO..."""
+"""This script is used to fill ``clade_defining_mutations_data/``.
+
+Just paste variant call files into the folder, whenever new VCF files
+are available, and run this script. The script will filter rows that
+are not clade defining mutations in each tsv file in
+``clade_defining_mutations_data/``.
+
+I do not feel like documenting this code further. It is pretty self
+explanatory.
+
+TODO: we should do this outside this codebase, when generating variant
+    call files.
+"""
 
 import csv
 import os
 
 
 def get_clade_defining_mutations():
-    """"TODO..."""
     ret = {}
     with open("VOC clade-defining mutations - gff3.tsv") as fp:
         fieldnames = [
@@ -36,7 +47,6 @@ def get_clade_defining_mutation_attributes(gff3_attributes_str):
 
 
 def main():
-    """TODO..."""
     clade_defining_mutations = get_clade_defining_mutations()
     with os.scandir("clade_defining_mutations_data") as it:
         for entry in it:
