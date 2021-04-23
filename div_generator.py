@@ -14,6 +14,20 @@ import heatmap_generator
 import table_generator
 
 
+def get_toolbar_row_div():
+    """Get Dash HTML component that sits above heatmap.
+
+    This contains the upload file button, and the clade defining
+    mutations switch.
+
+    :return: Dash HTML component with upload button and clade defining
+        mutations switch.
+    :rtype: html.Div
+    """
+    ret = html.Div([])
+    return ret
+
+
 def get_clade_defining_mutations_switch():
     """Get Dash HTML component for clade defining mutations switch.
 

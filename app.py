@@ -22,7 +22,8 @@ data = get_data("data")
 clade_defining_mutations_data = get_data("clade_defining_mutations_data")
 
 app.layout = dbc.Container([
-    div_generator.get_clade_defining_mutations_switch(),
+    # div_generator.get_clade_defining_mutations_switch(),
+    div_generator.get_toolbar_row_div(),
     div_generator.get_heatmap_row_div(data),
     div_generator.get_table_row_div(data)
 ], fluid=True)
