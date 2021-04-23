@@ -26,15 +26,31 @@ def get_toolbar_row_div():
     """
     ret = html.Div([
         dbc.Row([
-            dbc.Col(),
+            dbc.Col(
+                get_file_upload_component(),
+                width={"offset": 1}
+            ),
             dbc.Col(
                 get_clade_defining_mutations_switch_form_group(),
-                width=2
+                className="my-auto",
+                width={"offset": 8, "size": 2}
             )],
-            justify="end", className="mt-3"
+            className="mt-3"
         )
     ])
     return ret
+
+
+def get_file_upload_component():
+    """Get Dash component for upload button.
+
+    :return: Dash upload component with a dash bootstrap button
+        component inside.
+    :rtype: dcc.Upload
+    """
+    return dcc.Upload(
+            dbc.Button("Upload", color="primary")
+    )
 
 
 def get_clade_defining_mutations_switch_form_group():
@@ -55,8 +71,9 @@ def get_clade_defining_mutations_switch_form_group():
             value=[],
             id="clade-defining-mutations-switch",
             switch=True
-        )
-    ])
+        )],
+        className="mb-0"
+    )
     return ret
 
 
