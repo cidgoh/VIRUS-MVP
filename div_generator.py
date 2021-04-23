@@ -24,35 +24,37 @@ def get_toolbar_row_div():
         mutations switch.
     :rtype: html.Div
     """
-    ret = html.Div([])
-    return ret
-
-
-def get_clade_defining_mutations_switch():
-    """Get Dash HTML component for clade defining mutations switch.
-
-    :return: Dash HTML component with toggle watched by
-        ``on_form_change``.
-    :rtype: html.Div
-    """
     ret = html.Div([
         dbc.Row(
             dbc.Col(
-                dbc.FormGroup([
-                    dbc.Checklist(
-                        options=[{
-                            "label": "Clade defining mutations",
-                            "value": 1
-                        }],
-                        value=[],
-                        id="clade-defining-mutations-switch",
-                        switch=True
-                    )
-                ]),
+                get_clade_defining_mutations_switch_form_group(),
                 width=2
             ),
             justify="end",
             className="mt-3"
+        )
+    ])
+    return ret
+
+
+def get_clade_defining_mutations_switch_form_group():
+    """Get form group for clade defining mutations switch.
+
+    This is a Dash Bootstrap Components form group.
+
+    :return: Dash Bootstrap Components form group with clade defining
+        mutations switch.
+    :rtype: dbc.FormGroup
+    """
+    ret = dbc.FormGroup([
+        dbc.Checklist(
+            options=[{
+                "label": "Clade defining mutations",
+                "value": 1
+            }],
+            value=[],
+            id="clade-defining-mutations-switch",
+            switch=True
         )
     ])
     return ret
