@@ -25,13 +25,15 @@ def get_toolbar_row_div():
     :rtype: html.Div
     """
     ret = html.Div([
-        dbc.Row(
+        dbc.Row([
+            dbc.Col(),
             dbc.Col(
-                get_clade_defining_mutations_switch_form_group(),
+                html.Div(
+                    get_clade_defining_mutations_switch_form_group()
+                ),
                 width=2
-            ),
-            justify="end",
-            className="mt-3"
+            )],
+            justify="end", className="mt-3"
         )
     ])
     return ret
