@@ -28,9 +28,7 @@ def get_toolbar_row_div():
         dbc.Row([
             dbc.Col(),
             dbc.Col(
-                html.Div(
-                    get_clade_defining_mutations_switch_form_group()
-                ),
+                get_clade_defining_mutations_switch_form_group(),
                 width=2
             )],
             justify="end", className="mt-3"
