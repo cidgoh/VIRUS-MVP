@@ -105,7 +105,17 @@ def get_heatmap_row_div(data):
                 html.Div(
                     dcc.Graph(
                         id="heatmap-center-fig",
-                        figure=heatmap_generator.get_heatmap_center_fig(data)
+                        figure=heatmap_generator.get_heatmap_center_fig(data),
+                        # There is some sort of weirdness that
+                        # overrides figure layout autosize=False value
+                        # when the heatmap is re-rendered after launch,
+                        # through callbacks. I suspect it is some sort
+                        # of race condition between Plotly Python
+                        # autosize and PlotlyJs responding to window
+                        # resizing. See https://bit.ly/3nfRux2 section
+                        # on responsiveness. This line fixes it,
+                        # somehow.
+                        style={"width": len(data["heatmap_x"]) * 25}
                     ),
                     style={"overflowX": "scroll"}
                 ),

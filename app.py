@@ -63,40 +63,49 @@ def display_table(click_data, switches_value):
         return table_generator.get_table_fig(data, table_strain)
 
 
-@app.callback(
-    Output("heatmap-center-fig", "figure"),
-    Input("clade-defining-mutations-switch", "value"),
-    prevent_initial_call=True
-)
-def on_form_change(switches_value):
-    """Callback function for updating heatmap.
-
-    The heatmap is updated when the clade defining mutations switch is
-    toggled.
-
-    Only the center figure in the heatmap is updated.
-
-    :param switches_value: Information on clade defining mutations
-        switch.
-    :type switches_value: dict
-    :return: Center heatmap figure to show
-    :rtype: plotly.graph_objects.Figure
-    """
-    if len(switches_value) > 0:
-        return heatmap_generator \
-            .get_heatmap_center_fig(clade_defining_mutations_data)
-    else:
-        return heatmap_generator.get_heatmap_center_fig(data)
+# @app.callback(
+#     Output("heatmap-fig", "children"),
+#     Input("clade-defining-mutations-switch", "value"),
+#     prevent_initial_call=True
+# )
+# def on_form_change(switches_value):
+#     """Callback function for updating heatmap.
+#
+#     The heatmap is updated when the clade defining mutations switch is
+#     toggled.
+#
+#     Only the center figure in the heatmap is updated.
+#
+#     :param switches_value: Information on clade defining mutations
+#         switch.
+#     :type switches_value: dict
+#     :return: Center heatmap figure to show
+#     :rtype: plotly.graph_objects.Figure
+#     """
+#     if len(switches_value) > 0:
+#         heatmap_row_div =\
+#             div_generator.get_heatmap_row_div(clade_defining_mutations_data)
+#     else:
+#         heatmap_row_div = div_generator.get_heatmap_row_div(data)
+#     return heatmap_row_div
 
 
 @app.callback(
     Output("heatmap-fig", "children"),
+    Input("clade-defining-mutations-switch", "value"),
     Input("upload-file", "contents"),
     State("upload-file", "filename"),
     prevent_initial_call=True
 )
-def expand_heatmap(contents, filename):
-    heatmap_row_div = div_generator.get_heatmap_row_div(data)
+def update_heatmap(switches_value, file_contents, filename):
+    """TODO..."""
+    if len(switches_value) > 0:
+        data_to_use = clade_defining_mutations_data
+    else:
+        data_to_use = data
+
+    heatmap_row_div = div_generator.get_heatmap_row_div(data_to_use)
+
     return heatmap_row_div
 
 
