@@ -49,7 +49,8 @@ def get_file_upload_component():
     :rtype: dcc.Upload
     """
     return dcc.Upload(
-            dbc.Button("Upload", color="primary")
+        dbc.Button("Upload", color="primary"),
+        id="upload-file"
     )
 
 
@@ -79,6 +80,7 @@ def get_clade_defining_mutations_switch_form_group():
 
 def get_heatmap_row_div(data):
     """Get Dash HTML component containing heatmap view.
+    TODO update
 
     This HTML component is a row of several subcomponents, to get the
     necessary heatmap view.
@@ -87,7 +89,7 @@ def get_heatmap_row_div(data):
         components producing the overall heatmap view.
     :rtype: html.Div
     """
-    ret = html.Div([
+    ret = [
         dbc.Row([
             dbc.Col(
                 html.Div(
@@ -119,8 +121,8 @@ def get_heatmap_row_div(data):
                 ),
                 width=1, style={"overflowX": "hidden"}
             ),
-        ], no_gutters=True, className="mt-3"),
-    ])
+        ], no_gutters=True, className="mt-3")
+    ]
     return ret
 
 
