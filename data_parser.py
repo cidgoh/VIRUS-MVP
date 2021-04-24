@@ -32,10 +32,11 @@ def parse_data_files(dir_):
         # Maps cds info in tsv files to actual genes
         cds_gene_map = json.load(fp)
     with os.scandir(dir_) as it:
-        for entry in it:
+        # Iterate through tsv files in dir_ sorted by last modification
+        # time.
+        for entry in sorted(it, key=os.path.getmtime):
             strain = entry.name.split("_")[0]
             ret[strain] = {}
-            # Iterate through tsv files in dir_
             with open(entry.path) as fp:
                 reader = csv.DictReader(fp, delimiter="\t")
                 for row in reader:
