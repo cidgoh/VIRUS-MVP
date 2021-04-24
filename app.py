@@ -4,6 +4,8 @@ This is the Python script that is run to launch the visualization
 application.
 """
 
+from base64 import b64decode
+
 import dash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
@@ -116,7 +118,12 @@ def update_heatmap(switches_value, file_contents, filename):
                                    color="danger",
                                    className="mb-0 p-1 d-inline-block")
         else:
-            # TODO actually add new data to heatmap
+            _, base64_str = file_contents.split(",")
+            with open("data/" + filename, "w") as fp:
+                tsv_str_bytes = b64decode(base64_str)
+                tsv_str_utf8 = tsv_str_bytes.decode("utf-8")
+                fp.write(tsv_str_utf8)
+            data_to_use = get_data("data")
             dialog_col = dbc.Alert("File uploaded.",
                                    color="success",
                                    className="mb-0 p-1 d-inline-block")
