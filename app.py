@@ -16,7 +16,7 @@ import table_generator
 app = dash.Dash(__name__,
                 # We can use bootstrap CSS.
                 # https://bit.ly/3tMqY0W for details.
-                external_stylesheets=[dbc.themes.BOOTSTRAP])
+                external_stylesheets=[dbc.themes.COSMO])
 
 data = get_data("data")
 clade_defining_mutations_data = get_data("clade_defining_mutations_data")
