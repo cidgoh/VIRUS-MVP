@@ -15,29 +15,27 @@ import table_generator
 
 
 def get_toolbar_row_div():
-    """Get Dash HTML component that sits above heatmap.
+    """Get Dash Bootstrap Components row that sits above heatmap.
 
     This contains the upload file button, and the clade defining
     mutations switch.
 
-    :return: Dash HTML component with upload button and clade defining
-        mutations switch.
-    :rtype: html.Div
+    :return: Dash Bootstrap Component row with upload button and clade
+        defining mutations switch.
+    :rtype: dbc.Row
     """
-    ret = html.Div([
-        dbc.Row([
-            dbc.Col(
-                get_file_upload_component(),
-                width={"offset": 1}
-            ),
-            dbc.Col(
-                get_clade_defining_mutations_switch_form_group(),
-                className="my-auto",
-                width={"offset": 8, "size": 2}
-            )],
-            className="mt-3"
-        )
-    ])
+    ret = dbc.Row([
+        dbc.Col(
+            get_file_upload_component(),
+            width={"offset": 1}
+        ),
+        dbc.Col(
+            get_clade_defining_mutations_switch_form_group(),
+            className="my-auto",
+            width={"offset": 8, "size": 2}
+        )],
+        className="mt-3"
+    )
     return ret
 
 
@@ -79,78 +77,73 @@ def get_clade_defining_mutations_switch_form_group():
 
 
 def get_heatmap_row_div(data):
-    """Get Dash HTML component containing heatmap view.
-    TODO update
+    """Get Dash Bootstrap Components row containing heatmap columns.
 
-    This HTML component is a row of several subcomponents, to get the
-    necessary heatmap view.
+    Several columns are necessary to get the heatmap view the way we
+    want it.
 
-    :return: Dash HTML component with left, center, and right
-        components producing the overall heatmap view.
-    :rtype: html.Div
+    :return: Dash Bootstrap Components row with left, center, and right
+        columns producing the overall heatmap view.
+    :rtype: dbc.Row
     """
-    ret = [
-        dbc.Row([
-            dbc.Col(
-                html.Div(
-                    dcc.Graph(
-                        id="heatmap-left-fig",
-                        figure=heatmap_generator.get_heatmap_left_fig(data)
-                    ),
-                    style={"width": "90vw"}
+    ret = dbc.Row([
+        dbc.Col(
+            html.Div(
+                dcc.Graph(
+                    id="heatmap-left-fig",
+                    figure=heatmap_generator.get_heatmap_left_fig(data)
                 ),
-                width=1, style={"overflowX": "hidden"}
+                style={"width": "90vw"}
             ),
-            dbc.Col(
-                html.Div(
-                    dcc.Graph(
-                        id="heatmap-center-fig",
-                        figure=heatmap_generator.get_heatmap_center_fig(data),
-                        # There is some sort of weirdness that
-                        # overrides figure layout autosize=False value
-                        # when the heatmap is re-rendered after launch,
-                        # through callbacks. I suspect it is some sort
-                        # of race condition between Plotly Python
-                        # autosize and PlotlyJs responding to window
-                        # resizing. See https://bit.ly/3nfRux2 section
-                        # on responsiveness. This line fixes it,
-                        # somehow.
-                        style={"width": len(data["heatmap_x"]) * 25}
-                    ),
-                    style={"overflowX": "scroll"}
+            width=1, style={"overflowX": "hidden"}
+        ),
+        dbc.Col(
+            html.Div(
+                dcc.Graph(
+                    id="heatmap-center-fig",
+                    figure=heatmap_generator.get_heatmap_center_fig(data),
+                    # There is some sort of weirdness that
+                    # overrides figure layout autosize=False value
+                    # when the heatmap is re-rendered after launch,
+                    # through callbacks. I suspect it is some sort
+                    # of race condition between Plotly Python
+                    # autosize and PlotlyJs responding to window
+                    # resizing. See https://bit.ly/3nfRux2 section
+                    # on responsiveness. This line fixes it,
+                    # somehow.
+                    style={"width": len(data["heatmap_x"]) * 25}
                 ),
-                width=10
+                style={"overflowX": "scroll"}
             ),
-            dbc.Col(
-                html.Div(
-                    dcc.Graph(
-                        id="heatmap-right-fig",
-                        figure=heatmap_generator.get_heatmap_right_fig(data)
-                    ),
-                    style={"width": "90vw"}, className="ml-3"
+            width=10
+        ),
+        dbc.Col(
+            html.Div(
+                dcc.Graph(
+                    id="heatmap-right-fig",
+                    figure=heatmap_generator.get_heatmap_right_fig(data)
                 ),
-                width=1, style={"overflowX": "hidden"}
+                style={"width": "90vw"}, className="ml-3"
             ),
-        ], no_gutters=True, className="mt-3")
-    ]
+            width=1, style={"overflowX": "hidden"}
+        ),
+    ], no_gutters=True, className="mt-3")
     return ret
 
 
 def get_table_row_div(data):
-    """Get Dash HTML component containing table view.
+    """Get Dash Bootstrap Components row containing table view.
 
-    :return: Dash HTML component containing table
-    :rtype: html.Div
+    :return: Dash Bootstrap Components row containing table
+    :rtype: dbc.Row
     """
-    ret = html.Div([
-        dbc.Row(
-            dbc.Col(
-                dcc.Graph(
-                    id="table",
-                    figure=
-                    table_generator.get_table_fig(data, data["heatmap_y"][0])
-                )
-            ),
-        )
-    ])
+    ret = dbc.Row(
+        dbc.Col(
+            dcc.Graph(
+                id="table",
+                figure=
+                table_generator.get_table_fig(data, data["heatmap_y"][0])
+            )
+        ),
+    )
     return ret
