@@ -6,7 +6,7 @@ application.
 
 import dash
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 import dash_html_components as html
 
 from data_parser import get_data
@@ -66,7 +66,7 @@ def display_table(click_data, switches_value):
     Output("dialog-col", "children"),
     Input("clade-defining-mutations-switch", "value"),
     Input("upload-file", "contents"),
-    State("upload-file", "filename"),
+    Input("upload-file", "filename"),
     prevent_initial_call=True
 )
 def update_heatmap(switches_value, file_contents, filename):
@@ -100,12 +100,26 @@ def update_heatmap(switches_value, file_contents, filename):
     """
     if len(switches_value) > 0:
         data_to_use = clade_defining_mutations_data
-        dialog_col = dbc.Alert("This is a primary alert.", color="primary", className="mb-0 p-1 d-inline-block")
     else:
         data_to_use = data
-        dialog_col = None
 
-    # TODO ensure appropriate uploaded file, and add to heatmap
+    dialog_col = None
+    if file_contents and filename:
+        new_strain, ext = filename.rsplit(".", 1)
+        if ext != "tsv":
+            dialog_col = dbc.Alert("Filename must end in \".tsv\".",
+                                   color="danger",
+                                   className="mb-0 p-1 d-inline-block")
+        elif new_strain in data["heatmap_y"]:
+            dialog_col = dbc.Alert("Filename must not conflict with existing "
+                                   "voc.",
+                                   color="danger",
+                                   className="mb-0 p-1 d-inline-block")
+        else:
+            # TODO actually add new data to heatmap
+            dialog_col = dbc.Alert("File uploaded.",
+                                   color="success",
+                                   className="mb-0 p-1 d-inline-block")
 
     heatmap_row_div = div_generator.get_heatmap_row_div(data_to_use)
 
