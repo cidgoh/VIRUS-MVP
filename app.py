@@ -63,13 +63,14 @@ def display_table(click_data, switches_value):
 
 @app.callback(
     Output("heatmap-fig", "children"),
+    Output("dialog-col", "children"),
     Input("clade-defining-mutations-switch", "value"),
     Input("upload-file", "contents"),
     State("upload-file", "filename"),
     prevent_initial_call=True
 )
 def update_heatmap(switches_value, file_contents, filename):
-    """Callback function for updating heatmap.
+    """Callback function mainly for updating heatmap.
 
     Dash does not allow a many-to-one mapping of callback functions and
     outputs, so this function will update the heatmap in a variety of
@@ -81,6 +82,10 @@ def update_heatmap(switches_value, file_contents, filename):
     When a file is uploaded, the heatmap is updated to show an
     additional row.
 
+    This function also updates the dialog col in the top row div.
+    Ideally, this col should communicate something about updates to the
+    heatmap.
+
     :param switches_value: ``[1]`` or ``[0]`` is clade defining
         mutations switch is toggled on or off respectively.
     :type switches_value: list
@@ -90,19 +95,21 @@ def update_heatmap(switches_value, file_contents, filename):
     :param filename: Name of uploaded file
     :type filename: str
     :return: New dash bootstrap components row containing heatmap
-        figures.
-    :rtype: dbc.Row
+        figures, and maybe the dialog col in the top row div.
+    :rtype: (dbc.Row, Any)
     """
     if len(switches_value) > 0:
         data_to_use = clade_defining_mutations_data
+        dialog_col = dbc.Alert("This is a primary alert.", color="primary", className="mb-0 p-1 d-inline-block")
     else:
         data_to_use = data
+        dialog_col = None
 
     # TODO ensure appropriate uploaded file, and add to heatmap
 
     heatmap_row_div = div_generator.get_heatmap_row_div(data_to_use)
 
-    return heatmap_row_div
+    return heatmap_row_div, dialog_col
 
 
 if __name__ == "__main__":
