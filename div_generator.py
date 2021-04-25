@@ -17,8 +17,9 @@ import table_generator
 def get_toolbar_row_div():
     """Get Dash Bootstrap Components row that sits above heatmap.
 
-    This contains the upload file button, a col for displaying dialog
-    to the user, and the clade defining mutations switch.
+    This contains a col with buttons for showing and uploading strains,
+    a col for displaying dialog to the user, and the clade defining
+    mutations switch.
 
     :return: Dash Bootstrap Component row with upload button and clade
         defining mutations switch.
@@ -26,7 +27,10 @@ def get_toolbar_row_div():
     """
     ret = dbc.Row([
         dbc.Col(
-            get_file_upload_component(),
+            dbc.ButtonGroup([
+                get_show_strains_component(),
+                get_file_upload_component()
+            ]),
             className="my-auto",
             width={"offset": 1}
         ),
@@ -42,6 +46,19 @@ def get_toolbar_row_div():
         className="mt-3"
     )
     return ret
+
+
+def get_show_strains_component():
+    """TODO"""
+    return dbc.DropdownMenu(
+        label="Show",
+        children=[
+            dbc.DropdownMenuItem("Item 1"),
+            dbc.DropdownMenuItem("Item 2"),
+            dbc.DropdownMenuItem("Item 3"),
+        ],
+        className="mr-1"
+    )
 
 
 def get_file_upload_component():
