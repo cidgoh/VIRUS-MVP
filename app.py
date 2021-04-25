@@ -23,7 +23,7 @@ app = dash.Dash(__name__,
 data = get_data("data")
 
 app.layout = dbc.Container([
-    html.Div(div_generator.get_toolbar_row_div()),
+    html.Div(div_generator.get_toolbar_row_div(data)),
     html.Div(div_generator.get_heatmap_row_div(data), id="heatmap-fig"),
     html.Div(div_generator.get_table_row_div(data))
 ], fluid=True)

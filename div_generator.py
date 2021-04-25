@@ -14,13 +14,15 @@ import heatmap_generator
 import table_generator
 
 
-def get_toolbar_row_div():
+def get_toolbar_row_div(data):
     """Get Dash Bootstrap Components row that sits above heatmap.
 
     This contains a col with buttons for showing and uploading strains,
     a col for displaying dialog to the user, and the clade defining
     mutations switch.
 
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
     :return: Dash Bootstrap Component row with upload button and clade
         defining mutations switch.
     :rtype: dbc.Row
@@ -28,7 +30,7 @@ def get_toolbar_row_div():
     ret = dbc.Row([
         dbc.Col(
             dbc.ButtonGroup([
-                get_show_strains_component(),
+                get_show_strains_component(data),
                 get_file_upload_component()
             ]),
             className="my-auto",
@@ -48,16 +50,18 @@ def get_toolbar_row_div():
     return ret
 
 
-def get_show_strains_component():
+def get_show_strains_component(data):
     """TODO"""
+    dropdown_children = []
+    # TODO order
+    for strain in data["heatmap_y"]:
+        dropdown_children.append(dbc.DropdownMenuItem(strain))
+
     return dbc.DropdownMenu(
         label="Show",
-        children=[
-            dbc.DropdownMenuItem("Item 1"),
-            dbc.DropdownMenuItem("Item 2"),
-            dbc.DropdownMenuItem("Item 3"),
-        ],
-        className="mr-1"
+        children=dropdown_children,
+        className="mr-1",
+        id="show-dropdown-btn"
     )
 
 
@@ -104,6 +108,8 @@ def get_heatmap_row_div(data):
     Several columns are necessary to get the heatmap view the way we
     want it.
 
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
     :return: Dash Bootstrap Components row with left, center, and right
         columns producing the overall heatmap view.
     :rtype: dbc.Row
@@ -156,6 +162,8 @@ def get_heatmap_row_div(data):
 def get_table_row_div(data):
     """Get Dash Bootstrap Components row containing table view.
 
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
     :return: Dash Bootstrap Components row containing table
     :rtype: dbc.Row
     """
