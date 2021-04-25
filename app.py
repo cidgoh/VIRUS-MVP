@@ -100,11 +100,6 @@ def update_heatmap(switches_value, file_contents, filename):
         figures, and maybe the dialog col in the top row div.
     :rtype: (dbc.Row, Any)
     """
-    if len(switches_value) > 0:
-        data_to_use = get_data("data", clade_defining=True)
-    else:
-        data_to_use = get_data("data", clade_defining=False)
-
     dialog_col = None
     if file_contents and filename:
         new_strain, ext = filename.rsplit(".", 1)
@@ -123,10 +118,14 @@ def update_heatmap(switches_value, file_contents, filename):
                 tsv_str_bytes = b64decode(base64_str)
                 tsv_str_utf8 = tsv_str_bytes.decode("utf-8")
                 fp.write(tsv_str_utf8)
-            data_to_use = get_data("data")
             dialog_col = dbc.Alert("File uploaded.",
                                    color="success",
                                    className="mb-0 p-1 d-inline-block")
+
+    if len(switches_value) > 0:
+        data_to_use = get_data("data", clade_defining=True)
+    else:
+        data_to_use = get_data("data", clade_defining=False)
 
     heatmap_row_div = div_generator.get_heatmap_row_div(data_to_use)
 
