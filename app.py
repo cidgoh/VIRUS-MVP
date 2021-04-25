@@ -21,7 +21,6 @@ app = dash.Dash(__name__,
                 external_stylesheets=[dbc.themes.COSMO])
 
 data = get_data("data")
-clade_defining_mutations_data = get_data("clade_defining_mutations_data")
 
 app.layout = dbc.Container([
     html.Div(div_generator.get_toolbar_row_div()),
@@ -58,10 +57,11 @@ def display_table(click_data, switches_value):
         table_strain = click_data["points"][0]["y"]
 
     if len(switches_value) > 0:
-        return table_generator \
-            .get_table_fig(clade_defining_mutations_data, table_strain)
+        data_to_use = get_data("data", clade_defining=True)
     else:
-        return table_generator.get_table_fig(data, table_strain)
+        data_to_use = get_data("data", clade_defining=False)
+
+    return table_generator.get_table_fig(data_to_use, table_strain)
 
 @app.callback(
     Output("heatmap-fig", "children"),
@@ -101,9 +101,9 @@ def update_heatmap(switches_value, file_contents, filename):
     :rtype: (dbc.Row, Any)
     """
     if len(switches_value) > 0:
-        data_to_use = clade_defining_mutations_data
+        data_to_use = get_data("data", clade_defining=True)
     else:
-        data_to_use = data
+        data_to_use = get_data("data", clade_defining=False)
 
     dialog_col = None
     if file_contents and filename:
