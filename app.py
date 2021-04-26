@@ -20,7 +20,7 @@ app = dash.Dash(__name__,
                 # https://bit.ly/3tMqY0W for details.
                 external_stylesheets=[dbc.themes.COSMO])
 
-data = get_data("data")
+data = get_data(["data"])
 
 app.layout = dbc.Container([
     html.Div(div_generator.get_toolbar_row_div(data)),
@@ -57,9 +57,9 @@ def display_table(click_data, switches_value):
         table_strain = click_data["points"][0]["y"]
 
     if len(switches_value) > 0:
-        data_to_use = get_data("data", clade_defining=True)
+        data_to_use = get_data(["data"], clade_defining=True)
     else:
-        data_to_use = get_data("data", clade_defining=False)
+        data_to_use = get_data(["data"], clade_defining=False)
 
     return table_generator.get_table_fig(data_to_use, table_strain)
 
@@ -131,9 +131,9 @@ def update_heatmap(switches_value, file_contents, filename):
                                    className="mb-0 p-1 d-inline-block")
 
     if len(switches_value) > 0:
-        data_to_use = get_data("data", clade_defining=True)
+        data_to_use = get_data(["data"], clade_defining=True)
     else:
-        data_to_use = get_data("data", clade_defining=False)
+        data_to_use = get_data(["data"], clade_defining=False)
 
     heatmap_row_div = div_generator.get_heatmap_row_div(data_to_use)
 

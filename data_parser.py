@@ -122,9 +122,10 @@ def parse_data_files(dir_):
     return ret
 
 
-def get_data(dir_, clade_defining=False):
+def get_data(dirs, clade_defining=False):
     """Get relevant data for Plotly visualizations in this application.
 
+    TODO update function docstring
     This will include table data, which is straight forward. But this
     will also include various information related to the main heatmap,
     including heatmap x y coordinates for mutations, insertions,
@@ -145,7 +146,9 @@ def get_data(dir_, clade_defining=False):
         dir_.
     :rtype: dict
     """
-    parsed_files = parse_data_files(dir_)
+    parsed_files = {}
+    for dir_ in dirs:
+        parsed_files = {**parsed_files, **parse_data_files(dir_)}
 
     if clade_defining:
         for strain in parsed_files:
