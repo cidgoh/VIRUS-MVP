@@ -54,7 +54,7 @@ def get_show_strains_component(data):
     """TODO"""
     dropdown_children = []
     # TODO order
-    for strain in data["heatmap_y"]:
+    for strain in reversed(data["heatmap_y"]):
         dropdown_children.append(dbc.DropdownMenuItem(strain))
 
     return dbc.DropdownMenu(
