@@ -5,6 +5,7 @@ application.
 """
 
 from base64 import b64decode
+import os
 
 import dash
 import dash_bootstrap_components as dbc
@@ -113,8 +114,14 @@ def update_heatmap(switches_value, file_contents, filename):
                                    color="danger",
                                    className="mb-0 p-1 d-inline-block")
         else:
+            # Dash splits MIME type and the actual str with a comma
             _, base64_str = file_contents.split(",")
-            with open("data/" + filename, "w") as fp:
+            # File gets written to user_data folder. We create the
+            # folder if it does not exist.
+            # TODO: eventually replace with database
+            path = "user_data/" + filename
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open("user_data/" + filename, "w") as fp:
                 tsv_str_bytes = b64decode(base64_str)
                 tsv_str_utf8 = tsv_str_bytes.decode("utf-8")
                 fp.write(tsv_str_utf8)
