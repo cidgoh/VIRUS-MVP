@@ -74,6 +74,9 @@ def display_table(click_data, switches_value):
 def update_heatmap(switches_value, file_contents, filename):
     """Callback function mainly for updating heatmap.
 
+    TODO: this docstring will probably need to be updated when I am
+     done tinkering.
+
     Dash does not allow a many-to-one mapping of callback functions and
     outputs, so this function will update the heatmap in a variety of
     ways, given a variety of inputs.
@@ -102,14 +105,11 @@ def update_heatmap(switches_value, file_contents, filename):
     """
     dialog_col = None
     if file_contents and filename:
-        new_strain, ext = filename.rsplit(".", 1)
+        # TODO more thorough validation, maybe once we finalize data
+        #  standards.
+        _, ext = filename.rsplit(".", 1)
         if ext != "tsv":
             dialog_col = dbc.Alert("Filename must end in \".tsv\".",
-                                   color="danger",
-                                   className="mb-0 p-1 d-inline-block")
-        elif new_strain in data["heatmap_y"]:
-            dialog_col = dbc.Alert("Filename must not conflict with existing "
-                                   "voc.",
                                    color="danger",
                                    className="mb-0 p-1 d-inline-block")
         else:
