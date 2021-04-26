@@ -16,7 +16,8 @@ def parse_data_files(dir_):
     ``parse_data_files`` does not care about Plotly. It simply parses
     tsv files that are in the format of tsv files found in data/, and
     puts them into an easy to iterate Dictionary for ``get_data`` to
-    manipulate for Plotly.
+    manipulate for Plotly. The filename of these tsv files is
+    interpreted to be the strain name.
 
     TODO: there is also some data being parsed from some other files.
         We should obtain that data upstream when the files are
@@ -35,7 +36,9 @@ def parse_data_files(dir_):
         # Iterate through tsv files in dir_ sorted by last modification
         # time.
         for entry in sorted(it, key=os.path.getmtime):
-            strain = entry.name.split("_")[0]
+            strain, ext = entry.name.rsplit(".", 1)
+            if ext != "tsv":
+                continue
             ret[strain] = {}
             with open(entry.path) as fp:
                 reader = csv.DictReader(fp, delimiter="\t")

@@ -108,19 +108,21 @@ def update_heatmap(switches_value, file_contents, filename):
     if file_contents and filename:
         # TODO more thorough validation, maybe once we finalize data
         #  standards.
-        _, ext = filename.rsplit(".", 1)
+        new_strain, ext = filename.rsplit(".", 1)
         if ext != "tsv":
             dialog_col = dbc.Alert("Filename must end in \".tsv\".",
+                                   color="danger",
+                                   className="mb-0 p-1 d-inline-block")
+        elif new_strain in data["heatmap_y"]:
+            dialog_col = dbc.Alert("Filename must not conflict with existing "
+                                   "voc.",
                                    color="danger",
                                    className="mb-0 p-1 d-inline-block")
         else:
             # Dash splits MIME type and the actual str with a comma
             _, base64_str = file_contents.split(",")
-            # File gets written to user_data folder. We create the
-            # folder if it does not exist.
+            # File gets written to user_data folder
             # TODO: eventually replace with database
-            path = "user_data/" + filename
-            os.makedirs(os.path.dirname(path), exist_ok=True)
             with open("user_data/" + filename, "w") as fp:
                 tsv_str_bytes = b64decode(base64_str)
                 tsv_str_utf8 = tsv_str_bytes.decode("utf-8")
