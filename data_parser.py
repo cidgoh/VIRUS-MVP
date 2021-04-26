@@ -72,6 +72,8 @@ def parse_data_files(dir_):
 
     # TODO: we should add functionality to vcf files upstream of this
     #  codebase.
+    # TODO: how do we do clade defining mutations for user uploaded
+    #  files?
     functional_annotations_dict = {}
     functional_annotations_tsv_path = \
         "VOC clade-defining mutations - functional_annotation.tsv"
@@ -125,7 +127,6 @@ def parse_data_files(dir_):
 def get_data(dirs, clade_defining=False):
     """Get relevant data for Plotly visualizations in this application.
 
-    TODO update function docstring
     This will include table data, which is straight forward. But this
     will also include various information related to the main heatmap,
     including heatmap x y coordinates for mutations, insertions,
@@ -134,16 +135,16 @@ def get_data(dirs, clade_defining=False):
     Basically, this function gives us data to plug into the
     visualization functions of Plotly.
 
-    This relevant data is parsed from tsv files in the form of the tsv
-    files found in data/. Other folders with similar formats can be
-    parsed too.
+    This relevant data is parsed from tsv files across one or more
+    folders, with each tsv file in the form of the tsv files found in
+    ``data/``.
 
-    :param dir_: Path to folder to obtain data from
-    :type dir_: str
+    :param dirs: List of paths to folders to obtain data from
+    :type dirs: list[str]
     :param clade_defining: Get data for clade defining mutations only
     :type clade_defining: bool
     :return: Information on relevant columns in tsv files stored in
-        dir_.
+        folders listed in dirs.
     :rtype: dict
     """
     parsed_files = {}

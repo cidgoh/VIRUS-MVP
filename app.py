@@ -20,8 +20,11 @@ app = dash.Dash(__name__,
                 # https://bit.ly/3tMqY0W for details.
                 external_stylesheets=[dbc.themes.COSMO])
 
-data = get_data(["data"])
+# Dash is stateless--this global variable should only be referenced at
+# launch.
+data = get_data(["data", "user_data"])
 
+# These references to data are at launch.
 app.layout = dbc.Container([
     html.Div(div_generator.get_toolbar_row_div(data)),
     html.Div(div_generator.get_heatmap_row_div(data), id="heatmap-fig"),
@@ -51,15 +54,17 @@ def display_table(click_data, switches_value):
     :return: Table figure to show
     :rtype: plotly.graph_objects.Figure
     """
+    data_ = get_data(["data", "user_data"])
+
     if click_data is None:
-        table_strain = data["heatmap_y"][0]
+        table_strain = data_["heatmap_y"][0]
     else:
         table_strain = click_data["points"][0]["y"]
 
     if len(switches_value) > 0:
-        data_to_use = get_data(["data"], clade_defining=True)
+        data_to_use = get_data(["data", "user_data"], clade_defining=True)
     else:
-        data_to_use = get_data(["data"], clade_defining=False)
+        data_to_use = get_data(["data", "user_data"], clade_defining=False)
 
     return table_generator.get_table_fig(data_to_use, table_strain)
 
@@ -103,6 +108,8 @@ def update_heatmap(switches_value, file_contents, filename):
         figures, and maybe the dialog col in the top row div.
     :rtype: (dbc.Row, Any)
     """
+    data_ = get_data(["data", "user_data"])
+
     dialog_col = None
     if file_contents and filename:
         # TODO more thorough validation, maybe once we finalize data
@@ -112,7 +119,7 @@ def update_heatmap(switches_value, file_contents, filename):
             dialog_col = dbc.Alert("Filename must end in \".tsv\".",
                                    color="danger",
                                    className="mb-0 p-1 d-inline-block")
-        elif new_strain in data["heatmap_y"]:
+        elif new_strain in data_["heatmap_y"]:
             dialog_col = dbc.Alert("Filename must not conflict with existing "
                                    "voc.",
                                    color="danger",
@@ -131,9 +138,9 @@ def update_heatmap(switches_value, file_contents, filename):
                                    className="mb-0 p-1 d-inline-block")
 
     if len(switches_value) > 0:
-        data_to_use = get_data(["data"], clade_defining=True)
+        data_to_use = get_data(["data", "user_data"], clade_defining=True)
     else:
-        data_to_use = get_data(["data"], clade_defining=False)
+        data_to_use = get_data(["data", "user_data"], clade_defining=False)
 
     heatmap_row_div = div_generator.get_heatmap_row_div(data_to_use)
 
