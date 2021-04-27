@@ -4,6 +4,10 @@ These functions do not generate the figures inside the HTML components,
 they call the functions that generate figures, and organize them into
 HTML divs. We are using the dash bootstrap components, so these
 functions return divs in grid format.
+
+Most of these functions are only called at launch, with callbacks only
+changing sub-elements within the HTML components, like figures or
+sub-divs.
 """
 
 import dash_bootstrap_components as dbc
@@ -51,9 +55,15 @@ def get_toolbar_row_div(data):
 
 
 def get_show_strains_component(data):
-    """TODO"""
+    """Get Dash Bootstrap Components dropdown menu for showing strains.
+
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
+    :return: List of Dash Bootstrap Components dropdown menu items
+        corresponding to strains in data.
+    :rtype: list[dbc.DropdownMenuItem]
+    """
     dropdown_children = []
-    # TODO order
     for strain in reversed(data["heatmap_y"]):
         dropdown_children.append(dbc.DropdownMenuItem(strain))
 
