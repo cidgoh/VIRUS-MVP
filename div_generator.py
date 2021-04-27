@@ -64,8 +64,13 @@ def get_show_strains_component(data):
     :rtype: list[dbc.DropdownMenuItem]
     """
     dropdown_children = []
-    for strain in reversed(data["heatmap_y"]):
-        dropdown_children.append(dbc.DropdownMenuItem(strain))
+    for dir_ in reversed(data["dir_strains"]):
+        for strain in reversed(data["dir_strains"][dir_]):
+            dropdown_children.append(dbc.DropdownMenuItem(strain))
+        # Divider between directories
+        dropdown_children.append(dbc.DropdownMenuItem(divider=True))
+    # Remove last divider
+    dropdown_children.pop()
 
     return dbc.DropdownMenu(
         label="Show",

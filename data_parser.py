@@ -139,6 +139,10 @@ def get_data(dirs, clade_defining=False):
     folders, with each tsv file in the form of the tsv files found in
     ``data/``.
 
+    We will also keep track of the directory each strain came from,
+    because it becomes useful when distinguishing user uploaded strains
+    from other strains.
+
     :param dirs: List of paths to folders to obtain data from
     :type dirs: list[str]
     :param clade_defining: Get data for clade defining mutations only
@@ -148,8 +152,11 @@ def get_data(dirs, clade_defining=False):
     :rtype: dict
     """
     parsed_files = {}
+    dir_strains = {}
     for dir_ in dirs:
-        parsed_files = {**parsed_files, **parse_data_files(dir_)}
+        this_parsed_files = parse_data_files(dir_)
+        dir_strains[dir_] = list(this_parsed_files.keys())
+        parsed_files = {**parsed_files, **this_parsed_files}
 
     if clade_defining:
         for strain in parsed_files:
@@ -164,7 +171,8 @@ def get_data(dirs, clade_defining=False):
         "insertions_y": get_insertions_y(parsed_files),
         "deletions_x": get_deletions_x(parsed_files),
         "deletions_y": get_deletions_y(parsed_files),
-        "tables": get_tables(parsed_files)
+        "tables": get_tables(parsed_files),
+        "dir_strains": dir_strains
     }
     data["heatmap_z"] = get_heatmap_z(parsed_files, data["heatmap_x"])
     data["heatmap_cell_text"] = \
