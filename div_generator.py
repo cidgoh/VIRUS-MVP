@@ -57,6 +57,27 @@ def get_toolbar_row_div(data):
 def get_show_strains_component(data):
     """Get Dash Bootstrap Components dropdown menu for showing strains.
 
+    This function calls ``get_show_strains_component_children``.
+
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
+    :return: Dash Bootstrap Components dropdown containing strains in
+        data.
+    :rtype: dbc.DropdownMenu
+    """
+    return dbc.DropdownMenu(
+        label="Show",
+        children=get_show_strains_component_children(data),
+        className="mr-1",
+        id="show-dropdown-btn"
+    )
+
+
+def get_show_strains_component_children(data):
+    """Get Dash Bootstrap Components dropdown menu children.
+
+    In other words, this function actually populates the dropdown menu.
+
     :param data: ``data_parser.get_data`` return value
     :type data: dict
     :return: List of Dash Bootstrap Components dropdown menu items
@@ -71,13 +92,7 @@ def get_show_strains_component(data):
         dropdown_children.append(dbc.DropdownMenuItem(divider=True))
     # Remove last divider
     dropdown_children.pop()
-
-    return dbc.DropdownMenu(
-        label="Show",
-        children=dropdown_children,
-        className="mr-1",
-        id="show-dropdown-btn"
-    )
+    return dropdown_children
 
 
 def get_file_upload_component():
@@ -135,8 +150,7 @@ def get_heatmap_row_div(data):
                 dcc.Graph(
                     id="heatmap-left-fig",
                     figure=heatmap_generator.get_heatmap_left_fig(data)
-                ),
-                style={"width": "90vw"}
+                )
             ),
             width=1, style={"overflowX": "hidden"}
         ),

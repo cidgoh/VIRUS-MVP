@@ -29,6 +29,8 @@ app = dash.Dash(__name__,
 
 # Dash is stateless--this global variable should only be referenced at
 # launch.
+# TODO we need to remove the use of this global variable, because it
+#  causes problems on refresh.
 data_ = get_data(["data", "user_data"])
 
 app.layout = dbc.Container([
@@ -191,10 +193,7 @@ def update_show_dropdown_btn(data):
         corresponding to strains in data.
     :rtype: list[dbc.DropdownMenuItem]
     """
-    dropdown_children = []
-    for strain in reversed(data["heatmap_y"]):
-        dropdown_children.append(dbc.DropdownMenuItem(strain))
-    return dropdown_children
+    return div_generator.get_show_strains_component_children(data)
 
 
 @app.callback(
