@@ -92,8 +92,13 @@ def get_hide_strains_component_children(data):
                 "type": "hide-strain-dropdown-item",
                 "index": "n_clicks"
             }
+            # Strain is hidden
+            active = strain not in data["heatmap_y"]
+            # If this is the only visible strain, disable it
+            disabled = not active and len(data["heatmap_y"]) == 1
             child = dbc.DropdownMenuItem(strain,
-                                         active=False,
+                                         active=active,
+                                         disabled=disabled,
                                          id=pattern_matching_id)
             dropdown_children.append(child)
         # Divider between directories

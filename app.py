@@ -58,7 +58,8 @@ def launch_app(_):
     to a server. So new data between page reloads may not be displayed
     if you populate the initial layout in the global scope.
     """
-    data_ = get_data(["data", "user_data"])
+    hidden_strains = []
+    data_ = get_data(["data", "user_data"], hidden_strains=hidden_strains)
     return [
         html.Div(div_generator.get_toolbar_row_div(data_)),
         html.Div(div_generator.get_heatmap_row_div(data_)),
@@ -75,7 +76,7 @@ def launch_app(_):
         # changed.
         dcc.Store(id="show-clade-defining"),
         dcc.Store(id="new-upload"),
-        dcc.Store(id="hidden-strains", data=[])
+        dcc.Store(id="hidden-strains", data=hidden_strains)
     ]
 
 
@@ -108,7 +109,9 @@ def update_data(show_clade_defining, new_upload, hidden_strains):
     if ctx.triggered[0]["prop_id"] == "new-upload.data":
         if new_upload["status"] == "error":
             return dash.dash.no_update
-    return get_data(["data", "user_data"], clade_defining=show_clade_defining)
+    return get_data(["data", "user_data"],
+                    clade_defining=show_clade_defining,
+                    hidden_strains=hidden_strains)
 
 
 @app.callback(
@@ -193,7 +196,7 @@ def update_hidden_strains(n_clicks_list, strain_list, active_list):
     for i, strain in enumerate(strain_list):
         if n_clicks_list[i] and not active_list[i]:
             hidden_strains.append(strain)
-        elif active_list[i]:
+        elif not n_clicks_list[i] and active_list[i]:
             hidden_strains.append(strain)
     return hidden_strains
 

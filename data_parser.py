@@ -124,13 +124,13 @@ def parse_data_files(dir_):
     return ret
 
 
-def get_data(dirs, clade_defining=False):
+def get_data(dirs, clade_defining=False, hidden_strains=[]):
     """Get relevant data for Plotly visualizations in this application.
 
     This will include table data, which is straight forward. But this
     will also include various information related to the main heatmap,
     including heatmap x y coordinates for mutations, insertions,
-    deletions, and hover text.
+    deletions, and hover text. TODO
 
     Basically, this function gives us data to plug into the
     visualization functions of Plotly.
@@ -164,6 +164,10 @@ def get_data(dirs, clade_defining=False):
             parsed_files[strain] = \
                 {k: v for k, v in kv_pairs if v["clade_defining"]}
 
+    unfiltered_parsed_files = parsed_files
+    parsed_files =\
+        {k: v for k, v in parsed_files.items() if k not in hidden_strains}
+
     data = {
         "heatmap_x": get_heatmap_x(parsed_files),
         "heatmap_y": get_heatmap_y(parsed_files),
@@ -172,7 +176,8 @@ def get_data(dirs, clade_defining=False):
         "deletions_x": get_deletions_x(parsed_files),
         "deletions_y": get_deletions_y(parsed_files),
         "tables": get_tables(parsed_files),
-        "dir_strains": dir_strains
+        "dir_strains": dir_strains,
+        "unfiltered_heatmap_y": get_heatmap_y(unfiltered_parsed_files)
     }
     data["heatmap_z"] = get_heatmap_z(parsed_files, data["heatmap_x"])
     data["heatmap_cell_text"] = \
