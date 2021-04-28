@@ -311,6 +311,11 @@ def update_table(data, click_data):
     else:
         table_strain = click_data["points"][0]["y"]
 
+    # If you click a strain, but then hide it, this condition stops
+    # things from breaking.
+    if table_strain not in data["heatmap_y"]:
+        table_strain = data["heatmap_y"][0]
+
     return table_generator.get_table_fig(data, table_strain)
 
 
