@@ -21,7 +21,7 @@ import table_generator
 def get_toolbar_row_div(data):
     """Get Dash Bootstrap Components row that sits above heatmap.
 
-    This contains a col with buttons for showing and uploading strains,
+    This contains a col with buttons for hiding and uploading strains,
     a col for displaying dialog to the user, and the clade defining
     mutations switch.
 
@@ -34,7 +34,7 @@ def get_toolbar_row_div(data):
     ret = dbc.Row([
         dbc.Col(
             dbc.ButtonGroup([
-                get_show_strains_component(data),
+                get_hide_strains_component(data),
                 get_file_upload_component()
             ]),
             className="my-auto",
@@ -54,10 +54,10 @@ def get_toolbar_row_div(data):
     return ret
 
 
-def get_show_strains_component(data):
-    """Get Dash Bootstrap Components dropdown menu for showing strains.
+def get_hide_strains_component(data):
+    """Get Dash Bootstrap Components dropdown menu for hiding strains.
 
-    This function calls ``get_show_strains_component_children``.
+    This function calls ``get_hide_strains_component_children``.
 
     :param data: ``data_parser.get_data`` return value
     :type data: dict
@@ -66,17 +66,18 @@ def get_show_strains_component(data):
     :rtype: dbc.DropdownMenu
     """
     return dbc.DropdownMenu(
-        label="Show",
-        children=get_show_strains_component_children(data),
+        label="Hide",
+        children=get_hide_strains_component_children(data),
         className="mr-1",
-        id="show-dropdown-btn"
+        id="hide-dropdown-btn"
     )
 
 
-def get_show_strains_component_children(data):
+def get_hide_strains_component_children(data):
     """Get Dash Bootstrap Components dropdown menu children.
 
-    In other words, this function actually populates the dropdown menu.
+    In other words, this function actually populates the dropdown menu
+    for hiding strains.
 
     :param data: ``data_parser.get_data`` return value
     :type data: dict

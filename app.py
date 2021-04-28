@@ -202,12 +202,12 @@ def update_dialog_col(new_upload):
 
 
 @app.callback(
-    Output("show-dropdown-btn", "children"),
+    Output("hide-dropdown-btn", "children"),
     Input("data", "data"),
     prevent_initial_call=True
 )
-def update_show_dropdown_btn(data):
-    """Update ``show_dropdown_btn`` div in toolbar.
+def update_hide_dropdown_btn(data):
+    """Update ``hide_dropdown_btn`` div in toolbar.
 
     When the ``data`` variable in the dcc.Store is updated, the
     dropdown will show the updated list of strains.
@@ -219,7 +219,7 @@ def update_show_dropdown_btn(data):
         corresponding to strains in data.
     :rtype: list[dbc.DropdownMenuItem]
     """
-    return div_generator.get_show_strains_component_children(data)
+    return div_generator.get_hide_strains_component_children(data)
 
 
 @app.callback(
