@@ -25,32 +25,57 @@ import table_generator
 app = dash.Dash(__name__,
                 # We can use bootstrap CSS.
                 # https://bit.ly/3tMqY0W for details.
-                external_stylesheets=[dbc.themes.COSMO])
+                external_stylesheets=[dbc.themes.COSMO],
+                # Callbacks break without this, because they reference
+                # divs that are not present on initial page load, or
+                # until ``launch_app`` has finished executing.
+                suppress_callback_exceptions=True)
 
-# Dash is stateless--this global variable should only be referenced at
-# launch.
-# TODO we need to remove the use of this global variable, because it
-#  causes problems on refresh.
-data_ = get_data(["data", "user_data"])
+app.layout = dbc.Container(
+    # In-browser variable only used when page is first loaded. This
+    # variable helps us avoid global variables, which cause problems on
+    # refresh with Dash, as Dash is stateless.
+    dcc.Store("first-launch"),
+    fluid=True,
+    id="main-container")
 
-app.layout = dbc.Container([
-    # These references to data are at launch
-    html.Div(div_generator.get_toolbar_row_div(data_)),
-    html.Div(div_generator.get_heatmap_row_div(data_)),
-    html.Div(div_generator.get_table_row_div(data_)),
-    # These are in-browser variables that Dash can treat as Inputs and
-    # Outputs, in addition to more conventional Dash components like
-    # HTML divs and Plotly figures. ``data`` is the data used to
-    # generate the heatmap and table. A bit confusing, but dcc.Store
-    # variables have data attributes. So ``data`` has a ``data``
-    # attribute.
-    dcc.Store(id="data", data=data_),
-    # The following in-browser variables simply exist to help
-    # modularize the callbacks below, by alerting us when ``data`` is
-    # changed.
-    dcc.Store(id="show-clade-defining"),
-    dcc.Store(id="new-upload")
-], fluid=True)
+
+@app.callback(
+    Output("main-container", "children"),
+    Input("first-launch", "data")
+)
+def launch_app(_):
+    """Generate initial layout on page load.
+
+    ``first-launch`` should only receive input when the page is loaded.
+    We do not care about its value, we just use it to indicate the page
+    was loaded.
+
+    Populating the initial layout with a callback, instead of in the
+    global scope, prevents the application from breaking on page
+    reload. Dash is stateless, so it does not recalculate global
+    variables on page refreshes after the application is first deployed
+    to a server. So new data between page reloads may not be displayed
+    if you populate the initial layout in the global scope.
+    """
+    data_ = get_data(["data", "user_data"])
+    return [
+        html.Div(div_generator.get_toolbar_row_div(data_)),
+        html.Div(div_generator.get_heatmap_row_div(data_)),
+        html.Div(div_generator.get_table_row_div(data_)),
+        # These are in-browser variables that Dash can treat as Inputs and
+        # Outputs, in addition to more conventional Dash components like
+        # HTML divs and Plotly figures. ``data`` is the data used to
+        # generate the heatmap and table. A bit confusing, but dcc.Store
+        # variables have data attributes. So ``data`` has a ``data``
+        # attribute.
+        dcc.Store(id="data", data=data_),
+        # The following in-browser variables simply exist to help
+        # modularize the callbacks below, by alerting us when ``data`` is
+        # changed.
+        dcc.Store(id="show-clade-defining"),
+        dcc.Store(id="new-upload")
+    ]
 
 
 @app.callback(
@@ -127,6 +152,7 @@ def update_new_upload(file_contents, filename):
     :return: Dictionary describing upload attempt
     :rtype: dict
     """
+    data_ = get_data(["data", "user_data"])
     # TODO more thorough validation, maybe once we finalize data
     #  standards.
     new_strain, ext = filename.rsplit(".", 1)
