@@ -88,7 +88,14 @@ def get_hide_strains_component_children(data):
     dropdown_children = []
     for dir_ in reversed(data["dir_strains"]):
         for strain in reversed(data["dir_strains"][dir_]):
-            dropdown_children.append(dbc.DropdownMenuItem(strain))
+            pattern_matching_id = {
+                "type": "hide-strain-dropdown-item",
+                "index": "n_clicks"
+            }
+            child = dbc.DropdownMenuItem(strain,
+                                         active=False,
+                                         id=pattern_matching_id)
+            dropdown_children.append(child)
         # Divider between directories
         dropdown_children.append(dbc.DropdownMenuItem(divider=True))
     # Remove last divider

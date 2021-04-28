@@ -14,7 +14,7 @@ from base64 import b64decode
 import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
-from dash.dependencies import Input, Output
+from dash.dependencies import ALL, Input, Output
 import dash_html_components as html
 
 from data_parser import get_data
@@ -74,7 +74,8 @@ def launch_app(_):
         # modularize the callbacks below, by alerting us when ``data`` is
         # changed.
         dcc.Store(id="show-clade-defining"),
-        dcc.Store(id="new-upload")
+        dcc.Store(id="new-upload"),
+        dcc.Store(id="hidden-strains", data=[])
     ]
 
 
@@ -83,16 +84,17 @@ def launch_app(_):
     inputs=[
         Input("show-clade-defining", "data"),
         Input("new-upload", "data"),
+        Input("hidden-strains", "data")
     ],
     prevent_initial_call=True
 )
-def update_data(show_clade_defining, new_upload):
+def update_data(show_clade_defining, new_upload, hidden_strains):
     """Update ``data`` variable in dcc.Store.
 
     This is a central callback. It triggers a change to the ``data``
     variable in dcc.Store, which triggers cascading changes in several
     divs. This function receives multiple inputs, corresponding to
-    different ways the ``data`` variable could be changed.
+    different ways the ``data`` variable could be changed. TODO
 
     :param show_clade_defining: ``update_show_clade-defining`` return
         value.
@@ -174,6 +176,26 @@ def update_new_upload(file_contents, filename):
         status = "ok"
         msg = ""
     return {"filename": filename, "msg": msg, "status": status}
+
+
+@app.callback(
+    Output("hidden-strains", "data"),
+    inputs=[
+        Input({"type": "hide-strain-dropdown-item", "index": ALL}, "n_clicks"),
+        Input({"type": "hide-strain-dropdown-item", "index": ALL}, "children"),
+        Input({"type": "hide-strain-dropdown-item", "index": ALL}, "active")
+    ],
+    prevent_initial_call=True
+)
+def update_hidden_strains(n_clicks_list, strain_list, active_list):
+    """TODO"""
+    hidden_strains = []
+    for i, strain in enumerate(strain_list):
+        if n_clicks_list[i] and not active_list[i]:
+            hidden_strains.append(strain)
+        elif active_list[i]:
+            hidden_strains.append(strain)
+    return hidden_strains
 
 
 @app.callback(
