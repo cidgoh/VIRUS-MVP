@@ -16,7 +16,8 @@ def parse_data_files(dir_):
     ``parse_data_files`` does not care about Plotly. It simply parses
     tsv files that are in the format of tsv files found in data/, and
     puts them into an easy to iterate Dictionary for ``get_data`` to
-    manipulate for Plotly.
+    manipulate for Plotly. The filename of these tsv files is
+    interpreted to be the strain name.
 
     TODO: there is also some data being parsed from some other files.
         We should obtain that data upstream when the files are
@@ -32,10 +33,13 @@ def parse_data_files(dir_):
         # Maps cds info in tsv files to actual genes
         cds_gene_map = json.load(fp)
     with os.scandir(dir_) as it:
-        for entry in it:
-            strain = entry.name.split("_")[0]
+        # Iterate through tsv files in dir_ sorted by last modification
+        # time.
+        for entry in sorted(it, key=os.path.getmtime):
+            strain, ext = entry.name.rsplit(".", 1)
+            if ext != "tsv":
+                continue
             ret[strain] = {}
-            # Iterate through tsv files in dir_
             with open(entry.path) as fp:
                 reader = csv.DictReader(fp, delimiter="\t")
                 for row in reader:
@@ -48,6 +52,8 @@ def parse_data_files(dir_):
                     ret[strain][pos]["alt_codon"] = row["ALT_CODON"]
                     ret[strain][pos]["ref_aa"] = row["REF_AA"]
                     ret[strain][pos]["alt_aa"] = row["ALT_AA"]
+                    # We update this later
+                    ret[strain][pos]["clade_defining"] = False
 
                     gff_feature = row["GFF_FEATURE"]
                     if gff_feature in cds_gene_map:
@@ -64,6 +70,10 @@ def parse_data_files(dir_):
                     else:
                         ret[strain][pos]["mutation_type"] = "snp"
 
+    # TODO: we should add functionality to vcf files upstream of this
+    #  codebase.
+    # TODO: how do we do clade defining mutations for user uploaded
+    #  files?
     functional_annotations_dict = {}
     functional_annotations_tsv_path = \
         "VOC clade-defining mutations - functional_annotation.tsv"
@@ -85,6 +95,8 @@ def parse_data_files(dir_):
                 functional_annotations_dict[strain] = {}
             functional_annotations_dict[strain][mutation_name] = functions
 
+    # TODO: we should add clade defining key to vcf files upstream of
+    #  this codebase.
     with open("VOC clade-defining mutations - gff3.tsv") as fp:
         reader = csv.DictReader(fp, delimiter="\t")
         for row in reader:
@@ -102,6 +114,7 @@ def parse_data_files(dir_):
             pos = int(row["#start"])
             mutation_name = attributes_dict["Alias"]
             if strain in ret and pos in ret[strain]:
+                ret[strain][pos]["clade_defining"] = True
                 if mutation_name != "":
                     ret[strain][pos]["mutation_name"] = mutation_name
                 if mutation_name in functional_annotations_dict[strain]:
@@ -111,7 +124,7 @@ def parse_data_files(dir_):
     return ret
 
 
-def get_data(dir_):
+def get_data(dirs, clade_defining=False, hidden_strains=[]):
     """Get relevant data for Plotly visualizations in this application.
 
     This will include table data, which is straight forward. But this
@@ -122,17 +135,43 @@ def get_data(dir_):
     Basically, this function gives us data to plug into the
     visualization functions of Plotly.
 
-    This relevant data is parsed from tsv files in the form of the tsv
-    files found in data/. Other folders with similar formats can be
-    parsed too.
+    This relevant data is parsed from tsv files across one or more
+    folders, with each tsv file in the form of the tsv files found in
+    ``data/``.
 
-    :param dir_: Path to folder to obtain data from
-    :type dir_: str
+    We will also keep track of the directory each strain came from,
+    because it becomes useful when distinguishing user uploaded strains
+    from other strains. We will also keep track of strains the user has
+    chosen to hide.
+
+    :param dirs: List of paths to folders to obtain data from
+    :type dirs: list[str]
+    :param clade_defining: Get data for clade defining mutations only
+    :type clade_defining: bool
+    :param hidden_strains: List of strains from the dirs that the user
+        does not want to display in the heatmap and table.
+    :type hidden_strains: list[str]
     :return: Information on relevant columns in tsv files stored in
-        dir_.
+        folders listed in dirs.
     :rtype: dict
     """
-    parsed_files = parse_data_files(dir_)
+    parsed_files = {}
+    dir_strains = {}
+    for dir_ in dirs:
+        this_parsed_files = parse_data_files(dir_)
+        dir_strains[dir_] = list(this_parsed_files.keys())
+        parsed_files = {**parsed_files, **this_parsed_files}
+
+    if clade_defining:
+        for strain in parsed_files:
+            kv_pairs = parsed_files[strain].items()
+            parsed_files[strain] = \
+                {k: v for k, v in kv_pairs if v["clade_defining"]}
+
+    unfiltered_parsed_files = parsed_files
+    parsed_files =\
+        {k: v for k, v in parsed_files.items() if k not in hidden_strains}
+
     data = {
         "heatmap_x": get_heatmap_x(parsed_files),
         "heatmap_y": get_heatmap_y(parsed_files),
@@ -140,7 +179,9 @@ def get_data(dir_):
         "insertions_y": get_insertions_y(parsed_files),
         "deletions_x": get_deletions_x(parsed_files),
         "deletions_y": get_deletions_y(parsed_files),
-        "tables": get_tables(parsed_files)
+        "tables": get_tables(parsed_files),
+        "dir_strains": dir_strains,
+        "unfiltered_heatmap_y": get_heatmap_y(unfiltered_parsed_files)
     }
     data["heatmap_z"] = get_heatmap_z(parsed_files, data["heatmap_x"])
     data["heatmap_cell_text"] = \

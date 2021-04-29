@@ -81,7 +81,16 @@ def get_heatmap_center_fig(data):
     ret.add_trace(heatmap_center_base_obj, row=2, col=1)
 
     # Add lines between rows of cells
+    # TODO I'm lazy--any way to not hardcode "data" here?
+    our_strains = data["dir_strains"]["data"]
+    visible_strains = data["heatmap_y"]
+    thick_line_y = \
+        len([strain for strain in visible_strains if strain in our_strains])
     for y, _ in enumerate(heatmap_center_base_obj["y"]):
+        if y == thick_line_y:
+            width = 4
+        else:
+            width = 2
         ret.add_shape({
             "type": "line",
             "xref": "x2",
@@ -89,7 +98,8 @@ def get_heatmap_center_fig(data):
             "x0": -0.5,
             "x1": len(heatmap_center_base_obj["x"]) - 0.5,
             "y0": y-0.5,
-            "y1": y-0.5
+            "y1": y-0.5,
+            "line": {"width": width}
         })
 
     # Overlay insertions over cells
@@ -313,9 +323,9 @@ def get_heatmap_left_base_obj(data):
     :rtype: go.Heatmap
     """
     ret = go.Heatmap(
-        x=[1],
+        x=[0],
         y=data["heatmap_y"],
-        z=[[1] for _ in data["heatmap_y"]],
+        z=[[0] for _ in data["heatmap_y"]],
         showscale=False,
         hoverinfo="none",
         colorscale="Greys",
