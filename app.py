@@ -95,13 +95,15 @@ def update_data(show_clade_defining, new_upload, hidden_strains):
     This is a central callback. It triggers a change to the ``data``
     variable in dcc.Store, which triggers cascading changes in several
     divs. This function receives multiple inputs, corresponding to
-    different ways the ``data`` variable could be changed. TODO
+    different ways the ``data`` variable could be changed.
 
     :param show_clade_defining: ``update_show_clade-defining`` return
         value.
     :type show_clade_defining: bool
     :param new_upload: ``update_new_upload`` return value
     :type new_upload: dict
+    :param hidden_strains: ``update_hidden_strains`` return value
+    :type hidden_strains: list[str]
     :return: ``get_data`` return value
     :rtype: dict
     """
@@ -191,7 +193,31 @@ def update_new_upload(file_contents, filename):
     prevent_initial_call=True
 )
 def update_hidden_strains(n_clicks_list, strain_list, active_list):
-    """TODO"""
+    """Update ``hidden-strains`` variable in dcc.Store.
+
+    When a strain in the hide strains dropdown menu is activated, it is
+    added to ``hidden-strains``. When it is unactivated, it is removed.
+    Hidden strains are not displayed in the heatmap or table.
+    TODO: probably going to take a different approach to this, with a
+     more complex dropdown that allows you to reorder the heatmap and
+     select reference strains for clade defining mutations.
+
+    :param n_clicks_list: List of elements corresponding to each
+        dropdown menu item, with ``None`` for every element except the
+        one that was clicked, which has a ``1`` value.
+    :type n_clicks_list: list
+    :param strain_list: List of strains corresponding to each dropdown
+        menu item.
+    :type strain_list: list[str]
+    :param active_list: List of ``True`` or ``False`` values
+        corresponding to ``active`` attribute of each dropdown menu
+        item.
+    :type active_list: list[bool]
+    :return: List of strains that should not be displayed by the
+        heatmap or table, and should be marked active in the hide
+        strain dropdown menu.
+    :rtype: list[str]
+    """
     hidden_strains = []
     for i, strain in enumerate(strain_list):
         if n_clicks_list[i] and not active_list[i]:

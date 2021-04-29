@@ -130,7 +130,7 @@ def get_data(dirs, clade_defining=False, hidden_strains=[]):
     This will include table data, which is straight forward. But this
     will also include various information related to the main heatmap,
     including heatmap x y coordinates for mutations, insertions,
-    deletions, and hover text. TODO
+    deletions, and hover text.
 
     Basically, this function gives us data to plug into the
     visualization functions of Plotly.
@@ -141,12 +141,16 @@ def get_data(dirs, clade_defining=False, hidden_strains=[]):
 
     We will also keep track of the directory each strain came from,
     because it becomes useful when distinguishing user uploaded strains
-    from other strains.
+    from other strains. We will also keep track of strains the user has
+    chosen to hide.
 
     :param dirs: List of paths to folders to obtain data from
     :type dirs: list[str]
     :param clade_defining: Get data for clade defining mutations only
     :type clade_defining: bool
+    :param hidden_strains: List of strains from the dirs that the user
+        does not want to display in the heatmap and table.
+    :type hidden_strains: list[str]
     :return: Information on relevant columns in tsv files stored in
         folders listed in dirs.
     :rtype: dict

@@ -82,7 +82,6 @@ def get_heatmap_center_fig(data):
 
     # Add lines between rows of cells
     # TODO I'm lazy--any way to not hardcode "data" here?
-    # TODO bug when strains hidden
     our_strains = data["dir_strains"]["data"]
     visible_strains = data["heatmap_y"]
     thick_line_y = \
