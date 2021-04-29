@@ -8,6 +8,8 @@ functions return divs in grid format.
 Most of these functions are only called at launch, with callbacks only
 changing sub-elements within the HTML components, like figures or
 sub-divs.
+
+TODO maybe we should have separate files for each component
 """
 
 import dash_bootstrap_components as dbc
@@ -35,6 +37,7 @@ def get_toolbar_row_div(data):
         dbc.Col(
             dbc.ButtonGroup([
                 get_hide_strains_component(data),
+                get_select_lineages_component(),
                 get_file_upload_component()
             ]),
             className="my-auto",
@@ -52,6 +55,52 @@ def get_toolbar_row_div(data):
         className="mt-3"
     )
     return ret
+
+
+def get_select_lineages_component():
+    """TODO"""
+    return dbc.Button("Select lineages",
+                      id="open-select-lineages-modal",
+                      className="mr-1")
+
+
+def get_select_lineages_modal(data):
+    """TODO"""
+    return dbc.Modal([
+        dbc.ModalHeader("Select lineages"),
+        dbc.ModalBody(get_select_lineages_modal_body(data)),
+        dbc.ModalFooter(get_select_lineages_modal_footer())
+    ], id="select-lineages-modal", is_open=True)
+
+
+def get_select_lineages_modal_body(data):
+    """TODO"""
+    modal_body = []
+    for dir_ in reversed(data["dir_strains"]):
+        checklist_options = []
+        selected_values = []
+        for strain in reversed(data["dir_strains"][dir_]):
+            checklist_options.append({"label": strain, "value": strain})
+            selected_values.append(strain)
+        form_group = dbc.FormGroup([
+            dbc.Label(dir_),
+            dbc.Checklist(options=checklist_options, value=selected_values)
+        ])
+        modal_body.append(form_group)
+    return modal_body
+
+
+def get_select_lineages_modal_footer():
+    """TODO"""
+    return dbc.ButtonGroup([
+        dbc.Button("Ok",
+                   className="mr-1",
+                   color="success",
+                   id="select-lineages-ok-btn"),
+        dbc.Button("Cancel",
+                   color="danger",
+                   id="select-lineages-cancel-btn"),
+    ])
 
 
 def get_hide_strains_component(data):
