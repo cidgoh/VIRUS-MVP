@@ -81,11 +81,20 @@ def get_select_lineages_modal_body(data):
         checklist_options = []
         selected_values = []
         for strain in reversed(data["dir_strains"][dir_]):
-            checklist_options.append({"label": strain, "value": strain})
-            selected_values.append(strain)
+            checklist_options.append({
+                "label": strain,
+                "value": strain
+            })
+            # Strain is not currently hidden
+            if strain in data["heatmap_y"]:
+                selected_values.append(strain)
         form_group = dbc.FormGroup([
             dbc.Label(dir_),
-            dbc.Checklist(options=checklist_options, value=selected_values)
+            dbc.Checklist(
+                id={"type": "select-lineages-modal-checklist", "index": dir_},
+                options=checklist_options,
+                value=selected_values
+            )
         ])
         modal_body.append(form_group)
     return modal_body

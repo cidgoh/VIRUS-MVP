@@ -15,6 +15,7 @@ import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 from dash.dependencies import ALL, Input, Output, State
+from dash.exceptions import PreventUpdate
 import dash_html_components as html
 
 from data_parser import get_data
@@ -186,14 +187,13 @@ def update_new_upload(file_contents, filename):
 
 @app.callback(
     Output("hidden-strains", "data"),
-    inputs=[
-        Input({"type": "hide-strain-dropdown-item", "index": ALL}, "n_clicks"),
-        Input({"type": "hide-strain-dropdown-item", "index": ALL}, "children"),
-        Input({"type": "hide-strain-dropdown-item", "index": ALL}, "active")
-    ],
+    Input("select-lineages-ok-btn", "n_clicks"),
+    State({"type": "select-lineages-modal-checklist", "index": ALL}, "value"),
+    State("data", "data"),
+    State("hidden-strains", "data"),
     prevent_initial_call=True
 )
-def update_hidden_strains(n_clicks_list, strain_list, active_list):
+def update_hidden_strains(_, values, data, old_hidden_strains):
     """Update ``hidden-strains`` variable in dcc.Store.
 
     When a strain in the hide strains dropdown menu is activated, it is
@@ -202,6 +202,8 @@ def update_hidden_strains(n_clicks_list, strain_list, active_list):
     TODO: probably going to take a different approach to this, with a
      more complex dropdown that allows you to reorder the heatmap and
      select reference strains for clade defining mutations.
+
+    TODO: update
 
     :param n_clicks_list: List of elements corresponding to each
         dropdown menu item, with ``None`` for every element except the
@@ -219,12 +221,15 @@ def update_hidden_strains(n_clicks_list, strain_list, active_list):
         strain dropdown menu.
     :rtype: list[str]
     """
+    # Merge list of lists into single list. I got it from:
+    # https://stackoverflow.com/a/716761/11472358.
+    checked_strains = [j for i in values for j in i]
     hidden_strains = []
-    for i, strain in enumerate(strain_list):
-        if n_clicks_list[i] and not active_list[i]:
+    for strain in data["unfiltered_heatmap_y"]:
+        if strain not in checked_strains:
             hidden_strains.append(strain)
-        elif not n_clicks_list[i] and active_list[i]:
-            hidden_strains.append(strain)
+    if hidden_strains == old_hidden_strains:
+        raise PreventUpdate
     return hidden_strains
 
 
@@ -257,8 +262,8 @@ def update_dialog_col(new_upload):
     Output("select-lineages-modal", "is_open"),
     Output("select-lineages-modal-body", "children"),
     Input("open-select-lineages-modal-btn", "n_clicks"),
-    Input("select-lineages-cancel-btn", "n_clicks"),
     Input("select-lineages-ok-btn", "n_clicks"),
+    Input("select-lineages-cancel-btn", "n_clicks"),
     State("data", "data"),
     prevent_initial_call=True
 )
