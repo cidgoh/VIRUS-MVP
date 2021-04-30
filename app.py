@@ -62,10 +62,10 @@ def launch_app(_):
     hidden_strains = []
     data_ = get_data(["data", "user_data"], hidden_strains=hidden_strains)
     return [
-        html.Div(div_generator.get_toolbar_row_div(data_)),
+        html.Div(div_generator.get_toolbar_row_div()),
         html.Div(div_generator.get_heatmap_row_div(data_)),
         html.Div(div_generator.get_table_row_div(data_)),
-        html.Div(div_generator.get_select_lineages_modal(data_)),
+        html.Div(div_generator.get_select_lineages_modal()),
         # These are in-browser variables that Dash can treat as Inputs and
         # Outputs, in addition to more conventional Dash components like
         # HTML divs and Plotly figures. ``data`` is the data used to

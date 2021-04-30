@@ -20,8 +20,9 @@ import heatmap_generator
 import table_generator
 
 
-def get_toolbar_row_div(data):
+def get_toolbar_row_div():
     """Get Dash Bootstrap Components row that sits above heatmap.
+    TODO
 
     This contains a col with buttons for hiding and uploading strains,
     a col for displaying dialog to the user, and the clade defining
@@ -36,7 +37,6 @@ def get_toolbar_row_div(data):
     ret = dbc.Row([
         dbc.Col(
             dbc.ButtonGroup([
-                get_hide_strains_component(data),
                 get_select_lineages_component(),
                 get_file_upload_component()
             ]),
@@ -64,7 +64,7 @@ def get_select_lineages_component():
                       className="mr-1")
 
 
-def get_select_lineages_modal(data):
+def get_select_lineages_modal():
     """TODO"""
     return dbc.Modal([
         dbc.ModalHeader("Select lineages"),
@@ -111,60 +111,6 @@ def get_select_lineages_modal_footer():
                    color="danger",
                    id="select-lineages-cancel-btn"),
     ])
-
-
-def get_hide_strains_component(data):
-    """Get Dash Bootstrap Components dropdown menu for hiding strains.
-
-    This function calls ``get_hide_strains_component_children``.
-
-    :param data: ``data_parser.get_data`` return value
-    :type data: dict
-    :return: Dash Bootstrap Components dropdown containing strains in
-        data.
-    :rtype: dbc.DropdownMenu
-    """
-    return dbc.DropdownMenu(
-        label="Hide",
-        children=get_hide_strains_component_children(data),
-        className="mr-1",
-        id="hide-dropdown-btn"
-    )
-
-
-def get_hide_strains_component_children(data):
-    """Get Dash Bootstrap Components dropdown menu children.
-
-    In other words, this function actually populates the dropdown menu
-    for hiding strains.
-
-    :param data: ``data_parser.get_data`` return value
-    :type data: dict
-    :return: List of Dash Bootstrap Components dropdown menu items
-        corresponding to strains in data.
-    :rtype: list[dbc.DropdownMenuItem]
-    """
-    dropdown_children = []
-    for dir_ in reversed(data["dir_strains"]):
-        for strain in reversed(data["dir_strains"][dir_]):
-            pattern_matching_id = {
-                "type": "hide-strain-dropdown-item",
-                "index": "n_clicks"
-            }
-            # Strain is hidden
-            active = strain not in data["heatmap_y"]
-            # If this is the only visible strain, disable it
-            disabled = not active and len(data["heatmap_y"]) == 1
-            child = dbc.DropdownMenuItem(strain,
-                                         active=active,
-                                         disabled=disabled,
-                                         id=pattern_matching_id)
-            dropdown_children.append(child)
-        # Divider between directories
-        dropdown_children.append(dbc.DropdownMenuItem(divider=True))
-    # Remove last divider
-    dropdown_children.pop()
-    return dropdown_children
 
 
 def get_file_upload_component():
