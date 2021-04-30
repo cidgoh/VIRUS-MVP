@@ -14,7 +14,7 @@ from base64 import b64decode
 import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
-from dash.dependencies import ALL, Input, Output
+from dash.dependencies import ALL, Input, Output, State
 import dash_html_components as html
 
 from data_parser import get_data
@@ -251,6 +251,26 @@ def update_dialog_col(new_upload):
                          className="mb-0 p-1 d-inline-block")
     else:
         return None
+
+
+@app.callback(
+    Output("select-lineages-modal", "is_open"),
+    Output("select-lineages-modal-body", "children"),
+    Input("open-select-lineages-modal-btn", "n_clicks"),
+    Input("select-lineages-cancel-btn", "n_clicks"),
+    Input("select-lineages-ok-btn", "n_clicks"),
+    State("data", "data"),
+    prevent_initial_call=True
+)
+def toggle_select_lineages_modal(_, __, ___, data):
+    """TODO"""
+    ctx = dash.callback_context
+    triggered_prop_id = ctx.triggered[0]["prop_id"]
+    if triggered_prop_id == "open-select-lineages-modal-btn.n_clicks":
+        modal_body = div_generator.get_select_lineages_modal_body(data)
+        return True, modal_body
+    else:
+        return False, None
 
 
 @app.callback(

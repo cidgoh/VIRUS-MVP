@@ -60,7 +60,7 @@ def get_toolbar_row_div(data):
 def get_select_lineages_component():
     """TODO"""
     return dbc.Button("Select lineages",
-                      id="open-select-lineages-modal",
+                      id="open-select-lineages-modal-btn",
                       className="mr-1")
 
 
@@ -68,9 +68,10 @@ def get_select_lineages_modal(data):
     """TODO"""
     return dbc.Modal([
         dbc.ModalHeader("Select lineages"),
-        dbc.ModalBody(get_select_lineages_modal_body(data)),
+        # Populated dynamically
+        dbc.ModalBody(None, id="select-lineages-modal-body"),
         dbc.ModalFooter(get_select_lineages_modal_footer())
-    ], id="select-lineages-modal", is_open=True)
+    ], id="select-lineages-modal")
 
 
 def get_select_lineages_modal_body(data):
