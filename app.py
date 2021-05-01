@@ -225,10 +225,13 @@ def update_hidden_strains(_, values, data, old_hidden_strains):
     # https://stackoverflow.com/a/716761/11472358.
     checked_strains = [j for i in values for j in i]
     hidden_strains = []
-    for strain in data["unfiltered_heatmap_y"]:
+    all_strains = data["unfiltered_heatmap_y"]
+    for strain in all_strains:
         if strain not in checked_strains:
             hidden_strains.append(strain)
-    if hidden_strains == old_hidden_strains:
+    no_change = hidden_strains == old_hidden_strains
+    all_hidden = hidden_strains == all_strains
+    if no_change or all_hidden:
         raise PreventUpdate
     return hidden_strains
 
