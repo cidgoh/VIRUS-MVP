@@ -47,7 +47,8 @@ def get_heatmap_row_div(data):
             html.Div(
                 dcc.Graph(
                     id="heatmap-left-fig",
-                    figure=get_heatmap_left_fig(data)
+                    figure=get_heatmap_left_fig(data),
+                    config={"displayModeBar": False}
                 )
             ),
             width=1, style={"overflowX": "hidden"}
@@ -57,6 +58,7 @@ def get_heatmap_row_div(data):
                 dcc.Graph(
                     id="heatmap-center-fig",
                     figure=get_heatmap_center_fig(data),
+                    config={"displayModeBar": False},
                     # There is some sort of weirdness that
                     # overrides figure layout autosize=False value
                     # when the heatmap is re-rendered after launch,
@@ -76,7 +78,8 @@ def get_heatmap_row_div(data):
             html.Div(
                 dcc.Graph(
                     id="heatmap-right-fig",
-                    figure=get_heatmap_right_fig(data)
+                    figure=get_heatmap_right_fig(data),
+                    config={"displayModeBar": False}
                 ),
                 style={"width": "90vw"}, className="ml-3"
             ),
@@ -185,6 +188,8 @@ def get_heatmap_center_fig(data):
         "t": 0,
         "pad": 0
     })
+    ret.update_xaxes(fixedrange=True)
+    ret.update_yaxes(fixedrange=True)
 
     return ret
 
@@ -364,6 +369,8 @@ def get_heatmap_left_fig(data):
     ret.update_layout(plot_bgcolor="white")
     ret.update_xaxes(visible=False)
     ret.update_yaxes(visible=False)
+    ret.update_xaxes(fixedrange=True)
+    ret.update_yaxes(fixedrange=True)
 
     return ret
 
@@ -456,6 +463,9 @@ def get_heatmap_right_fig(data):
         "r": 0,
         "t": 0
     })
+    ret.update_xaxes(fixedrange=True)
+    ret.update_yaxes(fixedrange=True)
+
     return ret
 
 
