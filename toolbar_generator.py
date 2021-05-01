@@ -7,9 +7,9 @@ import dash_core_components as dcc
 def get_toolbar_row_div():
     """Get Dash Bootstrap Components row that sits above heatmap.
 
-    This contains a col with buttons for hiding and uploading strains,
-    a col for displaying dialog to the user, and the clade defining
-    mutations switch.
+    This contains a col with buttons for selecting and uploading
+    strains, a col for displaying dialog to the user, and the clade
+    defining mutations switch.
 
     :return: Dash Bootstrap Component row with upload button and clade
         defining mutations switch.
@@ -18,13 +18,14 @@ def get_toolbar_row_div():
     ret = dbc.Row([
         dbc.Col(
             dbc.ButtonGroup([
-                get_select_lineages_component(),
+                get_select_lineages_toolbar_btn(),
                 get_file_upload_component()
             ]),
             className="my-auto",
             width={"offset": 1}
         ),
         dbc.Col(
+            # Empty on launch; populated after user uploads data
             className="my-auto",
             id="dialog-col"
         ),
@@ -38,25 +39,44 @@ def get_toolbar_row_div():
     return ret
 
 
-def get_select_lineages_component():
-    """TODO"""
+def get_select_lineages_toolbar_btn():
+    """Returns toolbar button for opening select lineages modal.
+
+    :return: Dash Bootstrap Components button with appropriate label
+        for selecting lineages.
+    :rtype: dbc.Button
+    """
     return dbc.Button("Select lineages",
                       id="open-select-lineages-modal-btn",
                       className="mr-1")
 
 
 def get_select_lineages_modal():
-    """TODO"""
+    """Returns select lineages modal.
+
+    This modal is initially closed, and the body is empty.
+
+    :return: Initially closed Dash Bootstrap Components modal for
+        selecting lineages.
+    :rtype: dbc.Modal
+    """
     return dbc.Modal([
         dbc.ModalHeader("Select lineages"),
-        # Populated dynamically
+        # Empty at launch; populated when user opens modal
         dbc.ModalBody(None, id="select-lineages-modal-body"),
         dbc.ModalFooter(get_select_lineages_modal_footer())
     ], id="select-lineages-modal")
 
 
 def get_select_lineages_modal_body(data):
-    """TODO"""
+    """Returns select lineages modal body.
+
+    :param data: ``get_data`` return value
+    :type data: dict
+    :return: Checkboxes for each directory containing strains, with
+        only boxes for non-hidden strains checked.
+    :rtype: list[dbc.FormGroup]
+    """
     modal_body = []
     for dir_ in reversed(data["dir_strains"]):
         checklist_options = []
@@ -82,7 +102,16 @@ def get_select_lineages_modal_body(data):
 
 
 def get_select_lineages_modal_footer():
-    """TODO"""
+    """Returns select lineages modal footer.
+
+    The footer has an ok and and cancel button for confirming and
+    cancelling changes respectively for the strains that should be
+    hidden in the heatmap.
+
+    :return: Dash Bootstrap Components button group that will go inside
+        the select lineages modal footer.
+    :rtype: dbc.ButtonGroup
+    """
     return dbc.ButtonGroup([
         dbc.Button("Ok",
                    className="mr-1",

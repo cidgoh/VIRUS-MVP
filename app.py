@@ -49,8 +49,8 @@ def launch_app(_):
     """Generate initial layout on page load.
 
     ``first-launch`` should only receive input when the page is loaded.
-    We do not care about its value, we just use it to indicate the page
-    was loaded.
+    We do not care about its value, as we just use it to indicate the
+    page was loaded.
 
     Populating the initial layout with a callback, instead of in the
     global scope, prevents the application from breaking on page
@@ -74,8 +74,8 @@ def launch_app(_):
         # attribute.
         dcc.Store(id="data", data=data_),
         # The following in-browser variables simply exist to help
-        # modularize the callbacks below, by alerting us when ``data`` is
-        # changed.
+        # modularize the callbacks below, by alerting us when ``data``
+        # should be changed.
         dcc.Store(id="show-clade-defining"),
         dcc.Store(id="new-upload"),
         dcc.Store(id="hidden-strains", data=hidden_strains)
@@ -109,10 +109,12 @@ def update_data(show_clade_defining, new_upload, hidden_strains):
     :return: ``get_data`` return value
     :rtype: dict
     """
+    # Do not update if the input is a new upload that failed
     ctx = dash.callback_context
     if ctx.triggered[0]["prop_id"] == "new-upload.data":
         if new_upload["status"] == "error":
-            return dash.dash.no_update
+            raise PreventUpdate
+
     return get_data(["data", "user_data"],
                     clade_defining=show_clade_defining,
                     hidden_strains=hidden_strains)
@@ -132,7 +134,7 @@ def update_show_clade_defining(switches_value):
 
     :param switches_value: ``[1]`` if the clade defining mutation
         switch is switched on, and ``[]`` if it is not.
-    :type show_clade_defining: list
+    :type switches_value: list
     :return: True if clade defining mutations switch is switched on
     :rtype: bool
     """
@@ -196,43 +198,42 @@ def update_new_upload(file_contents, filename):
 def update_hidden_strains(_, values, data, old_hidden_strains):
     """Update ``hidden-strains`` variable in dcc.Store.
 
-    When a strain in the hide strains dropdown menu is activated, it is
-    added to ``hidden-strains``. When it is unactivated, it is removed.
-    Hidden strains are not displayed in the heatmap or table.
-    TODO: probably going to take a different approach to this, with a
-     more complex dropdown that allows you to reorder the heatmap and
-     select reference strains for clade defining mutations.
+    When the OK button is clicked in the select lineages modal, the
+    unchecked boxes are returned as the new ``hidden-strains`` value.
 
-    TODO: update
-
-    :param n_clicks_list: List of elements corresponding to each
-        dropdown menu item, with ``None`` for every element except the
-        one that was clicked, which has a ``1`` value.
-    :type n_clicks_list: list
-    :param strain_list: List of strains corresponding to each dropdown
-        menu item.
-    :type strain_list: list[str]
-    :param active_list: List of ``True`` or ``False`` values
-        corresponding to ``active`` attribute of each dropdown menu
-        item.
-    :type active_list: list[bool]
+    :param _: Otherwise useless input only needed to alert us when the
+        ok button in the select lineages modal was clicked.
+    :param values: List of lists, with the nested lists containing
+        strains from different directories, that had checked boxes when
+        the select lineages modal was closed.
+    :type values: list
+    :param data: Current value for ``data`` variable; see ``get_data``
+        return value.
+    :type data: dict
+    :param old_hidden_strains: Current value for ``hidden-strains``
+        variable; see the return value of this function.
+    :type old_hidden_strains: list[str]
     :return: List of strains that should not be displayed by the
-        heatmap or table, and should be marked active in the hide
-        strain dropdown menu.
+        heatmap or table.
     :rtype: list[str]
     """
     # Merge list of lists into single list. I got it from:
     # https://stackoverflow.com/a/716761/11472358.
     checked_strains = [j for i in values for j in i]
-    hidden_strains = []
+
     all_strains = data["unfiltered_heatmap_y"]
+    hidden_strains = []
     for strain in all_strains:
         if strain not in checked_strains:
             hidden_strains.append(strain)
+
+    # Do not update if the hidden strains did not change, or if the
+    # user chose to hide all strains.
     no_change = hidden_strains == old_hidden_strains
     all_hidden = hidden_strains == all_strains
     if no_change or all_hidden:
         raise PreventUpdate
+
     return hidden_strains
 
 
@@ -271,35 +272,33 @@ def update_dialog_col(new_upload):
     prevent_initial_call=True
 )
 def toggle_select_lineages_modal(_, __, ___, data):
-    """TODO"""
+    """Open or close select lineages modal.
+
+    Not only is this function in charge of opening or closing the
+    select lineages modal, it is also in charge of dynamically
+    populating the select lineages modal body when the modal is opened.
+
+    :param _: Select lineages button in toolbar was clicked
+    :param __: OK button in select lineages modal was clicked
+    :param ___: Cancel button in select lineages modal was clicked
+    :param data: Current value for ``data`` variable; see ``get_data``
+        return value.
+    :type data: dict
+    :return: Boolean representing whether the select lineages modal is
+        open or closed, and content representing the select lineages
+        modal body.
+    :rtype: (bool, list[dbc.FormGroup])
+    """
     ctx = dash.callback_context
     triggered_prop_id = ctx.triggered[0]["prop_id"]
+    # We only open the modal when the select lineages modal btn in the
+    # toolbar is clicked.
     if triggered_prop_id == "open-select-lineages-modal-btn.n_clicks":
         modal_body = toolbar_generator.get_select_lineages_modal_body(data)
         return True, modal_body
     else:
+        # No need to populate modal body if the modal is closed
         return False, None
-
-
-@app.callback(
-    Output("hide-dropdown-btn", "children"),
-    Input("data", "data"),
-    prevent_initial_call=True
-)
-def update_hide_dropdown_btn(data):
-    """Update ``hide_dropdown_btn`` div in toolbar.
-
-    When the ``data`` variable in the dcc.Store is updated, the
-    dropdown will show the updated list of strains.
-
-    :param data: ``get_data`` return value, transported here by
-        ``update_data``.
-    :type data: dict
-    :return: List of Dash Bootstrap Components dropdown menu items
-        corresponding to strains in data.
-    :rtype: list[dbc.DropdownMenuItem]
-    """
-    return toolbar_generator.get_hide_strains_component_children(data)
 
 
 @app.callback(
