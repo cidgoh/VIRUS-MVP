@@ -6,6 +6,9 @@ functionality did not provide the view we wanted.
 
 import json
 
+import dash_bootstrap_components as dbc
+import dash_core_components as dcc
+import dash_html_components as html
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -24,6 +27,62 @@ def get_color_scale():
         [1/2, "#ffffbf"],
         [1, "#91bfdb"]
     ]
+    return ret
+
+
+def get_heatmap_row_div(data):
+    """Get Dash Bootstrap Components row containing heatmap columns.
+
+    Several columns are necessary to get the heatmap view the way we
+    want it.
+
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
+    :return: Dash Bootstrap Components row with left, center, and right
+        columns producing the overall heatmap view.
+    :rtype: dbc.Row
+    """
+    ret = dbc.Row([
+        dbc.Col(
+            html.Div(
+                dcc.Graph(
+                    id="heatmap-left-fig",
+                    figure=get_heatmap_left_fig(data)
+                )
+            ),
+            width=1, style={"overflowX": "hidden"}
+        ),
+        dbc.Col(
+            html.Div(
+                dcc.Graph(
+                    id="heatmap-center-fig",
+                    figure=get_heatmap_center_fig(data),
+                    # There is some sort of weirdness that
+                    # overrides figure layout autosize=False value
+                    # when the heatmap is re-rendered after launch,
+                    # through callbacks. I suspect it is some sort
+                    # of race condition between Plotly Python
+                    # autosize and PlotlyJs responding to window
+                    # resizing. See https://bit.ly/3nfRux2 section
+                    # on responsiveness. This line fixes it,
+                    # somehow.
+                    style={"width": len(data["heatmap_x"]) * 25}
+                ),
+                style={"overflowX": "scroll"}
+            ),
+            width=10
+        ),
+        dbc.Col(
+            html.Div(
+                dcc.Graph(
+                    id="heatmap-right-fig",
+                    figure=get_heatmap_right_fig(data)
+                ),
+                style={"width": "90vw"}, className="ml-3"
+            ),
+            width=1, style={"overflowX": "hidden"}
+        ),
+    ], no_gutters=True, className="mt-3")
     return ret
 
 

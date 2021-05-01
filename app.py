@@ -19,7 +19,7 @@ from dash.exceptions import PreventUpdate
 import dash_html_components as html
 
 from data_parser import get_data
-import div_generator
+import toolbar_generator
 import heatmap_generator
 import table_generator
 
@@ -62,10 +62,10 @@ def launch_app(_):
     hidden_strains = []
     data_ = get_data(["data", "user_data"], hidden_strains=hidden_strains)
     return [
-        html.Div(div_generator.get_toolbar_row_div()),
-        html.Div(div_generator.get_heatmap_row_div(data_)),
-        html.Div(div_generator.get_table_row_div(data_)),
-        html.Div(div_generator.get_select_lineages_modal()),
+        html.Div(toolbar_generator.get_toolbar_row_div()),
+        html.Div(heatmap_generator.get_heatmap_row_div(data_)),
+        html.Div(table_generator.get_table_row_div(data_)),
+        html.Div(toolbar_generator.get_select_lineages_modal()),
         # These are in-browser variables that Dash can treat as Inputs and
         # Outputs, in addition to more conventional Dash components like
         # HTML divs and Plotly figures. ``data`` is the data used to
@@ -275,7 +275,7 @@ def toggle_select_lineages_modal(_, __, ___, data):
     ctx = dash.callback_context
     triggered_prop_id = ctx.triggered[0]["prop_id"]
     if triggered_prop_id == "open-select-lineages-modal-btn.n_clicks":
-        modal_body = div_generator.get_select_lineages_modal_body(data)
+        modal_body = toolbar_generator.get_select_lineages_modal_body(data)
         return True, modal_body
     else:
         return False, None
@@ -299,7 +299,7 @@ def update_hide_dropdown_btn(data):
         corresponding to strains in data.
     :rtype: list[dbc.DropdownMenuItem]
     """
-    return div_generator.get_hide_strains_component_children(data)
+    return toolbar_generator.get_hide_strains_component_children(data)
 
 
 @app.callback(

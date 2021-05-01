@@ -1,6 +1,27 @@
-"""Functions that generate figure in table view."""
+"""Functions for generating table view."""
 
+import dash_bootstrap_components as dbc
+import dash_core_components as dcc
 import plotly.graph_objects as go
+
+
+def get_table_row_div(data):
+    """Get Dash Bootstrap Components row containing table view.
+
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
+    :return: Dash Bootstrap Components row containing table
+    :rtype: dbc.Row
+    """
+    ret = dbc.Row(
+        dbc.Col(
+            dcc.Graph(
+                id="table",
+                figure=get_table_fig(data, data["heatmap_y"][0])
+            )
+        ),
+    )
+    return ret
 
 
 def get_table_fig(data, strain):
