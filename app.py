@@ -14,7 +14,7 @@ from base64 import b64decode
 import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
-from dash.dependencies import ALL, Input, Output, State
+from dash.dependencies import ALL, ClientsideFunction, Input, Output, State
 from dash.exceptions import PreventUpdate
 import dash_html_components as html
 
@@ -24,6 +24,10 @@ import heatmap_generator
 import table_generator
 
 app = dash.Dash(__name__,
+                external_scripts=[
+                    "https://code.jquery.com/jquery-2.2.4.min.js",
+                    "https://code.jquery.com/ui/1.12.1/jquery-ui.min.js",
+                ],
                 # We can use bootstrap CSS.
                 # https://bit.ly/3tMqY0W for details.
                 external_stylesheets=[dbc.themes.COSMO],
@@ -39,6 +43,24 @@ app.layout = dbc.Container(
     dcc.Store("first-launch"),
     fluid=True,
     id="main-container")
+
+app.clientside_callback(
+    ClientsideFunction(
+        namespace="clientside",
+        function_name="makeDraggable"
+    ),
+    Output("make-draggable", "data"),
+    Input({"type": "select-lineages-modal-checklist", "index": ALL}, "id")
+)
+app.clientside_callback(
+    ClientsideFunction(
+        namespace="clientside",
+        function_name="getDraggable"
+    ),
+    Output("get-draggable", "data"),
+    Input("select-lineages-ok-btn", "n_clicks"),
+    State({"type": "select-lineages-modal-checklist", "index": ALL}, "id")
+)
 
 
 @app.callback(
@@ -78,7 +100,10 @@ def launch_app(_):
         # should be changed.
         dcc.Store(id="show-clade-defining"),
         dcc.Store(id="new-upload"),
-        dcc.Store(id="hidden-strains", data=hidden_strains)
+        dcc.Store(id="hidden-strains", data=hidden_strains),
+        # TODO
+        dcc.Store(id="make-draggable"),
+        dcc.Store(id="get-draggable"),
     ]
 
 
@@ -87,12 +112,13 @@ def launch_app(_):
     inputs=[
         Input("show-clade-defining", "data"),
         Input("new-upload", "data"),
-        Input("hidden-strains", "data")
+        Input("hidden-strains", "data"),
+        Input("get-draggable", "data")
     ],
     prevent_initial_call=True
 )
-def update_data(show_clade_defining, new_upload, hidden_strains):
-    """Update ``data`` variable in dcc.Store.
+def update_data(show_clade_defining, new_upload, hidden_strains, draggable_data):
+    """Update ``data`` variable in dcc.Store. TODO
 
     This is a central callback. It triggers a change to the ``data``
     variable in dcc.Store, which triggers cascading changes in several
