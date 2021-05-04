@@ -63,8 +63,7 @@ def launch_app(_):
     to a server. So new data between page reloads may not be displayed
     if you populate the initial layout in the global scope.
     """
-    hidden_strains = []
-    data_ = get_data(["data", "user_data"], hidden_strains=hidden_strains)
+    data_ = get_data(["data", "user_data"])
     return [
         html.Div(toolbar_generator.get_toolbar_row_div()),
         html.Div(heatmap_generator.get_heatmap_row_div(data_)),
@@ -82,7 +81,7 @@ def launch_app(_):
         # should be changed.
         dcc.Store(id="show-clade-defining"),
         dcc.Store(id="new-upload"),
-        dcc.Store(id="hidden-strains", data=hidden_strains),
+        dcc.Store(id="hidden-strains"),
         dcc.Store(id="strain-order"),
         # Used to integrate JQuery UI drag and drop on client side. The
         # data value is meaningless, we just need an output to perform
@@ -202,10 +201,9 @@ def update_new_upload(file_contents, filename):
     Input("select-lineages-ok-btn", "n_clicks"),
     State({"type": "select-lineages-modal-checklist", "index": ALL}, "value"),
     State("data", "data"),
-    State("hidden-strains", "data"),
     prevent_initial_call=True
 )
-def update_hidden_strains(_, values, data, old_hidden_strains):
+def update_hidden_strains(_, values, data):
     """Update ``hidden-strains`` variable in dcc.Store.
 
     When the OK button is clicked in the select lineages modal, the
@@ -220,9 +218,6 @@ def update_hidden_strains(_, values, data, old_hidden_strains):
     :param data: Current value for ``data`` variable; see ``get_data``
         return value.
     :type data: dict
-    :param old_hidden_strains: Current value for ``hidden-strains``
-        variable; see the return value of this function.
-    :type old_hidden_strains: list[str]
     :return: List of strains that should not be displayed by the
         heatmap or table.
     :rtype: list[str]
@@ -231,7 +226,7 @@ def update_hidden_strains(_, values, data, old_hidden_strains):
     # https://stackoverflow.com/a/716761/11472358.
     checked_strains = [j for i in values for j in i]
 
-    all_strains = data["unfiltered_heatmap_y"]
+    all_strains = data["all_strains"]
     hidden_strains = []
     for strain in all_strains:
         if strain not in checked_strains:
@@ -239,6 +234,7 @@ def update_hidden_strains(_, values, data, old_hidden_strains):
 
     # Do not update if the hidden strains did not change, or if the
     # user chose to hide all strains.
+    old_hidden_strains = data["hidden_strains"]
     no_change = hidden_strains == old_hidden_strains
     all_hidden = hidden_strains == all_strains
     if no_change or all_hidden:
@@ -377,7 +373,7 @@ def update_table(data, click_data):
 
     # If you click a strain, but then hide it, this condition stops
     # things from breaking.
-    if table_strain not in data["heatmap_y"]:
+    if table_strain in data["hidden_strains"]:
         table_strain = data["heatmap_y"][0]
 
     return table_generator.get_table_fig(data, table_strain)

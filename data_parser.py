@@ -124,7 +124,7 @@ def parse_data_files(dir_):
     return ret
 
 
-def get_data(dirs, clade_defining=False, hidden_strains=[]):
+def get_data(dirs, clade_defining=False, hidden_strains=None):
     """Get relevant data for Plotly visualizations in this application.
 
     This will include table data, which is straight forward. But this
@@ -155,6 +155,9 @@ def get_data(dirs, clade_defining=False, hidden_strains=[]):
         folders listed in dirs.
     :rtype: dict
     """
+    if hidden_strains is None:
+        hidden_strains = []
+
     parsed_files = {}
     dir_strains = {}
     for dir_ in dirs:
@@ -181,7 +184,8 @@ def get_data(dirs, clade_defining=False, hidden_strains=[]):
         "deletions_y": get_deletions_y(parsed_files),
         "tables": get_tables(parsed_files),
         "dir_strains": dir_strains,
-        "unfiltered_heatmap_y": get_heatmap_y(unfiltered_parsed_files)
+        "hidden_strains": hidden_strains,
+        "all_strains": get_heatmap_y(unfiltered_parsed_files)
     }
     data["heatmap_z"] = get_heatmap_z(parsed_files, data["heatmap_x"])
     data["heatmap_cell_text"] = \

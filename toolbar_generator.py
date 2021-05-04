@@ -86,8 +86,7 @@ def get_select_lineages_modal_body(data):
                 "label": strain,
                 "value": strain
             })
-            # Strain is not currently hidden
-            if strain in data["heatmap_y"]:
+            if strain not in data["hidden_strains"]:
                 selected_values.append(strain)
         form_group = dbc.FormGroup([
             dbc.Label(dir_),
