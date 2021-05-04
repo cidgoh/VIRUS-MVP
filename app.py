@@ -44,24 +44,6 @@ app.layout = dbc.Container(
     fluid=True,
     id="main-container")
 
-app.clientside_callback(
-    ClientsideFunction(
-        namespace="clientside",
-        function_name="makeDraggable"
-    ),
-    Output("make-draggable", "data"),
-    Input({"type": "select-lineages-modal-checklist", "index": ALL}, "id")
-)
-app.clientside_callback(
-    ClientsideFunction(
-        namespace="clientside",
-        function_name="getDraggable"
-    ),
-    Output("get-draggable", "data"),
-    Input("select-lineages-ok-btn", "n_clicks"),
-    State({"type": "select-lineages-modal-checklist", "index": ALL}, "id")
-)
-
 
 @app.callback(
     Output("main-container", "children"),
@@ -101,9 +83,11 @@ def launch_app(_):
         dcc.Store(id="show-clade-defining"),
         dcc.Store(id="new-upload"),
         dcc.Store(id="hidden-strains", data=hidden_strains),
-        # TODO
-        dcc.Store(id="make-draggable"),
-        dcc.Store(id="get-draggable"),
+        dcc.Store(id="strain-order"),
+        # Used to integrate JQuery UI drag and drop on client side. The
+        # data value is meaningless, we just need an output to perform
+        # the clientside function.
+        dcc.Store(id="make-select-lineages-modal-checkboxes-draggable")
     ]
 
 
@@ -113,11 +97,11 @@ def launch_app(_):
         Input("show-clade-defining", "data"),
         Input("new-upload", "data"),
         Input("hidden-strains", "data"),
-        Input("get-draggable", "data")
+        Input("strain-order", "data")
     ],
     prevent_initial_call=True
 )
-def update_data(show_clade_defining, new_upload, hidden_strains, draggable_data):
+def update_data(show_clade_defining, new_upload, hidden_strains, strain_order):
     """Update ``data`` variable in dcc.Store. TODO
 
     This is a central callback. It triggers a change to the ``data``
@@ -398,6 +382,27 @@ def update_table(data, click_data):
 
     return table_generator.get_table_fig(data, table_strain)
 
+
+# This is how Dash allows you to write callbacks in JavaScript
+app.clientside_callback(
+    ClientsideFunction(
+        namespace="clientside",
+        function_name="makeSelectLineagesModalCheckboxesDraggable"
+    ),
+    Output("make-select-lineages-modal-checkboxes-draggable", "data"),
+    Input({"type": "select-lineages-modal-checklist", "index": ALL}, "id"),
+    prevent_initial_call=True
+)
+app.clientside_callback(
+    ClientsideFunction(
+        namespace="clientside",
+        function_name="getStrainOrder"
+    ),
+    Output("strain-order", "data"),
+    Input("select-lineages-ok-btn", "n_clicks"),
+    State({"type": "select-lineages-modal-checklist", "index": ALL}, "id"),
+    prevent_initial_call=True
+)
 
 if __name__ == "__main__":
     app.run_server(debug=True)
