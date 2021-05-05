@@ -116,7 +116,7 @@ def parse_data_files(dir_, file_order=None):
     with open("VOC clade-defining mutations - gff3.tsv") as fp:
         reader = csv.DictReader(fp, delimiter="\t")
         for row in reader:
-            attributes_list = row['#attributes'].split(";")
+            attributes_list = row["#attributes"].split(";")
             attributes_nested_list = [x.split("=") for x in attributes_list]
             attributes_dict = {}
             for attribute_list in attributes_nested_list:

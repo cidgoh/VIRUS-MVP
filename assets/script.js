@@ -57,9 +57,9 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
         const e2 = $(document.getElementById(idStr2))
         let checkboxDivs;
         if (e1.length) {
-          checkboxDivs = e1.find(":checkbox")
+          checkboxDivs = e1.find(':checkbox')
         } else {
-          checkboxDivs = e2.find(":checkbox")
+          checkboxDivs = e2.find(':checkbox')
         }
         for (const checkboxDiv of checkboxDivs) {
           ret.push(checkboxDiv.value)
