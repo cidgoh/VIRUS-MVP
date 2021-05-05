@@ -8,7 +8,7 @@ import json
 import os
 
 
-def parse_data_files(dir_):
+def parse_data_files(dir_, file_order=None):
     """Parses relevant visualization data from ``dir_``.
 
     This function assists ``get_data``, which is a function that
@@ -19,23 +19,39 @@ def parse_data_files(dir_):
     manipulate for Plotly. The filename of these tsv files is
     interpreted to be the strain name.
 
+    The files are parsed in order of modification date. However, this
+    can be overridden by listing the files you want parsed first in
+    ``file_order``. Any files not found in ``file_order`` will still be
+    parsed by modification date.
+
     TODO: there is also some data being parsed from some other files.
         We should obtain that data upstream when the files are
         generated, so this function can just focus on parsing a folder.
 
     :param dir_: Path to folder to parse tsv files from
     :type dir_: str
+    :param file_order: List of filenames corresponding to files to
+        parse first, if they exist in ``dir_``.
+    :type file_order: list[str]
     :return: Select column data parsed from tsv files in ``dir_``
     :rtype: dict
     """
+    if file_order is None:
+        file_order = []
+
     ret = {}
     with open("cds_gene_map.json") as fp:
         # Maps cds info in tsv files to actual genes
         cds_gene_map = json.load(fp)
     with os.scandir(dir_) as it:
-        # Iterate through tsv files in dir_ sorted by last modification
-        # time.
-        for entry in sorted(it, key=os.path.getmtime):
+        # Iterate through tsv files in dir_ sorted by ``file_order``
+        # first, and then modification time.
+        def key(e):
+            if e.name in file_order:
+                return file_order.index(e.name)
+            else:
+                return os.path.getmtime(e)
+        for entry in sorted(it, key=key):
             strain, ext = entry.name.rsplit(".", 1)
             if ext != "tsv":
                 continue
@@ -100,7 +116,7 @@ def parse_data_files(dir_):
     with open("VOC clade-defining mutations - gff3.tsv") as fp:
         reader = csv.DictReader(fp, delimiter="\t")
         for row in reader:
-            attributes_list = row['#attributes'].split(";")
+            attributes_list = row["#attributes"].split(";")
             attributes_nested_list = [x.split("=") for x in attributes_list]
             attributes_dict = {}
             for attribute_list in attributes_nested_list:
@@ -124,7 +140,8 @@ def parse_data_files(dir_):
     return ret
 
 
-def get_data(dirs, clade_defining=False, hidden_strains=[]):
+def get_data(dirs, clade_defining=False, hidden_strains=None,
+             strain_order=None):
     """Get relevant data for Plotly visualizations in this application.
 
     This will include table data, which is straight forward. But this
@@ -151,14 +168,23 @@ def get_data(dirs, clade_defining=False, hidden_strains=[]):
     :param hidden_strains: List of strains from the dirs that the user
         does not want to display in the heatmap and table.
     :type hidden_strains: list[str]
+    :param strain_order: Order of strains from the dirs that the user
+        wants to display in the heatmap and table.
+    :type strain_order: list[str]
     :return: Information on relevant columns in tsv files stored in
         folders listed in dirs.
     :rtype: dict
     """
+    if hidden_strains is None:
+        hidden_strains = []
+    if strain_order is None:
+        strain_order = []
+
     parsed_files = {}
     dir_strains = {}
+    file_order = [strain + ".tsv" for strain in strain_order]
     for dir_ in dirs:
-        this_parsed_files = parse_data_files(dir_)
+        this_parsed_files = parse_data_files(dir_, file_order)
         dir_strains[dir_] = list(this_parsed_files.keys())
         parsed_files = {**parsed_files, **this_parsed_files}
 
@@ -181,7 +207,8 @@ def get_data(dirs, clade_defining=False, hidden_strains=[]):
         "deletions_y": get_deletions_y(parsed_files),
         "tables": get_tables(parsed_files),
         "dir_strains": dir_strains,
-        "unfiltered_heatmap_y": get_heatmap_y(unfiltered_parsed_files)
+        "hidden_strains": hidden_strains,
+        "all_strains": get_heatmap_y(unfiltered_parsed_files)
     }
     data["heatmap_z"] = get_heatmap_z(parsed_files, data["heatmap_x"])
     data["heatmap_cell_text"] = \
