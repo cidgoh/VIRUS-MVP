@@ -101,7 +101,7 @@ def launch_app(_):
     prevent_initial_call=True
 )
 def update_data(show_clade_defining, new_upload, hidden_strains, strain_order):
-    """Update ``data`` variable in dcc.Store. TODO
+    """Update ``data`` variable in dcc.Store.
 
     This is a central callback. It triggers a change to the ``data``
     variable in dcc.Store, which triggers cascading changes in several
@@ -115,6 +115,9 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order):
     :type new_upload: dict
     :param hidden_strains: ``update_hidden_strains`` return value
     :type hidden_strains: list[str]
+    :param strain_order: ``getStrainOrder`` return value from
+        ``script.js``.
+    :type strain_order: list[str]
     :return: ``get_data`` return value
     :rtype: dict
     """
@@ -126,7 +129,8 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order):
 
     return get_data(["data", "user_data"],
                     clade_defining=show_clade_defining,
-                    hidden_strains=hidden_strains)
+                    hidden_strains=hidden_strains,
+                    strain_order=strain_order)
 
 
 @app.callback(
@@ -397,6 +401,7 @@ app.clientside_callback(
     Output("strain-order", "data"),
     Input("select-lineages-ok-btn", "n_clicks"),
     State({"type": "select-lineages-modal-checklist", "index": ALL}, "id"),
+    State("data", "data"),
     prevent_initial_call=True
 )
 
