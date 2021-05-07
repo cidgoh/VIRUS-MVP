@@ -63,7 +63,7 @@ def launch_app(_):
     to a server. So new data between page reloads may not be displayed
     if you populate the initial layout in the global scope.
     """
-    data_ = get_data(["data", "user_data"])
+    data_ = get_data(["reference_data", "user_data"])
     return [
         html.Div(toolbar_generator.get_toolbar_row_div()),
         html.Div(heatmap_generator.get_heatmap_row_div(data_)),
@@ -127,7 +127,7 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order):
         if new_upload["status"] == "error":
             raise PreventUpdate
 
-    return get_data(["data", "user_data"],
+    return get_data(["reference_data", "user_data"],
                     clade_defining=show_clade_defining,
                     hidden_strains=hidden_strains,
                     strain_order=strain_order)
@@ -176,7 +176,7 @@ def update_new_upload(file_contents, filename):
     :return: Dictionary describing upload attempt
     :rtype: dict
     """
-    data_ = get_data(["data", "user_data"])
+    data_ = get_data(["reference_data", "user_data"])
     # TODO more thorough validation, maybe once we finalize data
     #  standards.
     new_strain, ext = filename.rsplit(".", 1)
