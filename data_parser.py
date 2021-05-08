@@ -198,9 +198,10 @@ def parse_data_files(dir_, file_order=None):
     return ret
 
 
-def get_data(dirs, clade_defining=False, hidden_strains=None,
+def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
              strain_order=None):
     """Get relevant data for Plotly visualizations in this application.
+    TODO update docstring
 
     This will include table data, which is straight forward. But this
     will also include various information related to the main heatmap,

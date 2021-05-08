@@ -64,7 +64,7 @@ def launch_app(_):
     if you populate the initial layout in the global scope.
     """
     gff3_annotations = parse_gff3_file("gff3_annotations.tsv")
-    data_ = get_data(["reference_data", "user_data"])
+    data_ = get_data(["reference_data", "user_data"], gff3_annotations)
     return [
         html.Div(toolbar_generator.get_toolbar_row_div()),
         html.Div(heatmap_generator.get_heatmap_row_div(data_)),
@@ -100,10 +100,15 @@ def launch_app(_):
         Input("hidden-strains", "data"),
         Input("strain-order", "data")
     ],
+    state=[
+        State("gff3-annotations", "data")
+    ],
     prevent_initial_call=True
 )
-def update_data(show_clade_defining, new_upload, hidden_strains, strain_order):
+def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
+                gff3_annotations):
     """Update ``data`` variable in dcc.Store.
+    TODO update docstring
 
     This is a central callback. It triggers a change to the ``data``
     variable in dcc.Store, which triggers cascading changes in several
@@ -130,6 +135,7 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order):
             raise PreventUpdate
 
     return get_data(["reference_data", "user_data"],
+                    gff3_annotations,
                     clade_defining=show_clade_defining,
                     hidden_strains=hidden_strains,
                     strain_order=strain_order)
@@ -160,10 +166,12 @@ def update_show_clade_defining(switches_value):
     Output("new-upload", "data"),
     Input("upload-file", "contents"),
     Input("upload-file", "filename"),
+    State("data", "data"),
     prevent_initial_call=True
 )
-def update_new_upload(file_contents, filename):
+def update_new_upload(file_contents, filename, old_data):
     """Update ``new_upload`` variable in dcc.Store.
+    TODO update docstring
 
     If a valid file is uploaded, it will be written to ``user_data``.
     But regardless of whether a valid file is uploaded, this function
@@ -178,14 +186,13 @@ def update_new_upload(file_contents, filename):
     :return: Dictionary describing upload attempt
     :rtype: dict
     """
-    data_ = get_data(["reference_data", "user_data"])
     # TODO more thorough validation, maybe once we finalize data
     #  standards.
     new_strain, ext = filename.rsplit(".", 1)
     if ext != "tsv":
         status = "error"
         msg = "Filename must end in \".tsv\"."
-    elif new_strain in data_["heatmap_y"]:
+    elif new_strain in old_data["heatmap_y"]:
         status = "error"
         msg = "Filename must not conflict with existing voc."
     else:
