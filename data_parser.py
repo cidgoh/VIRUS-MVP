@@ -33,7 +33,7 @@ def parse_gff3_file(path):
             functional_annotations_dict[strain][mutation_name] = functions
 
     annotations_dict = {}
-    with open("gff3_annotations.tsv") as fp:
+    with open(path) as fp:
         reader = csv.DictReader(fp, delimiter="\t")
         for row in reader:
             if row["#start"] == "":
