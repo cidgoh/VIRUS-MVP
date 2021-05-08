@@ -8,6 +8,64 @@ import json
 import os
 
 
+def parse_gff3_file(path):
+    """TODO"""
+    # TODO eventually the functions will be included in the gff3 file
+    functional_annotations_dict = {}
+    functional_annotations_tsv_path = \
+        "VOC clade-defining mutations - functional_annotation.tsv"
+    with open(functional_annotations_tsv_path) as fp:
+        reader = csv.DictReader(fp, delimiter="\t")
+        for row in reader:
+            strain = row["lineage"]
+            mutation_name = row["aa_name"]
+            functions = row["function_category"]
+            if functions == "":
+                continue
+            functions = functions.split("|")
+            functions = [x.strip() for x in functions]
+            # TODO: This gets formatted in Plotly hover text. In the
+            #  spirit of this function, we should make this a list, and
+            #  format it in ``get_data``.
+            functions = "<br>".join(functions)
+            if strain not in functional_annotations_dict:
+                functional_annotations_dict[strain] = {}
+            functional_annotations_dict[strain][mutation_name] = functions
+
+    annotations_dict = {}
+    with open("gff3_annotations.tsv") as fp:
+        reader = csv.DictReader(fp, delimiter="\t")
+        for row in reader:
+            if row["#start"] == "":
+                continue
+
+            attributes_list = row["#attributes"].split(";")
+            attributes_nested_list = [x.split("=") for x in attributes_list]
+            attributes_dict = {}
+            for nested_list in attributes_nested_list:
+                if len(nested_list) >= 2:
+                    key = nested_list[0]
+                    val = nested_list[1]
+                    attributes_dict[key] = val
+
+            strain = attributes_dict["voc_name"]
+            pos = int(row["#start"])
+            if strain not in annotations_dict:
+                annotations_dict[strain] = {}
+            if pos not in annotations_dict[strain]:
+                annotations_dict[strain][pos] = []
+
+            mutation_name = attributes_dict["Alias"]
+            if strain in functional_annotations_dict \
+                    and mutation_name in functional_annotations_dict[strain]:
+                attributes_dict["functions"] = \
+                    functional_annotations_dict[strain][mutation_name]
+
+            annotations_dict[strain][pos].append(attributes_dict)
+
+    return annotations_dict
+
+
 def parse_data_files(dir_, file_order=None):
     """Parses relevant visualization data from ``dir_``.
 

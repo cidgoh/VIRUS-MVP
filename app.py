@@ -18,7 +18,7 @@ from dash.dependencies import ALL, ClientsideFunction, Input, Output, State
 from dash.exceptions import PreventUpdate
 import dash_html_components as html
 
-from data_parser import get_data
+from data_parser import get_data, parse_gff3_file
 import toolbar_generator
 import heatmap_generator
 import table_generator
@@ -63,6 +63,7 @@ def launch_app(_):
     to a server. So new data between page reloads may not be displayed
     if you populate the initial layout in the global scope.
     """
+    gff3_annotations = parse_gff3_file("gff3_annotations.tsv")
     data_ = get_data(["reference_data", "user_data"])
     return [
         html.Div(toolbar_generator.get_toolbar_row_div()),
@@ -75,6 +76,7 @@ def launch_app(_):
         # generate the heatmap and table. A bit confusing, but dcc.Store
         # variables have data attributes. So ``data`` has a ``data``
         # attribute.
+        dcc.Store(id="gff3-annotations", data=gff3_annotations),
         dcc.Store(id="data", data=data_),
         # The following in-browser variables simply exist to help
         # modularize the callbacks below, by alerting us when ``data``
