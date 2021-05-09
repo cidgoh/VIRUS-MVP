@@ -148,58 +148,6 @@ def parse_data_dir(dir_, file_order=None):
                         ret[strain][pos]["mutation_type"] = "deletion"
                     else:
                         ret[strain][pos]["mutation_type"] = "snp"
-
-    # # TODO: we should add functionality to vcf files upstream of this
-    # #  codebase.
-    # # TODO: how do we do clade defining mutations for user uploaded
-    # #  files?
-    # functional_annotations_dict = {}
-    # functional_annotations_tsv_path = \
-    #     "VOC clade-defining mutations - functional_annotation.tsv"
-    # with open(functional_annotations_tsv_path) as fp:
-    #     reader = csv.DictReader(fp, delimiter="\t")
-    #     for row in reader:
-    #         strain = row["lineage"]
-    #         mutation_name = row["aa_name"]
-    #         functions = row["function_category"]
-    #         if functions == "":
-    #             continue
-    #         functions = functions.split("|")
-    #         functions = [x.strip() for x in functions]
-    #         # TODO: This gets formatted in Plotly hover text. In the
-    #         #  spirit of this function, we should make this a list, and
-    #         #  format it in ``get_data``.
-    #         functions = "<br>".join(functions)
-    #         if strain not in functional_annotations_dict:
-    #             functional_annotations_dict[strain] = {}
-    #         functional_annotations_dict[strain][mutation_name] = functions
-    #
-    # # TODO: we should add clade defining key to vcf files upstream of
-    # #  this codebase.
-    # with open("VOC clade-defining mutations - gff3.tsv") as fp:
-    #     reader = csv.DictReader(fp, delimiter="\t")
-    #     for row in reader:
-    #         attributes_list = row["#attributes"].split(";")
-    #         attributes_nested_list = [x.split("=") for x in attributes_list]
-    #         attributes_dict = {}
-    #         for attribute_list in attributes_nested_list:
-    #             if len(attribute_list) >= 2:
-    #                 attributes_dict[attribute_list[0]] = attribute_list[1]
-    #
-    #         if row["#start"] == "":
-    #             continue
-    #
-    #         strain = attributes_dict["voc_name"]
-    #         pos = int(row["#start"])
-    #         mutation_name = attributes_dict["Alias"]
-    #         if strain in ret and pos in ret[strain]:
-    #             ret[strain][pos]["clade_defining"] = True
-    #             if mutation_name != "":
-    #                 ret[strain][pos]["mutation_name"] = mutation_name
-    #             if mutation_name in functional_annotations_dict[strain]:
-    #                 ret[strain][pos]["functions"] = \
-    #                     functional_annotations_dict[strain][mutation_name]
-
     return ret
 
 
