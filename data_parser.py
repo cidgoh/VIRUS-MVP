@@ -3,6 +3,7 @@
 Entry point is ``get_data``.
 """
 
+from copy import deepcopy
 import csv
 import json
 import os
@@ -153,7 +154,7 @@ def parse_data_dir(dir_, file_order=None):
 
 def get_annotated_data_dir(parsed_data_dir, gff3_annotations):
     """TODO"""
-    annotated_data_dir = parsed_data_dir
+    annotated_data_dir = deepcopy(parsed_data_dir)
     for strain in parsed_data_dir:
         if strain not in gff3_annotations:
             continue
@@ -183,6 +184,25 @@ def get_annotated_data_dir(parsed_data_dir, gff3_annotations):
                     annotated_data_dir[strain][pos]["functions"] = \
                         gff3_annotations_mutation["functions"]
     return annotated_data_dir
+
+
+def filter_clade_defining_mutations(annotated_data_dirs, weak_filter):
+    """TODO"""
+    seen_pos_set = set()
+    ret = deepcopy(annotated_data_dirs)
+    for strain in annotated_data_dirs:
+        if strain in weak_filter:
+            continue
+        for pos in annotated_data_dirs[strain]:
+            if annotated_data_dirs[strain][pos]["clade_defining"]:
+                seen_pos_set.add(pos)
+            else:
+                ret[strain].pop(pos)
+    for strain in weak_filter:
+        for pos in annotated_data_dirs[strain]:
+            if pos not in seen_pos_set:
+                ret[strain].pop(pos)
+    return ret
 
 
 def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
@@ -237,10 +257,10 @@ def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
         dir_strains[dir_] = list(parsed_data_dir.keys())
 
     if clade_defining:
-        for strain in annotated_data_dirs:
-            kv_pairs = annotated_data_dirs[strain].items()
-            annotated_data_dirs[strain] = \
-                {k: v for k, v in kv_pairs if v["clade_defining"]}
+        weak_filter = dir_strains["user_data"]
+        annotated_data_dirs = \
+            filter_clade_defining_mutations(annotated_data_dirs,
+                                            weak_filter=weak_filter)
 
     all_data = annotated_data_dirs
     visible_data = \
