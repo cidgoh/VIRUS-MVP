@@ -255,9 +255,23 @@ def filter_clade_defining_mutations(annotated_data_dirs, weak_filter):
     return ret
 
 
+def filter_mutations_by_freq(annotated_data_dirs, min_mutation_freq,
+                             max_mutation_freq):
+    """TODO"""
+    ret = deepcopy(annotated_data_dirs)
+    for strain in annotated_data_dirs:
+        for pos in annotated_data_dirs[strain]:
+            alt_freq = float(ret[strain][pos]["alt_freq"])
+            if alt_freq < min_mutation_freq or alt_freq > max_mutation_freq:
+                ret[strain].pop(pos)
+    # TODO need to stop from breaking on empty heatmap
+    return ret
+
+
 def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
-             strain_order=None):
+             strain_order=None, min_mutation_freq=0, max_mutation_freq=100):
     """Get relevant data for Plotly visualizations in this application.
+    TODO update docstring
 
     This will include table data, which is straight forward. But this
     will also include various information related to the main heatmap,
@@ -313,6 +327,11 @@ def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
         annotated_data_dirs = \
             filter_clade_defining_mutations(annotated_data_dirs,
                                             weak_filter=weak_filter)
+
+    if min_mutation_freq > 0 or max_mutation_freq < 100:
+        annotated_data_dirs = filter_mutations_by_freq(annotated_data_dirs,
+                                                       min_mutation_freq,
+                                                       max_mutation_freq)
 
     all_strain_data = annotated_data_dirs
     visible_strain_data = \

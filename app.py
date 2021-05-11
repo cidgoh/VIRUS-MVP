@@ -98,7 +98,8 @@ def launch_app(_):
         Input("show-clade-defining", "data"),
         Input("new-upload", "data"),
         Input("hidden-strains", "data"),
-        Input("strain-order", "data")
+        Input("strain-order", "data"),
+        Input("mutation-freq-slider", "value")
     ],
     state=[
         State("gff3-annotations", "data")
@@ -106,8 +107,9 @@ def launch_app(_):
     prevent_initial_call=True
 )
 def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
-                gff3_annotations):
+                mutation_freq_vals, gff3_annotations):
     """Update ``data`` variable in dcc.Store.
+    TODO update docstring
 
     This is a central callback. It triggers a change to the ``data``
     variable in dcc.Store, which triggers cascading changes in several
@@ -139,7 +141,9 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
                     gff3_annotations,
                     clade_defining=show_clade_defining,
                     hidden_strains=hidden_strains,
-                    strain_order=strain_order)
+                    strain_order=strain_order,
+                    min_mutation_freq=mutation_freq_vals[0],
+                    max_mutation_freq=mutation_freq_vals[1])
 
 
 @app.callback(

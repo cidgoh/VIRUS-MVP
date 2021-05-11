@@ -145,10 +145,11 @@ def get_mutation_freq_slider():
     return dcc.RangeSlider(id="mutation-freq-slider",
                            className="p-0",
                            min=0,
-                           max=100,
-                           value=[0, 100],
+                           max=1,
+                           step=0.01,
+                           value=[0, 1],
                            allowCross=False,
-                           marks={0: "Alt freq=0", 100: "100"},
+                           marks={0: "Alt freq=0", 1: "1"},
                            tooltip={})
 
 
