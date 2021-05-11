@@ -108,7 +108,6 @@ def launch_app(_):
 def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
                 gff3_annotations):
     """Update ``data`` variable in dcc.Store.
-    TODO update docstring
 
     This is a central callback. It triggers a change to the ``data``
     variable in dcc.Store, which triggers cascading changes in several
@@ -125,6 +124,8 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
     :param strain_order: ``getStrainOrder`` return value from
         ``script.js``.
     :type strain_order: list[str]
+    :param gff3_annotations: ``parse_gff3_file`` return value
+    :type gff3_annotations: dict
     :return: ``get_data`` return value
     :rtype: dict
     """
@@ -171,7 +172,6 @@ def update_show_clade_defining(switches_value):
 )
 def update_new_upload(file_contents, filename, old_data):
     """Update ``new_upload`` variable in dcc.Store.
-    TODO update docstring
 
     If a valid file is uploaded, it will be written to ``user_data``.
     But regardless of whether a valid file is uploaded, this function
@@ -183,6 +183,9 @@ def update_new_upload(file_contents, filename, old_data):
     :type file_contents: str
     :param filename: Name of uploaded file
     :type filename: str
+    :param old_data: ``get_data`` return value; current value for
+        ``data`` variable.
+    :type old_data: dict
     :return: Dictionary describing upload attempt
     :rtype: dict
     """
