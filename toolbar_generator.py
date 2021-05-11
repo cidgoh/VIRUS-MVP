@@ -30,6 +30,11 @@ def get_toolbar_row_div():
             id="dialog-col"
         ),
         dbc.Col(
+            get_mutation_freq_slider(),
+            className="my-auto",
+            width={"size": 2}
+        ),
+        dbc.Col(
             get_clade_defining_mutations_switch_form_group(),
             className="my-auto",
             width={"size": 2}
@@ -133,6 +138,18 @@ def get_file_upload_component():
         dbc.Button("Upload", color="primary"),
         id="upload-file"
     )
+
+
+def get_mutation_freq_slider():
+    """TODO"""
+    return dcc.RangeSlider(id="mutation-freq-slider",
+                           className="p-0",
+                           min=0,
+                           max=100,
+                           value=[0, 100],
+                           allowCross=False,
+                           marks={0: "Alt freq=0", 100: "100"},
+                           tooltip={})
 
 
 def get_clade_defining_mutations_switch_form_group():
