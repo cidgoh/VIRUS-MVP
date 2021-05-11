@@ -18,7 +18,7 @@ from dash.dependencies import ALL, ClientsideFunction, Input, Output, State
 from dash.exceptions import PreventUpdate
 import dash_html_components as html
 
-from data_parser import get_data
+from data_parser import get_data, parse_gff3_file
 import toolbar_generator
 import heatmap_generator
 import table_generator
@@ -63,7 +63,8 @@ def launch_app(_):
     to a server. So new data between page reloads may not be displayed
     if you populate the initial layout in the global scope.
     """
-    data_ = get_data(["data", "user_data"])
+    gff3_annotations = parse_gff3_file("gff3_annotations.tsv")
+    data_ = get_data(["reference_data", "user_data"], gff3_annotations)
     return [
         html.Div(toolbar_generator.get_toolbar_row_div()),
         html.Div(heatmap_generator.get_heatmap_row_div(data_)),
@@ -75,6 +76,7 @@ def launch_app(_):
         # generate the heatmap and table. A bit confusing, but dcc.Store
         # variables have data attributes. So ``data`` has a ``data``
         # attribute.
+        dcc.Store(id="gff3-annotations", data=gff3_annotations),
         dcc.Store(id="data", data=data_),
         # The following in-browser variables simply exist to help
         # modularize the callbacks below, by alerting us when ``data``
@@ -98,9 +100,13 @@ def launch_app(_):
         Input("hidden-strains", "data"),
         Input("strain-order", "data")
     ],
+    state=[
+        State("gff3-annotations", "data")
+    ],
     prevent_initial_call=True
 )
-def update_data(show_clade_defining, new_upload, hidden_strains, strain_order):
+def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
+                gff3_annotations):
     """Update ``data`` variable in dcc.Store.
 
     This is a central callback. It triggers a change to the ``data``
@@ -118,6 +124,8 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order):
     :param strain_order: ``getStrainOrder`` return value from
         ``script.js``.
     :type strain_order: list[str]
+    :param gff3_annotations: ``parse_gff3_file`` return value
+    :type gff3_annotations: dict
     :return: ``get_data`` return value
     :rtype: dict
     """
@@ -127,7 +135,8 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order):
         if new_upload["status"] == "error":
             raise PreventUpdate
 
-    return get_data(["data", "user_data"],
+    return get_data(["reference_data", "user_data"],
+                    gff3_annotations,
                     clade_defining=show_clade_defining,
                     hidden_strains=hidden_strains,
                     strain_order=strain_order)
@@ -158,9 +167,10 @@ def update_show_clade_defining(switches_value):
     Output("new-upload", "data"),
     Input("upload-file", "contents"),
     Input("upload-file", "filename"),
+    State("data", "data"),
     prevent_initial_call=True
 )
-def update_new_upload(file_contents, filename):
+def update_new_upload(file_contents, filename, old_data):
     """Update ``new_upload`` variable in dcc.Store.
 
     If a valid file is uploaded, it will be written to ``user_data``.
@@ -173,17 +183,19 @@ def update_new_upload(file_contents, filename):
     :type file_contents: str
     :param filename: Name of uploaded file
     :type filename: str
+    :param old_data: ``get_data`` return value; current value for
+        ``data`` variable.
+    :type old_data: dict
     :return: Dictionary describing upload attempt
     :rtype: dict
     """
-    data_ = get_data(["data", "user_data"])
     # TODO more thorough validation, maybe once we finalize data
     #  standards.
     new_strain, ext = filename.rsplit(".", 1)
     if ext != "tsv":
         status = "error"
         msg = "Filename must end in \".tsv\"."
-    elif new_strain in data_["heatmap_y"]:
+    elif new_strain in old_data["heatmap_y"]:
         status = "error"
         msg = "Filename must not conflict with existing voc."
     else:

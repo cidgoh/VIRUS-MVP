@@ -3,17 +3,90 @@
 Entry point is ``get_data``.
 """
 
+from copy import deepcopy
 import csv
 import json
 import os
 
 
-def parse_data_files(dir_, file_order=None):
+def parse_gff3_file(path):
+    """Parses relevant visualization data from gff3 file.
+
+    The return type is like:
+    ``{strain1: {pos1: [gff3_attributes_dicts], pos2:
+    [gff3_attributes_dicts], strain2: ...}``, where
+    ``gff3_attributes_dicts`` are dictionaries containing attribute
+    information for >1 mutations that may be at a nuceleotide position.
+
+    :param path: Path to gff3 file
+    :type path: str
+    :return: Dictionary containing information parsed from gff3 file
+    :rtype: dict
+    """
+    # TODO eventually the functions will be included in the gff3 file
+    functional_annotations_dict = {}
+    functional_annotations_tsv_path = \
+        "VOC clade-defining mutations - functional_annotation.tsv"
+    with open(functional_annotations_tsv_path) as fp:
+        reader = csv.DictReader(fp, delimiter="\t")
+        for row in reader:
+            strain = row["lineage"]
+            mutation_name = row["aa_name"]
+            functions = row["function_category"]
+            if functions == "":
+                continue
+            functions = functions.split("|")
+            functions = [x.strip() for x in functions]
+            # TODO: This gets formatted in Plotly hover text. In the
+            #  spirit of this function, we should make this a list, and
+            #  format it in ``get_data``.
+            functions = "<br>".join(functions)
+            if strain not in functional_annotations_dict:
+                functional_annotations_dict[strain] = {}
+            functional_annotations_dict[strain][mutation_name] = functions
+
+    annotations_dict = {}
+    with open(path) as fp:
+        reader = csv.DictReader(fp, delimiter="\t")
+        for row in reader:
+            if row["#start"] == "":
+                continue
+
+            attributes_list = row["#attributes"].split(";")
+            attributes_nested_list = [x.split("=") for x in attributes_list]
+            attributes_dict = {}
+            for nested_list in attributes_nested_list:
+                if len(nested_list) >= 2:
+                    key = nested_list[0]
+                    val = nested_list[1]
+                    attributes_dict[key] = val
+
+            strain = attributes_dict["voc_name"]
+            pos = int(row["#start"])
+            if strain not in annotations_dict:
+                annotations_dict[strain] = {}
+            if pos not in annotations_dict[strain]:
+                annotations_dict[strain][pos] = []
+
+            mutation_name = attributes_dict["Alias"]
+            if strain in functional_annotations_dict \
+                    and mutation_name in functional_annotations_dict[strain]:
+                attributes_dict["functions"] = \
+                    functional_annotations_dict[strain][mutation_name]
+            else:
+                attributes_dict["functions"] = ""
+
+            annotations_dict[strain][pos].append(attributes_dict)
+
+    return annotations_dict
+
+
+def parse_data_dir(dir_, file_order=None):
     """Parses relevant visualization data from ``dir_``.
 
     This function assists ``get_data``, which is a function that
     prepares data in a format suitable for Plotly functions. However,
-    ``parse_data_files`` does not care about Plotly. It simply parses
+    ``parse_data_dir`` does not care about Plotly. It simply parses
     tsv files that are in the format of tsv files found in data/, and
     puts them into an easy to iterate Dictionary for ``get_data`` to
     manipulate for Plotly. The filename of these tsv files is
@@ -23,10 +96,6 @@ def parse_data_files(dir_, file_order=None):
     can be overridden by listing the files you want parsed first in
     ``file_order``. Any files not found in ``file_order`` will still be
     parsed by modification date.
-
-    TODO: there is also some data being parsed from some other files.
-        We should obtain that data upstream when the files are
-        generated, so this function can just focus on parsing a folder.
 
     :param dir_: Path to folder to parse tsv files from
     :type dir_: str
@@ -59,7 +128,7 @@ def parse_data_files(dir_, file_order=None):
             with open(entry.path) as fp:
                 reader = csv.DictReader(fp, delimiter="\t")
                 for row in reader:
-                    pos = int(row["POS"])
+                    pos = row["POS"]
                     ret[strain][pos] = {}
                     ret[strain][pos]["ref"] = row["REF"]
                     ret[strain][pos]["alt"] = row["ALT"]
@@ -68,7 +137,7 @@ def parse_data_files(dir_, file_order=None):
                     ret[strain][pos]["alt_codon"] = row["ALT_CODON"]
                     ret[strain][pos]["ref_aa"] = row["REF_AA"]
                     ret[strain][pos]["alt_aa"] = row["ALT_AA"]
-                    # We update this later
+                    # We may update this in ``get_annotated_data_dir``
                     ret[strain][pos]["clade_defining"] = False
 
                     gff_feature = row["GFF_FEATURE"]
@@ -77,70 +146,116 @@ def parse_data_files(dir_, file_order=None):
                     else:
                         ret[strain][pos]["gene"] = "n/a"
 
+                    # We may update these in ``get_annotated_data_dir``
                     ret[strain][pos]["mutation_name"] = "n/a"
                     ret[strain][pos]["functions"] = "n/a"
+
                     if row["ALT"][0] == "+":
                         ret[strain][pos]["mutation_type"] = "insertion"
                     elif row["ALT"][0] == "-":
                         ret[strain][pos]["mutation_type"] = "deletion"
                     else:
                         ret[strain][pos]["mutation_type"] = "snp"
-
-    # TODO: we should add functionality to vcf files upstream of this
-    #  codebase.
-    # TODO: how do we do clade defining mutations for user uploaded
-    #  files?
-    functional_annotations_dict = {}
-    functional_annotations_tsv_path = \
-        "VOC clade-defining mutations - functional_annotation.tsv"
-    with open(functional_annotations_tsv_path) as fp:
-        reader = csv.DictReader(fp, delimiter="\t")
-        for row in reader:
-            strain = row["lineage"]
-            mutation_name = row["aa_name"]
-            functions = row["function_category"]
-            if functions == "":
-                continue
-            functions = functions.split("|")
-            functions = [x.strip() for x in functions]
-            # TODO: This gets formatted in Plotly hover text. In the
-            #  spirit of this function, we should make this a list, and
-            #  format it in ``get_data``.
-            functions = "<br>".join(functions)
-            if strain not in functional_annotations_dict:
-                functional_annotations_dict[strain] = {}
-            functional_annotations_dict[strain][mutation_name] = functions
-
-    # TODO: we should add clade defining key to vcf files upstream of
-    #  this codebase.
-    with open("VOC clade-defining mutations - gff3.tsv") as fp:
-        reader = csv.DictReader(fp, delimiter="\t")
-        for row in reader:
-            attributes_list = row["#attributes"].split(";")
-            attributes_nested_list = [x.split("=") for x in attributes_list]
-            attributes_dict = {}
-            for attribute_list in attributes_nested_list:
-                if len(attribute_list) >= 2:
-                    attributes_dict[attribute_list[0]] = attribute_list[1]
-
-            if row["#start"] == "":
-                continue
-
-            strain = attributes_dict["voc_name"]
-            pos = int(row["#start"])
-            mutation_name = attributes_dict["Alias"]
-            if strain in ret and pos in ret[strain]:
-                ret[strain][pos]["clade_defining"] = True
-                if mutation_name != "":
-                    ret[strain][pos]["mutation_name"] = mutation_name
-                if mutation_name in functional_annotations_dict[strain]:
-                    ret[strain][pos]["functions"] = \
-                        functional_annotations_dict[strain][mutation_name]
-
     return ret
 
 
-def get_data(dirs, clade_defining=False, hidden_strains=None,
+def get_annotated_data_dir(parsed_data_dir, gff3_annotations):
+    """Annotate ``parse_data_dir`` val with ``parse_gff3_file`` val.
+
+    Although ``parse_data_dir`` provides the information needed for a
+    barebones visualization, such as mutation positions and frequency,
+    there is information returned by ``parse_gff3_file`` that is also
+    valuable for visualization purposes, such as clade defining
+    mutations and mutation functions.
+
+    :param parsed_data_dir: ``parse_data_dir`` return value
+    :type parsed_data_dir: dict
+    :param gff3_annotations: ``parse_gff3_file`` return value
+    :type gff3_annotations: dict
+    :return: ``parsed_data_dir`` with additional information added from
+        ``gff3_annotations``.
+    :rtype: dict
+    """
+    annotated_data_dir = deepcopy(parsed_data_dir)
+    for strain in parsed_data_dir:
+        if strain not in gff3_annotations:
+            continue
+        for pos in parsed_data_dir[strain]:
+            if pos not in gff3_annotations[strain]:
+                continue
+            parsed_data_dir_mutation = parsed_data_dir[strain][pos]
+            # There is some syntax differences between the gff3 and
+            # data files, so we need to modify the ref to alt mutation
+            # from the data file we are looking for to match the format
+            # expected by the gff3 file.
+            matching_gff3_del = parsed_data_dir_mutation["ref"]
+            matching_gff3_ins = parsed_data_dir_mutation["alt"]
+            if len(matching_gff3_ins) and matching_gff3_ins[0] in ["-", "+"]:
+                matching_gff3_ins = matching_gff3_ins[1:]
+
+            gff3_annotations_mutation = None
+            for mutation in gff3_annotations[strain][pos]:
+                if mutation["del"] == matching_gff3_del \
+                        and mutation["ins"] == matching_gff3_ins:
+                    gff3_annotations_mutation = mutation
+                    break
+            # We found a mutation in the gff3 file that corresponds to
+            # the mutation in the data dir we are currently visiting in
+            # the for loop.
+            if gff3_annotations_mutation:
+                if gff3_annotations_mutation["clade_defining"] == "true":
+                    annotated_data_dir[strain][pos]["clade_defining"] = True
+                if gff3_annotations_mutation["Name"]:
+                    annotated_data_dir[strain][pos]["mutation_name"] = \
+                        gff3_annotations_mutation["Name"]
+                if gff3_annotations_mutation["functions"]:
+                    annotated_data_dir[strain][pos]["functions"] = \
+                        gff3_annotations_mutation["functions"]
+    return annotated_data_dir
+
+
+def filter_clade_defining_mutations(annotated_data_dirs, weak_filter):
+    """Filter ``annotated_data_dirs`` for clade defining mutations.
+
+    Returns a copy of ``annotated_data_dirs``, with the only the clade
+    defining mutations. You can specify strains in
+    ``annotated_data_dirs`` to apply a weak filter to. Strains that are
+    filtered weakly will not be filtered by the clade defining
+    attribute, but will instead have their mutations filtered based on
+    whether their mutations share a position with clade defining
+    mutations from non-weakly filtered strains. This is useful for user
+    uploaded strains.
+
+    :param annotated_data_dirs: A dictionary containing multiple merged
+        ``get_annotated_data_dir`` return values.
+    :type annotated_data_dirs: dict
+    :param weak_filter: List of strains to filter based on whether they
+        share a nucleotide position with clade defining mutations from
+        other strains, instead of the clade defining attribute of the
+        mutations themselves.
+    :type weak_filter: list[str]
+    :return: Filtered copy of ``annotated_data_dirs``, containing clade
+        defining mutations only.
+    :rtype: dict
+    """
+    seen_pos_set = set()
+    ret = deepcopy(annotated_data_dirs)
+    for strain in annotated_data_dirs:
+        if strain in weak_filter:
+            continue
+        for pos in annotated_data_dirs[strain]:
+            if annotated_data_dirs[strain][pos]["clade_defining"]:
+                seen_pos_set.add(pos)
+            else:
+                ret[strain].pop(pos)
+    for strain in weak_filter:
+        for pos in annotated_data_dirs[strain]:
+            if pos not in seen_pos_set:
+                ret[strain].pop(pos)
+    return ret
+
+
+def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
              strain_order=None):
     """Get relevant data for Plotly visualizations in this application.
 
@@ -154,7 +269,8 @@ def get_data(dirs, clade_defining=False, hidden_strains=None,
 
     This relevant data is parsed from tsv files across one or more
     folders, with each tsv file in the form of the tsv files found in
-    ``data/``.
+    ``data/``, and from annotations parsed from a gff3 file, in the
+    form of ``gff3_annotations.tsv``.
 
     We will also keep track of the directory each strain came from,
     because it becomes useful when distinguishing user uploaded strains
@@ -163,6 +279,8 @@ def get_data(dirs, clade_defining=False, hidden_strains=None,
 
     :param dirs: List of paths to folders to obtain data from
     :type dirs: list[str]
+    :param gff3_annotations: ``parse_gff3_file`` return value
+    :type gff3_annotations: dict
     :param clade_defining: Get data for clade defining mutations only
     :type clade_defining: bool
     :param hidden_strains: List of strains from the dirs that the user
@@ -180,80 +298,85 @@ def get_data(dirs, clade_defining=False, hidden_strains=None,
     if strain_order is None:
         strain_order = []
 
-    parsed_files = {}
+    annotated_data_dirs = {}
     dir_strains = {}
     file_order = [strain + ".tsv" for strain in strain_order]
     for dir_ in dirs:
-        this_parsed_files = parse_data_files(dir_, file_order)
-        dir_strains[dir_] = list(this_parsed_files.keys())
-        parsed_files = {**parsed_files, **this_parsed_files}
+        parsed_data_dir = parse_data_dir(dir_, file_order)
+        annotated_data_dir = \
+            get_annotated_data_dir(parsed_data_dir, gff3_annotations)
+        annotated_data_dirs = {**annotated_data_dirs, **annotated_data_dir}
+        dir_strains[dir_] = list(parsed_data_dir.keys())
 
     if clade_defining:
-        for strain in parsed_files:
-            kv_pairs = parsed_files[strain].items()
-            parsed_files[strain] = \
-                {k: v for k, v in kv_pairs if v["clade_defining"]}
+        weak_filter = dir_strains["user_data"]
+        annotated_data_dirs = \
+            filter_clade_defining_mutations(annotated_data_dirs,
+                                            weak_filter=weak_filter)
 
-    unfiltered_parsed_files = parsed_files
-    parsed_files =\
-        {k: v for k, v in parsed_files.items() if k not in hidden_strains}
+    all_strain_data = annotated_data_dirs
+    visible_strain_data = \
+        {k: v for k, v in all_strain_data.items() if k not in hidden_strains}
 
     data = {
-        "heatmap_x": get_heatmap_x(parsed_files),
-        "heatmap_y": get_heatmap_y(parsed_files),
-        "insertions_x": get_insertions_x(parsed_files),
-        "insertions_y": get_insertions_y(parsed_files),
-        "deletions_x": get_deletions_x(parsed_files),
-        "deletions_y": get_deletions_y(parsed_files),
-        "tables": get_tables(parsed_files),
+        "heatmap_x": get_heatmap_x(visible_strain_data),
+        "heatmap_y": get_heatmap_y(visible_strain_data),
+        "insertions_x": get_insertions_x(visible_strain_data),
+        "insertions_y": get_insertions_y(visible_strain_data),
+        "deletions_x": get_deletions_x(visible_strain_data),
+        "deletions_y": get_deletions_y(visible_strain_data),
+        "tables": get_tables(visible_strain_data),
         "dir_strains": dir_strains,
         "hidden_strains": hidden_strains,
-        "all_strains": get_heatmap_y(unfiltered_parsed_files)
+        "all_strains": get_heatmap_y(all_strain_data)
     }
-    data["heatmap_z"] = get_heatmap_z(parsed_files, data["heatmap_x"])
+    data["heatmap_z"] = \
+        get_heatmap_z(visible_strain_data, data["heatmap_x"])
     data["heatmap_cell_text"] = \
-        get_heatmap_cell_text(parsed_files, data["heatmap_x"])
+        get_heatmap_cell_text(visible_strain_data, data["heatmap_x"])
     data["heatmap_x_genes"] =\
-        get_heatmap_x_genes(parsed_files, data["heatmap_x"])
+        get_heatmap_x_genes(visible_strain_data, data["heatmap_x"])
     return data
 
 
-def get_heatmap_x(parsed_files):
+def get_heatmap_x(annotated_data_dirs):
     """Get x axis values of heatmap cells.
 
     These are the nucleotide position of mutations.
 
-    :param parsed_files: ``parse_data_files`` return value
-    :type parsed_files: dict
+    :param annotated_data_dirs: A dictionary containing multiple merged
+        ``get_annotated_data_dir`` return values.
+    :type annotated_data_dirs: dict
     :return: List of x axis values
-    :rtype: list[int]
+    :rtype: list[str]
     """
     seen = set()
     ret = []
-    for strain in parsed_files:
-        for pos in parsed_files[strain]:
+    for strain in annotated_data_dirs:
+        for pos in annotated_data_dirs[strain]:
             if pos not in seen:
                 seen.add(pos)
                 ret.append(pos)
-    ret.sort()
+    ret.sort(key=int)
     return ret
 
 
-def get_heatmap_x_genes(parsed_files, heatmap_x):
+def get_heatmap_x_genes(annotated_data_dirs, heatmap_x):
     """Get gene values corresponding to x axis values in heatmap.
 
-    :param parsed_files: ``parse_data_files`` return value
-    :type parsed_files: dict
+    :param annotated_data_dirs: A dictionary containing multiple merged
+        ``get_annotated_data_dir`` return values.
+    :type annotated_data_dirs: dict
     :param heatmap_x: ``get_heatmap_x`` return value
-    :type heatmap_x: list[int]
+    :type heatmap_x: list[str]
     :return: List of genes for each x in ``heatmap_x``
     :rtype: list[str]
     """
     ret = []
     for pos in heatmap_x:
-        for strain in parsed_files:
-            if pos in parsed_files[strain]:
-                gene = parsed_files[strain][pos]["gene"]
+        for strain in annotated_data_dirs:
+            if pos in annotated_data_dirs[strain]:
+                gene = annotated_data_dirs[strain][pos]["gene"]
                 if gene != "n/a":
                     ret.append(gene)
                 else:
@@ -285,52 +408,55 @@ def get_heatmap_x_genes(parsed_files, heatmap_x):
     return ret
 
 
-def get_heatmap_y(parsed_files):
+def get_heatmap_y(annotated_data_dirs):
     """Get y axis values of heatmap cells.
 
     These are the VOC strains.
 
-    :param parsed_files: ``parse_data_files`` return value
-    :type parsed_files: dict
+    :param annotated_data_dirs: A dictionary containing multiple merged
+        ``get_annotated_data_dir`` return values.
+    :type annotated_data_dirs: dict
     :return: List of y axis values
     :rtype: list[str]
     """
     ret = []
-    for strain in parsed_files:
+    for strain in annotated_data_dirs:
         ret.append(strain)
     return ret
 
 
-def get_heatmap_z(parsed_files, heatmap_x):
+def get_heatmap_z(annotated_data_dirs, heatmap_x):
     """Get z values of heatmap cells.
 
     These are the mutation frequencies, and the z values dictate the
     colours of the heatmap cells.
 
-    :param parsed_files: ``parse_data_files`` return value
-    :type parsed_files: dict
+    :param annotated_data_dirs: A dictionary containing multiple merged
+        ``get_annotated_data_dir`` return values.
+    :type annotated_data_dirs: dict
     :param heatmap_x: ``get_heatmap_x`` return value
     :type heatmap_x: list[int]
     :return: List of z values
     :rtype: list[str]
     """
     ret = []
-    for strain in parsed_files:
+    for strain in annotated_data_dirs:
         row = []
         for pos in heatmap_x:
-            if pos in parsed_files[strain]:
-                row.append(parsed_files[strain][pos]["alt_freq"])
+            if pos in annotated_data_dirs[strain]:
+                row.append(annotated_data_dirs[strain][pos]["alt_freq"])
             else:
                 row.append(None)
         ret.append(row)
     return ret
 
 
-def get_heatmap_cell_text(parsed_files, heatmap_x):
+def get_heatmap_cell_text(annotated_data_dirs, heatmap_x):
     """Get hover text of heatmap cells.
 
-    :param parsed_files: ``parse_data_files`` return value
-    :type parsed_files: dict
+    :param annotated_data_dirs: A dictionary containing multiple merged
+        ``get_annotated_data_dir`` return values.
+    :type annotated_data_dirs: dict
     :param heatmap_x: ``get_heatmap_x`` return value
     :type heatmap_x: list[int]
     :return: List of D3 formatted text values for each x y coordinate
@@ -338,11 +464,11 @@ def get_heatmap_cell_text(parsed_files, heatmap_x):
     :rtype: list[str]
     """
     ret = []
-    for strain in parsed_files:
+    for strain in annotated_data_dirs:
         row = []
         for pos in heatmap_x:
-            if pos in parsed_files[strain]:
-                cell_data = parsed_files[strain][pos]
+            if pos in annotated_data_dirs[strain]:
+                cell_data = annotated_data_dirs[strain][pos]
                 cell_text_str = "<b>Mutation name: %s</b><br>" \
                                 "<br>" \
                                 "<b>Position:</b> %s<br>" \
@@ -367,92 +493,98 @@ def get_heatmap_cell_text(parsed_files, heatmap_x):
     return ret
 
 
-def get_insertions_x(parsed_files):
+def get_insertions_x(annotated_data_dirs):
     """Get x coordinates of insertion markers to overlay in heatmap.
 
-    :param parsed_files: ``parse_data_files`` return value
-    :type parsed_files: dict
+    :param annotated_data_dirs: A dictionary containing multiple merged
+        ``get_annotated_data_dir`` return values.
+    :type annotated_data_dirs: dict
     :return: List of x coordinate values to display insertion markers
     :rtype: list[int]
     """
     ret = []
-    for strain in parsed_files:
-        for pos in parsed_files[strain]:
-            if parsed_files[strain][pos]["mutation_type"] == "insertion":
+    for strain in annotated_data_dirs:
+        for pos in annotated_data_dirs[strain]:
+            mutation_type = annotated_data_dirs[strain][pos]["mutation_type"]
+            if mutation_type == "insertion":
                 ret.append(pos)
     return ret
 
 
-def get_insertions_y(parsed_files):
+def get_insertions_y(annotated_data_dirs):
     """Get y coordinates of insertion markers to overlay in heatmap.
 
-    :param parsed_files: ``parse_data_files`` return value
-    :type parsed_files: dict
+    :param annotated_data_dirs: A dictionary containing multiple merged
+        ``get_annotated_data_dir`` return values.
+    :type annotated_data_dirs: dict
     :return: List of y coordinate values to display insertion markers
     :rtype: list[str]
     """
     ret = []
-    for strain in parsed_files:
-        for pos in parsed_files[strain]:
-            if parsed_files[strain][pos]["mutation_type"] == "insertion":
+    for strain in annotated_data_dirs:
+        for pos in annotated_data_dirs[strain]:
+            if annotated_data_dirs[strain][pos]["mutation_type"] == "insertion":
                 ret.append(strain)
     return ret
 
 
-def get_deletions_x(parsed_files):
+def get_deletions_x(annotated_data_dirs):
     """Get x coordinates of deletion markers to overlay in heatmap.
 
-    :param parsed_files: ``parse_data_files`` return value
-    :type parsed_files: dict
+    :param annotated_data_dirs: A dictionary containing multiple merged
+        ``get_annotated_data_dir`` return values.
+    :type annotated_data_dirs: dict
     :return: List of x coordinate values to display insertion markers
     :rtype: list[int]
     """
     ret = []
-    for strain in parsed_files:
-        for pos in parsed_files[strain]:
-            if parsed_files[strain][pos]["mutation_type"] == "deletion":
+    for strain in annotated_data_dirs:
+        for pos in annotated_data_dirs[strain]:
+            if annotated_data_dirs[strain][pos]["mutation_type"] == "deletion":
                 ret.append(pos)
     return ret
 
 
-def get_deletions_y(parsed_files):
+def get_deletions_y(annotated_data_dirs):
     """Get y coordinates of deletion markers to overlay in heatmap.
 
-    :param parsed_files: ``parse_data_files`` return value
-    :type parsed_files: dict
+    :param annotated_data_dirs: A dictionary containing multiple merged
+        ``get_annotated_data_dir`` return values.
+    :type annotated_data_dirs: dict
     :return: List of y coordinate values to display deletion markers
     :rtype: list[str]
     """
     ret = []
-    for strain in parsed_files:
-        for pos in parsed_files[strain]:
-            if parsed_files[strain][pos]["mutation_type"] == "deletion":
+    for strain in annotated_data_dirs:
+        for pos in annotated_data_dirs[strain]:
+            if annotated_data_dirs[strain][pos]["mutation_type"] == "deletion":
                 ret.append(strain)
     return ret
 
 
-def get_tables(parsed_files):
+def get_tables(annotated_data_dirs):
     """Get table column data for each y axis value or strain.
 
     The columns are represented as lists.
 
-    :param parsed_files: ``parse_data_files`` return value
-    :type parsed_files: dict
+    :param annotated_data_dirs: A dictionary containing multiple merged
+        ``get_annotated_data_dir`` return values.
+    :type annotated_data_dirs: dict
     :return: Dictionary with keys for each strain, and a list of lists
         values representing columns for each strain.
     :rtype: dict[str, list[list]]
     """
     ret = {}
-    for strain in parsed_files:
+    for strain in annotated_data_dirs:
         pos_col = []
         mutation_name_col = []
         ref_col = []
         alt_col = []
         alt_freq_col = []
         functions_col = []
-        for pos in parsed_files[strain]:
+        for pos in annotated_data_dirs[strain]:
             pos_col.append(pos)
-            cell_data = parsed_files[strain][pos]
+            cell_data = annotated_data_dirs[strain][pos]
             mutation_name_col.append(cell_data["mutation_name"])
             ref_col.append(cell_data["ref"])
             alt_col.append(cell_data["alt"])
