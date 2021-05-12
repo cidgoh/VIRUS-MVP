@@ -66,7 +66,7 @@ def launch_app(_):
     gff3_annotations = parse_gff3_file("gff3_annotations.tsv")
     data_ = get_data(["reference_data", "user_data"], gff3_annotations)
     return [
-        html.Div(toolbar_generator.get_toolbar_row_div()),
+        html.Div(toolbar_generator.get_toolbar_row_div(data_)),
         html.Div(heatmap_generator.get_heatmap_row_div(data_)),
         html.Div(table_generator.get_table_row_div(data_)),
         html.Div(toolbar_generator.get_select_lineages_modal()),
@@ -137,13 +137,19 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
         if new_upload["status"] == "error":
             raise PreventUpdate
 
+    # TODO explain this
+    if ctx.triggered[0]["prop_id"] != "mutation-freq-slider.value":
+        min_mutation_freq, max_mutation_freq = None, None
+    else:
+        [min_mutation_freq, max_mutation_freq] = mutation_freq_vals
+
     return get_data(["reference_data", "user_data"],
                     gff3_annotations,
                     clade_defining=show_clade_defining,
                     hidden_strains=hidden_strains,
                     strain_order=strain_order,
-                    min_mutation_freq=mutation_freq_vals[0],
-                    max_mutation_freq=mutation_freq_vals[1])
+                    min_mutation_freq=min_mutation_freq,
+                    max_mutation_freq=max_mutation_freq)
 
 
 @app.callback(
@@ -326,6 +332,21 @@ def toggle_select_lineages_modal(_, __, ___, data):
         # No need to populate modal body if the modal is closed
         return False, None
 
+
+@app.callback(
+    Output("mutation-freq-slider-col", "children"),
+    Input("data", "data"),
+    State("mutation-freq-slider", "marks"),
+    prevent_initial_call=True
+)
+def update_mutation_freq_slider(data, current_marks):
+    """TODO"""
+    new_mark_vals = data["mutation_freq_slider_vals"]
+    old_mark_vals = current_marks.keys()
+    # TODO what
+    if len(new_mark_vals) == len(old_mark_vals):
+        raise PreventUpdate
+    return toolbar_generator.get_mutation_freq_slider(data)
 
 @app.callback(
     Output("heatmap-left-fig", "figure"),

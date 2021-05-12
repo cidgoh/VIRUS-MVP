@@ -4,8 +4,9 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 
 
-def get_toolbar_row_div():
+def get_toolbar_row_div(data):
     """Get Dash Bootstrap Components row that sits above heatmap.
+    TODO update docstring
 
     This contains a col with buttons for selecting and uploading
     strains, a col for displaying dialog to the user, and the clade
@@ -30,8 +31,9 @@ def get_toolbar_row_div():
             id="dialog-col"
         ),
         dbc.Col(
-            get_mutation_freq_slider(),
+            get_mutation_freq_slider(data),
             className="my-auto",
+            id="mutation-freq-slider-col",
             width={"size": 2}
         ),
         dbc.Col(
@@ -140,16 +142,34 @@ def get_file_upload_component():
     )
 
 
-def get_mutation_freq_slider():
+def get_mutation_freq_slider(data):
     """TODO"""
+    marks = {}
+    min_val = 1
+    max_val = 0
+    for str_val in data["mutation_freq_slider_vals"]:
+        num_val = float(str_val)
+        if num_val % 1 == 0:
+            num_val = int(str_val)
+        if num_val < min_val:
+            min_val = num_val
+        if num_val > max_val:
+            max_val = num_val
+        marks[num_val] = {
+            "label": str_val,
+            "style": {"display": "none"}
+        }
+    marks[min_val]["style"].pop("display")
+    marks[min_val]["label"] = "Alt freq= " + marks[min_val]["label"]
+    marks[max_val]["style"].pop("display")
     return dcc.RangeSlider(id="mutation-freq-slider",
                            className="p-0",
-                           min=0,
-                           max=1,
-                           step=0.01,
-                           value=[0, 1],
+                           min=min_val,
+                           max=max_val,
+                           step=None,
+                           value=[min_val, max_val],
                            allowCross=False,
-                           marks={0: "Alt freq=0", 1: "1"},
+                           marks=marks,
                            tooltip={})
 
 

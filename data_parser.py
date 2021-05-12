@@ -269,7 +269,8 @@ def filter_mutations_by_freq(annotated_data_dirs, min_mutation_freq,
 
 
 def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
-             strain_order=None, min_mutation_freq=0, max_mutation_freq=100):
+             strain_order=None, min_mutation_freq=None,
+             max_mutation_freq=None):
     """Get relevant data for Plotly visualizations in this application.
     TODO update docstring
 
@@ -328,14 +329,16 @@ def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
             filter_clade_defining_mutations(annotated_data_dirs,
                                             weak_filter=weak_filter)
 
-    if min_mutation_freq > 0 or max_mutation_freq < 100:
-        annotated_data_dirs = filter_mutations_by_freq(annotated_data_dirs,
-                                                       min_mutation_freq,
-                                                       max_mutation_freq)
-
     all_strain_data = annotated_data_dirs
     visible_strain_data = \
         {k: v for k, v in all_strain_data.items() if k not in hidden_strains}
+
+    mutation_freq_slider_vals = \
+        get_mutation_freq_slider_vals(visible_strain_data)
+    if min_mutation_freq and max_mutation_freq:
+        visible_strain_data = filter_mutations_by_freq(visible_strain_data,
+                                                       min_mutation_freq,
+                                                       max_mutation_freq)
 
     data = {
         "heatmap_x": get_heatmap_x(visible_strain_data),
@@ -347,7 +350,8 @@ def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
         "tables": get_tables(visible_strain_data),
         "dir_strains": dir_strains,
         "hidden_strains": hidden_strains,
-        "all_strains": get_heatmap_y(all_strain_data)
+        "all_strains": get_heatmap_y(all_strain_data),
+        "mutation_freq_slider_vals": mutation_freq_slider_vals
     }
     data["heatmap_z"] = \
         get_heatmap_z(visible_strain_data, data["heatmap_x"])
@@ -356,6 +360,16 @@ def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
     data["heatmap_x_genes"] =\
         get_heatmap_x_genes(visible_strain_data, data["heatmap_x"])
     return data
+
+
+def get_mutation_freq_slider_vals(annotated_data_dirs):
+    """TODO"""
+    alt_freq_set = set()
+    for strain in annotated_data_dirs:
+        for pos in annotated_data_dirs[strain]:
+            alt_freq_set.add(annotated_data_dirs[strain][pos]["alt_freq"])
+    ret = sorted(list(alt_freq_set), key=float)
+    return ret
 
 
 def get_heatmap_x(annotated_data_dirs):
