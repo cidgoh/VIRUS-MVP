@@ -81,6 +81,37 @@ def parse_gff3_file(path):
     return annotations_dict
 
 
+def map_pos_to_gene(pos):
+    """TODO https://www.ncbi.nlm.nih.gov/nuccore/MN908947"""
+    if pos <= 265:
+        return "5' UTR"
+    elif 266 <= pos <= 21555:
+        return "ORF1ab"
+    elif 21563 <= pos <= 25384:
+        return "S"
+    elif 25393 <= pos <= 26220:
+        return "ORF3a"
+    elif 26245 <= pos <= 26472:
+        return "E"
+    elif 26523 <= pos <= 27191:
+        return "M"
+    elif 27202 <= pos <= 27387:
+        return "ORF6"
+    elif 27394 <= pos <= 27759:
+        return "ORF7a"
+    elif 27894 <= pos <= 28259:
+        return "ORF8"
+    elif 28274 <= pos <= 29533:
+        return "N"
+    elif 29558 <= pos <= 29674:
+        return "ORF10"
+    elif pos >= 29675:
+        return "3' UTR"
+    else:
+        # Intergenic region
+        return "n/a"
+
+
 def parse_data_dir(dir_, file_order=None):
     """Parses relevant visualization data from ``dir_``.
 
@@ -109,9 +140,6 @@ def parse_data_dir(dir_, file_order=None):
         file_order = []
 
     ret = {}
-    with open("cds_gene_map.json") as fp:
-        # Maps cds info in tsv files to actual genes
-        cds_gene_map = json.load(fp)
     with os.scandir(dir_) as it:
         # Iterate through tsv files in dir_ sorted by ``file_order``
         # first, and then modification time.
@@ -140,11 +168,7 @@ def parse_data_dir(dir_, file_order=None):
                     # We may update this in ``get_annotated_data_dir``
                     ret[strain][pos]["clade_defining"] = False
 
-                    gff_feature = row["GFF_FEATURE"]
-                    if gff_feature in cds_gene_map:
-                        ret[strain][pos]["gene"] = cds_gene_map[gff_feature]
-                    else:
-                        ret[strain][pos]["gene"] = "n/a"
+                    ret[strain][pos]["gene"] = map_pos_to_gene(int(pos))
 
                     # We may update these in ``get_annotated_data_dir``
                     ret[strain][pos]["mutation_name"] = "n/a"
@@ -358,7 +382,7 @@ def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
     data["heatmap_cell_text"] = \
         get_heatmap_cell_text(visible_strain_data, data["heatmap_x"])
     data["heatmap_x_genes"] =\
-        get_heatmap_x_genes(visible_strain_data, data["heatmap_x"])
+        get_heatmap_x_genes(data["heatmap_x"])
     return data
 
 
@@ -394,7 +418,7 @@ def get_heatmap_x(annotated_data_dirs):
     return ret
 
 
-def get_heatmap_x_genes(annotated_data_dirs, heatmap_x):
+def get_heatmap_x_genes(heatmap_x):
     """Get gene values corresponding to x axis values in heatmap.
 
     :param annotated_data_dirs: A dictionary containing multiple merged
@@ -407,37 +431,7 @@ def get_heatmap_x_genes(annotated_data_dirs, heatmap_x):
     """
     ret = []
     for pos in heatmap_x:
-        for strain in annotated_data_dirs:
-            if pos in annotated_data_dirs[strain]:
-                gene = annotated_data_dirs[strain][pos]["gene"]
-                if gene != "n/a":
-                    ret.append(gene)
-                else:
-                    ret.append("")
-                break
-
-    # TODO: We need to fill in intergenic gaps with last gene seen
-    #  until vcf is more accurate.
-    end_5_utr_index = None
-    for i in range(0, len(ret)):
-        if ret[i] != "":
-            if i != 0:
-                end_5_utr_index = i
-            break
-    start_3_utr_index = None
-    for i in range(len(ret) - 1, -1, -1):
-        if ret[i] != "":
-            if i != (len(ret) - 1):
-                start_3_utr_index = i
-            break
-    for i in range(len(ret)):
-        if end_5_utr_index and i <= end_5_utr_index:
-            ret[i] = "5' UTR"
-        if start_3_utr_index and i >= start_3_utr_index:
-            ret[i] = "3' UTR"
-        if ret[i] == "":
-            ret[i] = ret[i-1]
-
+        ret.append(map_pos_to_gene(int(pos)))
     return ret
 
 

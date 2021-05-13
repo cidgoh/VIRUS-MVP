@@ -126,7 +126,7 @@ def get_heatmap_center_fig(data):
     for i, gene_label in enumerate(heatmap_center_genes_obj["text"][0]):
         x_start = heatmap_center_genes_obj["x"][i]
         x_end = heatmap_center_genes_obj["x"][i+1]
-        if (x_end - x_start) < 2:
+        if (x_end - x_start) < 3:
             continue
         ret.add_annotation(
             xref="x1",
@@ -220,10 +220,10 @@ def get_heatmap_center_genes_obj(data):
         if i == 0:
             heatmap_center_genes_obj_x.append(i-0.5)
             last_gene_seen = heatmap_x_gene
-        elif i == (len(data["heatmap_x_genes"]) - 1):
+        if i == (len(data["heatmap_x_genes"]) - 1):
             heatmap_center_genes_obj_x.append(i+0.5)
             heatmap_center_genes_obj_labels.append(last_gene_seen)
-        elif heatmap_x_gene != last_gene_seen:
+        if heatmap_x_gene != last_gene_seen:
             heatmap_center_genes_obj_x.append(i-0.5)
             heatmap_center_genes_obj_labels.append(last_gene_seen)
             last_gene_seen = heatmap_x_gene
@@ -233,8 +233,10 @@ def get_heatmap_center_genes_obj(data):
     with open("gene_colors.json") as fp:
         gene_colors = json.load(fp)
     for i, label in enumerate(heatmap_center_genes_obj_labels):
-        mock_z_val = i / (len(heatmap_center_genes_obj_labels) - 1)
+        mock_z_val = (i + 1) / len(heatmap_center_genes_obj_labels)
         heatmap_center_genes_obj_z[0].append(mock_z_val)
+        # TODO explain why twice
+        heatmap_center_genes_obj_colorscale.append(gene_colors[label])
         heatmap_center_genes_obj_colorscale.append(gene_colors[label])
 
     ret = go.Heatmap(
