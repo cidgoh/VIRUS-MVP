@@ -556,7 +556,8 @@ def get_insertions_y(annotated_data_dirs):
     ret = []
     for strain in annotated_data_dirs:
         for pos in annotated_data_dirs[strain]:
-            if annotated_data_dirs[strain][pos]["mutation_type"] == "insertion":
+            mutation_type = annotated_data_dirs[strain][pos]["mutation_type"]
+            if mutation_type == "insertion":
                 ret.append(strain)
     return ret
 

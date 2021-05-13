@@ -344,7 +344,7 @@ def update_mutation_freq_slider(data, current_marks):
     new_mark_vals = data["mutation_freq_slider_vals"]
     old_mark_vals = current_marks.keys()
     # TODO what
-    if len(new_mark_vals) == len(old_mark_vals):
+    if len(data["mutation_freq_slider_vals"]) == len(current_marks):
         raise PreventUpdate
     return toolbar_generator.get_mutation_freq_slider(data)
 
