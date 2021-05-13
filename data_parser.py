@@ -418,23 +418,23 @@ def get_heatmap_x_genes(annotated_data_dirs, heatmap_x):
 
     # TODO: We need to fill in intergenic gaps with last gene seen
     #  until vcf is more accurate.
-    end_3_utr_index = None
+    end_5_utr_index = None
     for i in range(0, len(ret)):
         if ret[i] != "":
             if i != 0:
-                end_3_utr_index = i
+                end_5_utr_index = i
             break
-    start_5_utr_index = None
+    start_3_utr_index = None
     for i in range(len(ret) - 1, -1, -1):
         if ret[i] != "":
             if i != (len(ret) - 1):
-                start_5_utr_index = i
+                start_3_utr_index = i
             break
     for i in range(len(ret)):
-        if not end_3_utr_index or i < end_3_utr_index:
-            continue
-        if not start_5_utr_index or i > start_5_utr_index:
-            continue
+        if end_5_utr_index and i <= end_5_utr_index:
+            ret[i] = "5' UTR"
+        if start_3_utr_index and i >= start_3_utr_index:
+            ret[i] = "3' UTR"
         if ret[i] == "":
             ret[i] = ret[i-1]
 

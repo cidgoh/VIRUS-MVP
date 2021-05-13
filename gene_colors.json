@@ -1,5 +1,5 @@
 {
-  "": "white",
+  "5' UTR": "black",
   "ORF1ab": "#8EBC66",
   "S": "#5097BA",
   "ORF3a": "#AABD52",
@@ -9,5 +9,6 @@
   "ORF7a": "#C4B945",
   "ORF8": "#60AA9E",
   "N": "#E67030",
-  "ORF10": "#8EBC66"
+  "ORF10": "#8EBC66",
+  "3' UTR": "black"
 }
