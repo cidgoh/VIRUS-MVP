@@ -348,6 +348,7 @@ def update_mutation_freq_slider(data, current_marks):
         raise PreventUpdate
     return toolbar_generator.get_mutation_freq_slider(data)
 
+
 @app.callback(
     Output("heatmap-left-fig", "figure"),
     Output("heatmap-center-fig", "figure"),

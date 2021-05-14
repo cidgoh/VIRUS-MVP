@@ -173,6 +173,9 @@ def parse_data_dir(dir_, file_order=None):
                     ret[strain][pos]["mutation_name"] = "n/a"
                     ret[strain][pos]["functions"] = "n/a"
 
+                    # We may update this later
+                    ret[strain][pos]["hidden_cell"] = False
+
                     if row["ALT"][0] == "+":
                         ret[strain][pos]["mutation_type"] = "insertion"
                     elif row["ALT"][0] == "-":
@@ -270,11 +273,11 @@ def filter_clade_defining_mutations(annotated_data_dirs, weak_filter):
             if annotated_data_dirs[strain][pos]["clade_defining"]:
                 seen_pos_set.add(pos)
             else:
-                ret[strain].pop(pos)
+                ret[strain][pos]["hidden_cell"] = True
     for strain in weak_filter:
         for pos in annotated_data_dirs[strain]:
             if pos not in seen_pos_set:
-                ret[strain].pop(pos)
+                ret[strain][pos]["hidden_cell"] = True
     return ret
 
 
@@ -286,8 +289,7 @@ def filter_mutations_by_freq(annotated_data_dirs, min_mutation_freq,
         for pos in annotated_data_dirs[strain]:
             alt_freq = float(ret[strain][pos]["alt_freq"])
             if alt_freq < min_mutation_freq or alt_freq > max_mutation_freq:
-                ret[strain].pop(pos)
-    # TODO need to stop from breaking on empty heatmap
+                ret[strain][pos]["hidden_cell"] = True
     return ret
 
 
@@ -390,7 +392,8 @@ def get_mutation_freq_slider_vals(annotated_data_dirs):
     alt_freq_set = set()
     for strain in annotated_data_dirs:
         for pos in annotated_data_dirs[strain]:
-            alt_freq_set.add(annotated_data_dirs[strain][pos]["alt_freq"])
+            if not annotated_data_dirs[strain][pos]["hidden_cell"]:
+                alt_freq_set.add(annotated_data_dirs[strain][pos]["alt_freq"])
     ret = sorted(list(alt_freq_set), key=float)
     return ret
 
@@ -469,7 +472,9 @@ def get_heatmap_z(annotated_data_dirs, heatmap_x):
     for strain in annotated_data_dirs:
         row = []
         for pos in heatmap_x:
-            if pos in annotated_data_dirs[strain]:
+            cond = pos in annotated_data_dirs[strain] \
+                   and not annotated_data_dirs[strain][pos]["hidden_cell"]
+            if cond:
                 row.append(annotated_data_dirs[strain][pos]["alt_freq"])
             else:
                 row.append(None)
@@ -532,7 +537,8 @@ def get_insertions_x(annotated_data_dirs):
     for strain in annotated_data_dirs:
         for pos in annotated_data_dirs[strain]:
             mutation_type = annotated_data_dirs[strain][pos]["mutation_type"]
-            if mutation_type == "insertion":
+            hidden_cell = annotated_data_dirs[strain][pos]["hidden_cell"]
+            if mutation_type == "insertion" and not hidden_cell:
                 ret.append(pos)
     return ret
 
@@ -550,7 +556,8 @@ def get_insertions_y(annotated_data_dirs):
     for strain in annotated_data_dirs:
         for pos in annotated_data_dirs[strain]:
             mutation_type = annotated_data_dirs[strain][pos]["mutation_type"]
-            if mutation_type == "insertion":
+            hidden_cell = annotated_data_dirs[strain][pos]["hidden_cell"]
+            if mutation_type == "insertion" and not hidden_cell:
                 ret.append(strain)
     return ret
 
@@ -567,7 +574,9 @@ def get_deletions_x(annotated_data_dirs):
     ret = []
     for strain in annotated_data_dirs:
         for pos in annotated_data_dirs[strain]:
-            if annotated_data_dirs[strain][pos]["mutation_type"] == "deletion":
+            mutation_type = annotated_data_dirs[strain][pos]["mutation_type"]
+            hidden_cell = annotated_data_dirs[strain][pos]["hidden_cell"]
+            if mutation_type == "deletion" and not hidden_cell:
                 ret.append(pos)
     return ret
 
@@ -584,7 +593,9 @@ def get_deletions_y(annotated_data_dirs):
     ret = []
     for strain in annotated_data_dirs:
         for pos in annotated_data_dirs[strain]:
-            if annotated_data_dirs[strain][pos]["mutation_type"] == "deletion":
+            mutation_type = annotated_data_dirs[strain][pos]["mutation_type"]
+            hidden_cell = annotated_data_dirs[strain][pos]["hidden_cell"]
+            if mutation_type == "deletion" and not hidden_cell:
                 ret.append(strain)
     return ret
 
