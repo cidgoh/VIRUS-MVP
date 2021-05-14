@@ -117,7 +117,7 @@ def get_heatmap_center_fig(data):
 
     # This bit of hackey code is needed to display the labels on the
     # gene bar where we want them. The labels are in the middle, and
-    # only appear if the bars are big enough.
+    # appear differently if the bars are too small.
     midpoints = []
     endpoints = heatmap_center_genes_obj["x"]
     for i, val in enumerate(endpoints[:-1]):
@@ -126,16 +126,21 @@ def get_heatmap_center_fig(data):
     for i, gene_label in enumerate(heatmap_center_genes_obj["text"][0]):
         x_start = heatmap_center_genes_obj["x"][i]
         x_end = heatmap_center_genes_obj["x"][i+1]
-        if (x_end - x_start) < 3:
-            continue
+        if (x_end - x_start) < 2:
+            font_size = 10
+            text_angle = 90
+        else:
+            font_size = 18
+            text_angle = 0
         ret.add_annotation(
             xref="x1",
             yref="y1",
             x=midpoints[i],
             y=heatmap_center_genes_obj["y"][0],
             text=gene_label,
+            textangle=text_angle,
             showarrow=False,
-            font={"color": "white"}
+            font={"color": "white", "size": font_size}
         )
 
     # Cells and x axis
