@@ -5,7 +5,6 @@ Entry point is ``get_data``.
 
 from copy import deepcopy
 import csv
-import json
 import os
 
 
