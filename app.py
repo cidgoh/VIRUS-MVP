@@ -132,16 +132,16 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
     :rtype: dict
     """
     # Do not update if the input is a new upload that failed
-    ctx = dash.callback_context
-    if ctx.triggered[0]["prop_id"] == "new-upload.data":
+    trigger = dash.callback_context.triggered[0]["prop_id"]
+    if trigger == "new-upload.data":
         if new_upload["status"] == "error":
             raise PreventUpdate
 
     # TODO explain this
-    if ctx.triggered[0]["prop_id"] != "mutation-freq-slider.value":
-        min_mutation_freq, max_mutation_freq = None, None
-    else:
+    if trigger in ["mutation-freq-slider.value", "strain-order.data"]:
         [min_mutation_freq, max_mutation_freq] = mutation_freq_vals
+    else:
+        min_mutation_freq, max_mutation_freq = None, None
 
     return get_data(["reference_data", "user_data"],
                     gff3_annotations,
@@ -339,12 +339,10 @@ def toggle_select_lineages_modal(_, __, ___, data):
     State("mutation-freq-slider", "marks"),
     prevent_initial_call=True
 )
-def update_mutation_freq_slider(data, current_marks):
+def update_mutation_freq_slider(data, old_slider_marks):
     """TODO"""
-    new_mark_vals = data["mutation_freq_slider_vals"]
-    old_mark_vals = current_marks.keys()
-    # TODO what
-    if len(data["mutation_freq_slider_vals"]) == len(current_marks):
+    # TODO explain why this check
+    if len(data["mutation_freq_slider_vals"]) == len(old_slider_marks):
         raise PreventUpdate
     return toolbar_generator.get_mutation_freq_slider(data)
 
