@@ -88,7 +88,9 @@ def launch_app(_):
         # Used to integrate JQuery UI drag and drop on client side. The
         # data value is meaningless, we just need an output to perform
         # the clientside function.
-        dcc.Store(id="make-select-lineages-modal-checkboxes-draggable")
+        dcc.Store(id="make-select-lineages-modal-checkboxes-draggable"),
+        # TODO
+        dcc.Store("new-mutation-freq-slider")
     ]
 
 
@@ -223,6 +225,44 @@ def update_new_upload(file_contents, filename, old_data):
 
 
 @app.callback(
+    Output("dialog-col", "children"),
+    Input("new-upload", "data"),
+    Input("new-mutation-freq-slider", "data"),
+    Input("data", "data"),
+    prevent_initial_call=True
+)
+def update_dialog_col(new_upload, new_mutation_freq_slider, __):
+    """Update ``dialog-col`` div in toolbar.
+    TODO update docstring
+
+    This function shows an error alert when there was an unsuccessful
+    upload by the user, or the mutation frequency slider was
+    re-rendered.
+
+    :param new_upload: ``update_new_upload`` return value
+    :type new_upload: dict
+    :return: Dash Bootstrap Components alert if new_upload describes an
+        unsuccessfully uploaded file.
+    :rtype: dbc.Alert
+    """
+    triggers = [x["prop_id"] for x in dash.callback_context.triggered]
+
+    if "new-upload.data" in triggers and new_upload["status"] == "error":
+        return dbc.Alert(new_upload["msg"],
+                         color="danger",
+                         className="mb-0 p-1 d-inline-block")
+    elif "new-mutation-freq-slider.data" in triggers:
+        msg_template = "Mutation frequency range reset between %s and %s."
+        msg_vals = (new_mutation_freq_slider["min"],
+                    new_mutation_freq_slider["max"])
+        return dbc.Alert(msg_template % msg_vals,
+                         color="warning",
+                         className="mb-0 p-1 d-inline-block")
+    else:
+        return None
+
+
+@app.callback(
     Output("hidden-strains", "data"),
     Input("select-lineages-ok-btn", "n_clicks"),
     State({"type": "select-lineages-modal-checklist", "index": ALL}, "value"),
@@ -270,31 +310,6 @@ def update_hidden_strains(_, values, data):
 
 
 @app.callback(
-    Output("dialog-col", "children"),
-    Input("new-upload", "data"),
-    prevent_initial_call=True
-)
-def update_dialog_col(new_upload):
-    """Update ``dialog-col`` div in toolbar.
-
-    This function shows an error alert when there was an unsuccessful
-    upload by the user.
-
-    :param new_upload: ``update_new_upload`` return value
-    :type new_upload: dict
-    :return: Dash Bootstrap Components alert if new_upload describes an
-        unsuccessfully uploaded file.
-    :rtype: dbc.Alert
-    """
-    if new_upload["status"] == "error":
-        return dbc.Alert(new_upload["msg"],
-                         color="danger",
-                         className="mb-0 p-1 d-inline-block")
-    else:
-        return None
-
-
-@app.callback(
     Output("select-lineages-modal", "is_open"),
     Output("select-lineages-modal-body", "children"),
     Input("open-select-lineages-modal-btn", "n_clicks"),
@@ -335,6 +350,7 @@ def toggle_select_lineages_modal(_, __, ___, data):
 
 @app.callback(
     Output("mutation-freq-slider-col", "children"),
+    Output("new-mutation-freq-slider", "data"),
     Input("data", "data"),
     State("mutation-freq-slider", "marks"),
     prevent_initial_call=True
@@ -342,9 +358,14 @@ def toggle_select_lineages_modal(_, __, ___, data):
 def update_mutation_freq_slider(data, old_slider_marks):
     """TODO"""
     # TODO explain why this check
-    if len(data["mutation_freq_slider_vals"]) == len(old_slider_marks):
+    current_slider_marks = data["mutation_freq_slider_vals"]
+    if len(current_slider_marks) == len(old_slider_marks):
         raise PreventUpdate
-    return toolbar_generator.get_mutation_freq_slider(data)
+
+    slider_div = toolbar_generator.get_mutation_freq_slider(data)
+    new_mutation_freq_slider_data = \
+        {"min": current_slider_marks[0], "max": current_slider_marks[-1]}
+    return slider_div, new_mutation_freq_slider_data
 
 
 @app.callback(

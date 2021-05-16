@@ -26,7 +26,7 @@ def get_toolbar_row_div(data):
             width={"offset": 1}
         ),
         dbc.Col(
-            # Empty on launch; populated after user uploads data
+            # Empty on launch
             className="my-auto",
             id="dialog-col"
         ),
