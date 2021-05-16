@@ -88,9 +88,7 @@ def launch_app(_):
         # Used to integrate JQuery UI drag and drop on client side. The
         # data value is meaningless, we just need an output to perform
         # the clientside function.
-        dcc.Store(id="make-select-lineages-modal-checkboxes-draggable"),
-        # TODO
-        dcc.Store("new-mutation-freq-slider")
+        dcc.Store(id="make-select-lineages-modal-checkboxes-draggable")
     ]
 
 
@@ -227,7 +225,7 @@ def update_new_upload(file_contents, filename, old_data):
 @app.callback(
     Output("dialog-col", "children"),
     Input("new-upload", "data"),
-    Input("new-mutation-freq-slider", "data"),
+    Input("mutation-freq-slider", "marks"),
     Input("data", "data"),
     prevent_initial_call=True
 )
@@ -251,11 +249,8 @@ def update_dialog_col(new_upload, new_mutation_freq_slider, __):
         return dbc.Alert(new_upload["msg"],
                          color="danger",
                          className="mb-0 p-1 d-inline-block")
-    elif "new-mutation-freq-slider.data" in triggers:
-        msg_template = "Mutation frequency range reset between %s and %s."
-        msg_vals = (new_mutation_freq_slider["min"],
-                    new_mutation_freq_slider["max"])
-        return dbc.Alert(msg_template % msg_vals,
+    elif "mutation-freq-slider.marks" in triggers:
+        return dbc.Alert("Mutation frequency slider values reset.",
                          color="warning",
                          className="mb-0 p-1 d-inline-block")
     else:
@@ -350,7 +345,6 @@ def toggle_select_lineages_modal(_, __, ___, data):
 
 @app.callback(
     Output("mutation-freq-slider-col", "children"),
-    Output("new-mutation-freq-slider", "data"),
     Input("data", "data"),
     State("mutation-freq-slider", "marks"),
     prevent_initial_call=True
@@ -362,10 +356,7 @@ def update_mutation_freq_slider(data, old_slider_marks):
     if len(current_slider_marks) == len(old_slider_marks):
         raise PreventUpdate
 
-    slider_div = toolbar_generator.get_mutation_freq_slider(data)
-    new_mutation_freq_slider_data = \
-        {"min": current_slider_marks[0], "max": current_slider_marks[-1]}
-    return slider_div, new_mutation_freq_slider_data
+    return toolbar_generator.get_mutation_freq_slider(data)
 
 
 @app.callback(
