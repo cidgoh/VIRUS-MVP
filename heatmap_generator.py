@@ -240,7 +240,8 @@ def get_heatmap_center_genes_obj(data):
     for i, label in enumerate(heatmap_center_genes_obj_labels):
         mock_z_val = (i + 1) / len(heatmap_center_genes_obj_labels)
         heatmap_center_genes_obj_z[0].append(mock_z_val)
-        # TODO explain why twice
+        # We add the same color to the colorscale twice, to prevent
+        # things from breaking when the gene bar has only one z val.
         heatmap_center_genes_obj_colorscale.append(gene_colors[label])
         heatmap_center_genes_obj_colorscale.append(gene_colors[label])
 

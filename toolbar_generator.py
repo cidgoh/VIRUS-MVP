@@ -6,12 +6,13 @@ import dash_core_components as dcc
 
 def get_toolbar_row_div(data):
     """Get Dash Bootstrap Components row that sits above heatmap.
-    TODO update docstring
 
     This contains a col with buttons for selecting and uploading
     strains, a col for displaying dialog to the user, and the clade
     defining mutations switch.
 
+    :param data: ``get_data`` return value
+    :type data: dict
     :return: Dash Bootstrap Component row with upload button and clade
         defining mutations switch.
     :rtype: dbc.Row
@@ -143,14 +144,25 @@ def get_file_upload_component():
 
 
 def get_mutation_freq_slider(data):
-    """TODO"""
+    """Return mutation freq slider div.
+
+    :param data: ``get_data`` return value
+    :type data: dict
+    :return: Mutation freq slider div with marks corresponding to
+        unique mutation frequencies in ``data``, and with handles at
+        the minimum and maximum positions.
+    :rtype: dcc.RangeSlider
+    """
     marks = {}
     min_val = 1
     max_val = 0
     for str_val in data["mutation_freq_slider_vals"]:
+        # Dash sliders currently have a bug that prevents typing whole
+        # numbers as floats. See https://bit.ly/3wgwh9p.
         num_val = float(str_val)
         if num_val % 1 == 0:
             num_val = int(str_val)
+
         if num_val < min_val:
             min_val = num_val
         if num_val > max_val:
