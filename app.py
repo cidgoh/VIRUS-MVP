@@ -382,19 +382,19 @@ def toggle_select_lineages_modal(_, __, ___, data):
     State("mutation-freq-slider", "marks"),
     prevent_initial_call=True
 )
-def update_mutation_freq_slider(data, current_slider_marks):
+def update_mutation_freq_slider(data, old_slider_marks):
     """Update mutation frequency slider div.
 
     If the ``data`` dcc variable is updated, this function will
     re-render the slider if the new ``data`` variable has a different
-    set of mutation frequencies.
+    set of mutation frequencies. TODO
 
     :param data: ``get_data`` return value, transported here by
         ``update_data``.
     :type data: dict
-    :param current_slider_marks: ``marks`` property of the current
+    :param old_slider_marks: ``marks`` property of the current
         mutation frequency slider div.
-    :type current_slider_marks: dict
+    :type old_slider_marks: dict
     :return: New mutation frequency slider div, if one is needed
     :rtype: dcc.RangeSlider
     """
@@ -402,8 +402,8 @@ def update_mutation_freq_slider(data, current_slider_marks):
     # number of mutation frequencies in the updated ``data`` is
     # different than the number of mutation frequencies in the current
     # slider. I do not think this will currently break anything.
-    current_slider_marks = data["mutation_freq_slider_vals"]
-    if len(current_slider_marks) == len(current_slider_marks):
+    new_slider_marks = data["mutation_freq_slider_vals"]
+    if len(new_slider_marks) == len(old_slider_marks):
         raise PreventUpdate
 
     return toolbar_generator.get_mutation_freq_slider(data)
