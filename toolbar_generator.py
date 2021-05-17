@@ -4,13 +4,15 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 
 
-def get_toolbar_row_div():
+def get_toolbar_row_div(data):
     """Get Dash Bootstrap Components row that sits above heatmap.
 
     This contains a col with buttons for selecting and uploading
     strains, a col for displaying dialog to the user, and the clade
     defining mutations switch.
 
+    :param data: ``get_data`` return value
+    :type data: dict
     :return: Dash Bootstrap Component row with upload button and clade
         defining mutations switch.
     :rtype: dbc.Row
@@ -25,9 +27,15 @@ def get_toolbar_row_div():
             width={"offset": 1}
         ),
         dbc.Col(
-            # Empty on launch; populated after user uploads data
+            # Empty on launch
             className="my-auto",
             id="dialog-col"
+        ),
+        dbc.Col(
+            get_mutation_freq_slider(data),
+            className="my-auto",
+            id="mutation-freq-slider-col",
+            width={"size": 2}
         ),
         dbc.Col(
             get_clade_defining_mutations_switch_form_group(),
@@ -133,6 +141,48 @@ def get_file_upload_component():
         dbc.Button("Upload", color="primary"),
         id="upload-file"
     )
+
+
+def get_mutation_freq_slider(data):
+    """Return mutation freq slider div.
+
+    :param data: ``get_data`` return value
+    :type data: dict
+    :return: Mutation freq slider div with marks corresponding to
+        unique mutation frequencies in ``data``, and with handles at
+        the minimum and maximum positions.
+    :rtype: dcc.RangeSlider
+    """
+    marks = {}
+    min_val = 1
+    max_val = 0
+    for str_val in data["mutation_freq_slider_vals"]:
+        # Dash sliders currently have a bug that prevents typing whole
+        # numbers as floats. See https://bit.ly/3wgwh9p.
+        num_val = float(str_val)
+        if num_val % 1 == 0:
+            num_val = int(str_val)
+
+        if num_val < min_val:
+            min_val = num_val
+        if num_val > max_val:
+            max_val = num_val
+        marks[num_val] = {
+            "label": str_val,
+            "style": {"display": "none"}
+        }
+    marks[min_val]["style"].pop("display")
+    marks[min_val]["label"] = "Alt freq= " + marks[min_val]["label"]
+    marks[max_val]["style"].pop("display")
+    return dcc.RangeSlider(id="mutation-freq-slider",
+                           className="p-0",
+                           min=min_val,
+                           max=max_val,
+                           step=None,
+                           value=[min_val, max_val],
+                           allowCross=False,
+                           marks=marks,
+                           tooltip={})
 
 
 def get_clade_defining_mutations_switch_form_group():

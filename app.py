@@ -10,6 +10,7 @@ read the function docstrings and comments if you are confused.
 """
 
 from base64 import b64decode
+from time import sleep
 
 import dash
 import dash_bootstrap_components as dbc
@@ -66,7 +67,7 @@ def launch_app(_):
     gff3_annotations = parse_gff3_file("gff3_annotations.tsv")
     data_ = get_data(["reference_data", "user_data"], gff3_annotations)
     return [
-        html.Div(toolbar_generator.get_toolbar_row_div()),
+        html.Div(toolbar_generator.get_toolbar_row_div(data_)),
         html.Div(heatmap_generator.get_heatmap_row_div(data_)),
         html.Div(table_generator.get_table_row_div(data_)),
         html.Div(toolbar_generator.get_select_lineages_modal()),
@@ -98,7 +99,8 @@ def launch_app(_):
         Input("show-clade-defining", "data"),
         Input("new-upload", "data"),
         Input("hidden-strains", "data"),
-        Input("strain-order", "data")
+        Input("strain-order", "data"),
+        Input("mutation-freq-slider", "value")
     ],
     state=[
         State("gff3-annotations", "data")
@@ -106,7 +108,7 @@ def launch_app(_):
     prevent_initial_call=True
 )
 def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
-                gff3_annotations):
+                mutation_freq_vals, gff3_annotations):
     """Update ``data`` variable in dcc.Store.
 
     This is a central callback. It triggers a change to the ``data``
@@ -124,22 +126,39 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
     :param strain_order: ``getStrainOrder`` return value from
         ``script.js``.
     :type strain_order: list[str]
+    :param mutation_freq_vals: Position of handles in mutation freq
+        slider.
+    :type mutation_freq_vals: list[int|float]
     :param gff3_annotations: ``parse_gff3_file`` return value
     :type gff3_annotations: dict
     :return: ``get_data`` return value
     :rtype: dict
     """
-    # Do not update if the input is a new upload that failed
-    ctx = dash.callback_context
-    if ctx.triggered[0]["prop_id"] == "new-upload.data":
+    # Do not update if a new upload triggered this function, and that
+    # new upload failed.
+    triggers = [x["prop_id"] for x in dash.callback_context.triggered]
+    if "new-upload.data" in triggers:
         if new_upload["status"] == "error":
             raise PreventUpdate
+
+    # Do not use the current position of the mutation frequency slider
+    # if this function was triggered by an input that will modify the
+    # slider values. We must reset the slider in that case to avoid
+    # bugs.
+    use_mutation_freq_vals = "mutation-freq-slider.value" in triggers
+    use_mutation_freq_vals |= "strain-order.data" in triggers
+    if use_mutation_freq_vals:
+        [min_mutation_freq, max_mutation_freq] = mutation_freq_vals
+    else:
+        min_mutation_freq, max_mutation_freq = None, None
 
     return get_data(["reference_data", "user_data"],
                     gff3_annotations,
                     clade_defining=show_clade_defining,
                     hidden_strains=hidden_strains,
-                    strain_order=strain_order)
+                    strain_order=strain_order,
+                    min_mutation_freq=min_mutation_freq,
+                    max_mutation_freq=max_mutation_freq)
 
 
 @app.callback(
@@ -213,6 +232,65 @@ def update_new_upload(file_contents, filename, old_data):
 
 
 @app.callback(
+    Output("dialog-col", "children"),
+    Input("new-upload", "data"),
+    Input("mutation-freq-slider", "marks"),
+    prevent_initial_call=True
+)
+def update_dialog_col(new_upload, _):
+    """Update ``dialog-col`` div in toolbar.
+
+    This function shows an error alert when there was an unsuccessful
+    upload by the user, or the mutation frequency slider was
+    re-rendered. In a hackey way, this function triggers
+    ``hide_dialog_col``, which hides the dialog col after some time.
+
+    :param new_upload: ``update_new_upload`` return value
+    :type new_upload: dict
+    :param _: Unused input variable that allows re-rendering of the
+        mutation frequency slider to trigger this function.
+    :return: Dash Bootstrap Components alert if new_upload describes an
+        unsuccessfully uploaded file.
+    :rtype: dbc.Alert
+    """
+    triggers = [x["prop_id"] for x in dash.callback_context.triggered]
+
+    if "new-upload.data" in triggers and new_upload["status"] == "error":
+        return dbc.Fade(
+            dbc.Alert(new_upload["msg"],
+                      color="danger",
+                      className="mb-0 p-1 d-inline-block"),
+            id="temp-dialog-col",
+            style={"transition": "all 500ms linear 0s"}
+        )
+    elif "mutation-freq-slider.marks" in triggers:
+        return dbc.Fade(
+            dbc.Alert("Mutation frequency slider values reset.",
+                      color="warning",
+                      className="mb-0 p-1 d-inline-block"),
+            id="temp-dialog-col",
+            style={"transition": "all 500ms linear 0s"}
+        )
+
+
+@app.callback(
+    Output("temp-dialog-col", "is_in"),
+    Input("temp-dialog-col", "children")
+)
+def hide_dialog_col(_):
+    """Hides newly generated ``dialog-col`` divs after five seconds.
+
+    :param _: Unused input variable that allows generation of
+        ``temp-dialog-col`` in ``update_dialog_col`` to trigger this
+        function.
+    :return: Property that fades newly generated ``dialog-col`` out.
+    :rtype: bool
+    """
+    sleep(5)
+    return False
+
+
+@app.callback(
     Output("hidden-strains", "data"),
     Input("select-lineages-ok-btn", "n_clicks"),
     State({"type": "select-lineages-modal-checklist", "index": ALL}, "value"),
@@ -260,31 +338,6 @@ def update_hidden_strains(_, values, data):
 
 
 @app.callback(
-    Output("dialog-col", "children"),
-    Input("new-upload", "data"),
-    prevent_initial_call=True
-)
-def update_dialog_col(new_upload):
-    """Update ``dialog-col`` div in toolbar.
-
-    This function shows an error alert when there was an unsuccessful
-    upload by the user.
-
-    :param new_upload: ``update_new_upload`` return value
-    :type new_upload: dict
-    :return: Dash Bootstrap Components alert if new_upload describes an
-        unsuccessfully uploaded file.
-    :rtype: dbc.Alert
-    """
-    if new_upload["status"] == "error":
-        return dbc.Alert(new_upload["msg"],
-                         color="danger",
-                         className="mb-0 p-1 d-inline-block")
-    else:
-        return None
-
-
-@app.callback(
     Output("select-lineages-modal", "is_open"),
     Output("select-lineages-modal-body", "children"),
     Input("open-select-lineages-modal-btn", "n_clicks"),
@@ -321,6 +374,39 @@ def toggle_select_lineages_modal(_, __, ___, data):
     else:
         # No need to populate modal body if the modal is closed
         return False, None
+
+
+@app.callback(
+    Output("mutation-freq-slider-col", "children"),
+    Input("data", "data"),
+    State("mutation-freq-slider", "marks"),
+    prevent_initial_call=True
+)
+def update_mutation_freq_slider(data, old_slider_marks):
+    """Update mutation frequency slider div.
+
+    If the ``data`` dcc variable is updated, this function will
+    re-render the slider if the new ``data`` variable has a different
+    set of mutation frequencies. TODO
+
+    :param data: ``get_data`` return value, transported here by
+        ``update_data``.
+    :type data: dict
+    :param old_slider_marks: ``marks`` property of the current
+        mutation frequency slider div.
+    :type old_slider_marks: dict
+    :return: New mutation frequency slider div, if one is needed
+    :rtype: dcc.RangeSlider
+    """
+    # This is very hackey, but also very fast. We simply check if the
+    # number of mutation frequencies in the updated ``data`` is
+    # different than the number of mutation frequencies in the current
+    # slider. I do not think this will currently break anything.
+    new_slider_marks = data["mutation_freq_slider_vals"]
+    if len(new_slider_marks) == len(old_slider_marks):
+        raise PreventUpdate
+
+    return toolbar_generator.get_mutation_freq_slider(data)
 
 
 @app.callback(
