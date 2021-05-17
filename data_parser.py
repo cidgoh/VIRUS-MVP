@@ -81,7 +81,15 @@ def parse_gff3_file(path):
 
 
 def map_pos_to_gene(pos):
-    """TODO https://www.ncbi.nlm.nih.gov/nuccore/MN908947"""
+    """Map a nucleotide position to a SARS-CoV-2 gene.
+
+    See https://www.ncbi.nlm.nih.gov/nuccore/MN908947.
+
+    :param pos: Nucleotide position
+    :type pos: int
+    :return: SARS-CoV-2 gene at nucleotide position ``pos``
+    :rtype: str
+    """
     if pos <= 265:
         return "5' UTR"
     elif 266 <= pos <= 21555:
@@ -243,14 +251,14 @@ def get_annotated_data_dir(parsed_data_dir, gff3_annotations):
 def filter_clade_defining_mutations(annotated_data_dirs, weak_filter):
     """Filter ``annotated_data_dirs`` for clade defining mutations.
 
-    Returns a copy of ``annotated_data_dirs``, with the only the clade
-    defining mutations. You can specify strains in
-    ``annotated_data_dirs`` to apply a weak filter to. Strains that are
-    filtered weakly will not be filtered by the clade defining
-    attribute, but will instead have their mutations filtered based on
-    whether their mutations share a position with clade defining
-    mutations from non-weakly filtered strains. This is useful for user
-    uploaded strains.
+    Returns a copy of ``annotated_data_dirs``, with the ``hidden_cell``
+    property of non clade defining mutations set to ``True``. You can
+    specify strains in ``annotated_data_dirs`` to apply a weak filter
+    to. Strains that are filtered weakly will not be filtered by the
+    clade defining attribute, but will instead have their mutations
+    filtered based on whether their mutations share a position with
+    clade defining mutations from non-weakly filtered strains. This is
+    useful for user uploaded strains.
 
     :param annotated_data_dirs: A dictionary containing multiple merged
         ``get_annotated_data_dir`` return values.
@@ -283,7 +291,24 @@ def filter_clade_defining_mutations(annotated_data_dirs, weak_filter):
 
 def filter_mutations_by_freq(annotated_data_dirs, min_mutation_freq,
                              max_mutation_freq):
-    """TODO"""
+    """Filter ``annotated_data_dirs`` by mutation frequency.
+
+    Returns a copy of ``annotated_data_dirs``, with the ``hidden_cell``
+    property of mutations with a frequency outside a specific range set
+    to ``True``.
+
+    :param annotated_data_dirs: A dictionary containing multiple merged
+        ``get_annotated_data_dir`` return values.
+    :type annotated_data_dirs: dict
+    :param min_mutation_freq: Minimum mutation frequency to filter
+        mutations by.
+    :type min_mutation_freq: int|float
+    :param max_mutation_freq: Maximum mutation frequency to filter
+        mutations by.
+    :type max_mutation_freq: int|float
+    :return:
+    :rtype:
+    """
     ret = deepcopy(annotated_data_dirs)
     for strain in annotated_data_dirs:
         for pos in annotated_data_dirs[strain]:
@@ -297,12 +322,12 @@ def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
              strain_order=None, min_mutation_freq=None,
              max_mutation_freq=None):
     """Get relevant data for Plotly visualizations in this application.
-    TODO update docstring
 
     This will include table data, which is straight forward. But this
     will also include various information related to the main heatmap,
     including heatmap x y coordinates for mutations, insertions,
-    deletions, and hover text.
+    deletions, and hover text. This will also include information for
+    rendering the mutation frequency slider.
 
     Basically, this function gives us data to plug into the
     visualization functions of Plotly.
@@ -312,16 +337,11 @@ def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
     ``data/``, and from annotations parsed from a gff3 file, in the
     form of ``gff3_annotations.tsv``.
 
-    We will also keep track of the directory each strain came from,
-    because it becomes useful when distinguishing user uploaded strains
-    from other strains. We will also keep track of strains the user has
-    chosen to hide.
-
     :param dirs: List of paths to folders to obtain data from
     :type dirs: list[str]
     :param gff3_annotations: ``parse_gff3_file`` return value
     :type gff3_annotations: dict
-    :param clade_defining: Get data for clade defining mutations only
+    :param clade_defining: Set non-clade defining mutations as hidden
     :type clade_defining: bool
     :param hidden_strains: List of strains from the dirs that the user
         does not want to display in the heatmap and table.
@@ -329,6 +349,12 @@ def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
     :param strain_order: Order of strains from the dirs that the user
         wants to display in the heatmap and table.
     :type strain_order: list[str]
+    :param min_mutation_freq: Set mutations with a lower frequency than
+        this as hidden.
+    :type min_mutation_freq: int|float
+    :param max_mutation_freq: Set mutations with a higher frequency
+        than this as hidden.
+    :type max_mutation_freq: int|float
     :return: Information on relevant columns in tsv files stored in
         folders listed in dirs.
     :rtype: dict
@@ -388,7 +414,19 @@ def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
 
 
 def get_mutation_freq_slider_vals(annotated_data_dirs):
-    """TODO"""
+    """Get the mutation freq slider vals from ``annotated_data_dirs``.
+
+    This value is ultimately used when rendering the mutation frequency
+    slider. This is really just a sorted list of unique mutation
+    frequencies from visible cells in ``annotated_data_dirs``.
+
+    :param annotated_data_dirs: A dictionary containing multiple merged
+        ``get_annotated_data_dir`` return values.
+    :type annotated_data_dirs: dict
+    :return: Lowest to highest sorted list of unique mutation
+        frequencies from visible cells in ``annotated_data_dirs``.
+    :rtype: list[str]
+    """
     alt_freq_set = set()
     for strain in annotated_data_dirs:
         for pos in annotated_data_dirs[strain]:
