@@ -110,7 +110,6 @@ def launch_app(_):
 def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
                 mutation_freq_vals, gff3_annotations):
     """Update ``data`` variable in dcc.Store.
-    TODO update docstring
 
     This is a central callback. It triggers a change to the ``data``
     variable in dcc.Store, which triggers cascading changes in several
@@ -127,18 +126,25 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
     :param strain_order: ``getStrainOrder`` return value from
         ``script.js``.
     :type strain_order: list[str]
+    :param mutation_freq_vals: Position of handles in mutation freq
+        slider.
+    :type mutation_freq_vals: list[int|float]
     :param gff3_annotations: ``parse_gff3_file`` return value
     :type gff3_annotations: dict
     :return: ``get_data`` return value
     :rtype: dict
     """
-    # Do not update if the input is a new upload that failed
+    # Do not update if a new upload triggered this function, and that
+    # new upload failed.
     triggers = [x["prop_id"] for x in dash.callback_context.triggered]
     if "new-upload.data" in triggers:
         if new_upload["status"] == "error":
             raise PreventUpdate
 
-    # TODO explain this
+    # Do not use the current position of the mutation frequency slider
+    # if this function was triggered by an input that will modify the
+    # slider values. We must reset the slider in that case to avoid
+    # bugs.
     use_mutation_freq_vals = "mutation-freq-slider.value" in triggers
     use_mutation_freq_vals |= "strain-order.data" in triggers
     if use_mutation_freq_vals:
@@ -233,14 +239,16 @@ def update_new_upload(file_contents, filename, old_data):
 )
 def update_dialog_col(new_upload, _):
     """Update ``dialog-col`` div in toolbar.
-    TODO update docstring
 
     This function shows an error alert when there was an unsuccessful
     upload by the user, or the mutation frequency slider was
-    re-rendered.
+    re-rendered. In a hackey way, this function triggers
+    ``hide_dialog_col``, which hides the dialog col after some time.
 
     :param new_upload: ``update_new_upload`` return value
     :type new_upload: dict
+    :param _: Unused input variable that allows re-rendering of the
+        mutation frequency slider to trigger this function.
     :return: Dash Bootstrap Components alert if new_upload describes an
         unsuccessfully uploaded file.
     :rtype: dbc.Alert
@@ -270,7 +278,14 @@ def update_dialog_col(new_upload, _):
     Input("temp-dialog-col", "children")
 )
 def hide_dialog_col(_):
-    """TODO"""
+    """Hides newly generated ``dialog-col`` divs after five seconds.
+
+    :param _: Unused input variable that allows generation of
+        ``temp-dialog-col`` in ``update_dialog_col`` to trigger this
+        function.
+    :return: Property that fades newly generated ``dialog-col`` out.
+    :rtype: bool
+    """
     sleep(5)
     return False
 
@@ -367,11 +382,28 @@ def toggle_select_lineages_modal(_, __, ___, data):
     State("mutation-freq-slider", "marks"),
     prevent_initial_call=True
 )
-def update_mutation_freq_slider(data, old_slider_marks):
-    """TODO"""
-    # TODO explain why this check
+def update_mutation_freq_slider(data, current_slider_marks):
+    """Update mutation frequency slider div.
+
+    If the ``data`` dcc variable is updated, this function will
+    re-render the slider if the new ``data`` variable has a different
+    set of mutation frequencies.
+
+    :param data: ``get_data`` return value, transported here by
+        ``update_data``.
+    :type data: dict
+    :param current_slider_marks: ``marks`` property of the current
+        mutation frequency slider div.
+    :type current_slider_marks: dict
+    :return: New mutation frequency slider div, if one is needed
+    :rtype: dcc.RangeSlider
+    """
+    # This is very hackey, but also very fast. We simply check if the
+    # number of mutation frequencies in the updated ``data`` is
+    # different than the number of mutation frequencies in the current
+    # slider. I do not think this will currently break anything.
     current_slider_marks = data["mutation_freq_slider_vals"]
-    if len(current_slider_marks) == len(old_slider_marks):
+    if len(current_slider_marks) == len(current_slider_marks):
         raise PreventUpdate
 
     return toolbar_generator.get_mutation_freq_slider(data)
