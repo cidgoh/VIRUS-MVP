@@ -10,6 +10,7 @@ read the function docstrings and comments if you are confused.
 """
 
 from base64 import b64decode
+from time import sleep
 
 import dash
 import dash_bootstrap_components as dbc
@@ -132,13 +133,15 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
     :rtype: dict
     """
     # Do not update if the input is a new upload that failed
-    trigger = dash.callback_context.triggered[0]["prop_id"]
-    if trigger == "new-upload.data":
+    triggers = [x["prop_id"] for x in dash.callback_context.triggered]
+    if "new-upload.data" in triggers:
         if new_upload["status"] == "error":
             raise PreventUpdate
 
     # TODO explain this
-    if trigger in ["mutation-freq-slider.value", "strain-order.data"]:
+    use_mutation_freq_vals = "mutation-freq-slider.value" in triggers
+    use_mutation_freq_vals |= "strain-order.data" in triggers
+    if use_mutation_freq_vals:
         [min_mutation_freq, max_mutation_freq] = mutation_freq_vals
     else:
         min_mutation_freq, max_mutation_freq = None, None
@@ -226,10 +229,9 @@ def update_new_upload(file_contents, filename, old_data):
     Output("dialog-col", "children"),
     Input("new-upload", "data"),
     Input("mutation-freq-slider", "marks"),
-    Input("data", "data"),
     prevent_initial_call=True
 )
-def update_dialog_col(new_upload, new_mutation_freq_slider, __):
+def update_dialog_col(new_upload, _):
     """Update ``dialog-col`` div in toolbar.
     TODO update docstring
 
@@ -246,15 +248,31 @@ def update_dialog_col(new_upload, new_mutation_freq_slider, __):
     triggers = [x["prop_id"] for x in dash.callback_context.triggered]
 
     if "new-upload.data" in triggers and new_upload["status"] == "error":
-        return dbc.Alert(new_upload["msg"],
-                         color="danger",
-                         className="mb-0 p-1 d-inline-block")
+        return dbc.Fade(
+            dbc.Alert(new_upload["msg"],
+                      color="danger",
+                      className="mb-0 p-1 d-inline-block"),
+            id="temp-dialog-col",
+            style={"transition": "all 500ms linear 0s"}
+        )
     elif "mutation-freq-slider.marks" in triggers:
-        return dbc.Alert("Mutation frequency slider values reset.",
-                         color="warning",
-                         className="mb-0 p-1 d-inline-block")
-    else:
-        return None
+        return dbc.Fade(
+            dbc.Alert("Mutation frequency slider values reset.",
+                      color="warning",
+                      className="mb-0 p-1 d-inline-block"),
+            id="temp-dialog-col",
+            style={"transition": "all 500ms linear 0s"}
+        )
+
+
+@app.callback(
+    Output("temp-dialog-col", "is_in"),
+    Input("temp-dialog-col", "children")
+)
+def hide_dialog_col(_):
+    """TODO"""
+    sleep(5)
+    return False
 
 
 @app.callback(
