@@ -366,7 +366,7 @@ def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
                                                        max_mutation_freq)
 
     data = {
-        "heatmap_x": get_heatmap_x(visible_strain_data),
+        "heatmap_x": get_heatmap_x(all_strain_data),
         "heatmap_y": get_heatmap_y(visible_strain_data),
         "insertions_x": get_insertions_x(visible_strain_data),
         "insertions_y": get_insertions_y(visible_strain_data),
