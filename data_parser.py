@@ -399,6 +399,7 @@ def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
         "deletions_x": get_deletions_x(visible_strain_data),
         "deletions_y": get_deletions_y(visible_strain_data),
         "tables": get_tables(visible_strain_data),
+        "histogram_x": get_histogram_x(visible_strain_data),
         "dir_strains": dir_strains,
         "hidden_strains": hidden_strains,
         "all_strains": get_heatmap_y(all_strain_data),
@@ -670,4 +671,13 @@ def get_tables(annotated_data_dirs):
             pos_col, mutation_name_col, ref_col, alt_col, alt_freq_col,
             functions_col
         ]
+    return ret
+
+
+def get_histogram_x(annotated_data_dirs):
+    """TODO"""
+    ret = []
+    for strain in annotated_data_dirs:
+        for pos in annotated_data_dirs[strain]:
+            ret.append(pos)
     return ret
