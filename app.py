@@ -22,6 +22,7 @@ import dash_html_components as html
 from data_parser import get_data, parse_gff3_file
 import toolbar_generator
 import heatmap_generator
+import histogram_generator
 import table_generator
 
 app = dash.Dash(__name__,
@@ -69,6 +70,7 @@ def launch_app(_):
     return [
         html.Div(toolbar_generator.get_toolbar_row_div(data_)),
         html.Div(heatmap_generator.get_heatmap_row_div(data_)),
+        html.Div(histogram_generator.get_histogram_row_div(data_)),
         html.Div(table_generator.get_table_row_div(data_)),
         html.Div(toolbar_generator.get_select_lineages_modal()),
         # These are in-browser variables that Dash can treat as Inputs and
