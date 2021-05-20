@@ -5,6 +5,7 @@ Entry point is ``get_data``.
 
 from copy import deepcopy
 import csv
+import json
 import os
 
 
@@ -90,33 +91,15 @@ def map_pos_to_gene(pos):
     :return: SARS-CoV-2 gene at nucleotide position ``pos``
     :rtype: str
     """
-    if pos <= 265:
-        return "5' UTR"
-    elif 266 <= pos <= 21555:
-        return "ORF1ab"
-    elif 21563 <= pos <= 25384:
-        return "S"
-    elif 25393 <= pos <= 26220:
-        return "ORF3a"
-    elif 26245 <= pos <= 26472:
-        return "E"
-    elif 26523 <= pos <= 27191:
-        return "M"
-    elif 27202 <= pos <= 27387:
-        return "ORF6"
-    elif 27394 <= pos <= 27759:
-        return "ORF7a"
-    elif 27894 <= pos <= 28259:
-        return "ORF8"
-    elif 28274 <= pos <= 29533:
-        return "N"
-    elif 29558 <= pos <= 29674:
-        return "ORF10"
-    elif pos >= 29675:
-        return "3' UTR"
-    else:
-        # Intergenic region
-        return "n/a"
+    with open("gene_positions.json") as fp:
+        gene_positions_dict = json.load(fp)
+    for gene in gene_positions_dict:
+        start = gene_positions_dict[gene]["start"]
+        end = gene_positions_dict[gene]["end"]
+        if start <= pos <= end:
+            return gene
+    # Intergenic region
+    return "n/a"
 
 
 def parse_data_dir(dir_, file_order=None):
