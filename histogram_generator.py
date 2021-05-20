@@ -13,11 +13,11 @@ def get_histogram_row_div(data):
                 id="table",
                 figure=get_histogram_fig(data),
                 config={"displayModeBar": False},
-                style={"height": "10vh"}
+                style={"height": "7rem"}
             ),
             width={"offset": 1, "size": 10}
         ),
-        className="mt-3"
+        className="mt-2"
     )
 
 
