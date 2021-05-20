@@ -29,7 +29,8 @@ def get_histogram_fig(data):
             margin={"t": 0, "b": 0, "l": 0, "r": 0, "pad": 0},
             plot_bgcolor="white",
             bargap=0.1,
-            font={"size": 18}
+            font={"size": 18},
+            yaxis={"visible": False}
         )
     )
     return ret
@@ -39,12 +40,7 @@ def get_histogram_obj(data):
     """TODO"""
     ret = go.Histogram(
         x=[int(x) for x in data["histogram_x"]],
-        xbins={
-            "start": 0,
-            "size": 100
-        },
-        marker={
-            "color": "black"
-        }
+        xbins={"start": 1, "size": 100},
+        marker={"color": "black"},
     )
     return ret
