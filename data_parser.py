@@ -662,5 +662,7 @@ def get_histogram_x(annotated_data_dirs):
     ret = []
     for strain in annotated_data_dirs:
         for pos in annotated_data_dirs[strain]:
-            ret.append(pos)
+            hidden_cell = annotated_data_dirs[strain][pos]["hidden_cell"]
+            if not hidden_cell:
+                ret.append(pos)
     return ret

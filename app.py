@@ -445,6 +445,16 @@ def update_heatmap(data):
 
 
 @app.callback(
+    Output("histogram", "figure"),
+    Input("data", "data"),
+    prevent_initial_call=True
+)
+def update_histogram(data):
+    """TODO"""
+    return histogram_generator.get_histogram_fig(data)
+
+
+@app.callback(
     Output("table", "figure"),
     inputs=[
         Input("data", "data"),

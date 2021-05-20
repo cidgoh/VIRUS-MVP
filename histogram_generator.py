@@ -13,7 +13,7 @@ def get_histogram_row_div(data):
     return dbc.Row(
         dbc.Col(
             dcc.Graph(
-                id="table",
+                id="histogram",
                 figure=get_histogram_fig(data),
                 config={"displayModeBar": False},
                 style={"height": "7rem"}
