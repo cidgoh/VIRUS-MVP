@@ -54,7 +54,8 @@ def get_histogram_main_obj(data):
         x=[int(x) for x in data["histogram_x"]],
         xbins={"start": 1, "size": 100},
         marker={"color": "black"},
-        showlegend=False
+        showlegend=False,
+        hovertemplate="%{y} mutations across positions %{x}<extra></extra>"
     )
     return ret
 
@@ -75,12 +76,14 @@ def get_histogram_gene_bar_obj_list():
                          x=[this_bar_len],
                          y=["foo"],
                          orientation="h",
-                         text=[gene],
+                         text=[gene] if this_bar_len > 1000 else [],
                          textposition="inside",
                          insidetextanchor="middle",
                          insidetextfont={"color": "white"},
                          marker={"color": gene_colors_dict[gene]},
-                         showlegend=False)
+                         showlegend=False,
+                         hovertemplate=gene
+                         )
         ret.append(bar_obj)
 
     return ret
