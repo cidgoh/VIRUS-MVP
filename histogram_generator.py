@@ -69,21 +69,35 @@ def get_histogram_gene_bar_obj_list():
 
     ret = []
     total_bar_len_so_far = 0
+    last_gene_end = 1
     for gene in gene_positions_dict:
-        this_bar_len = gene_positions_dict[gene]["end"] - total_bar_len_so_far
-        total_bar_len_so_far += this_bar_len
-        bar_obj = go.Bar(name=gene,
-                         x=[this_bar_len],
-                         y=["foo"],
-                         orientation="h",
-                         text=[gene] if this_bar_len > 1000 else [],
-                         textposition="inside",
-                         insidetextanchor="middle",
-                         insidetextfont={"color": "white"},
-                         marker={"color": gene_colors_dict[gene]},
-                         showlegend=False,
-                         hovertemplate=gene
-                         )
-        ret.append(bar_obj)
+        gene_start = gene_positions_dict[gene]["start"]
+        gene_end = gene_positions_dict[gene]["end"]
+        if gene_start > last_gene_end:
+            intergenic_bar_len = gene_start - total_bar_len_so_far
+            total_bar_len_so_far += intergenic_bar_len
+            intergenic_bar_obj = go.Bar(name="",
+                                        x=[intergenic_bar_len],
+                                        y=["foo"],
+                                        orientation="h",
+                                        marker={"color": "white"},
+                                        showlegend=False,
+                                        hoverinfo="skip")
+            ret.append(intergenic_bar_obj)
+        intragenic_bar_len = gene_end - total_bar_len_so_far
+        total_bar_len_so_far += intragenic_bar_len
+        intragenic_bar_text = [gene] if intragenic_bar_len > 1000 else []
+        intragenic_bar_obj = go.Bar(name=gene,
+                                    x=[intragenic_bar_len],
+                                    y=["foo"],
+                                    orientation="h",
+                                    text=intragenic_bar_text,
+                                    textposition="inside",
+                                    insidetextanchor="middle",
+                                    insidetextfont={"color": "white"},
+                                    marker={"color": gene_colors_dict[gene]},
+                                    showlegend=False,
+                                    hovertemplate=gene)
+        ret.append(intragenic_bar_obj)
 
     return ret
