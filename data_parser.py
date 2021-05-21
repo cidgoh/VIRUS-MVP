@@ -306,11 +306,11 @@ def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
              max_mutation_freq=None):
     """Get relevant data for Plotly visualizations in this application.
 
-    This will include table data, which is straight forward. But this
-    will also include various information related to the main heatmap,
-    including heatmap x y coordinates for mutations, insertions,
-    deletions, and hover text. This will also include information for
-    rendering the mutation frequency slider.
+    This will include table and histogram data, which is straight
+    forward. But this will also include various information related to
+    the main heatmap, including heatmap x y coordinates for mutations,
+    insertions, deletions, and hover text. This will also include
+    information for rendering the mutation frequency slider.
 
     Basically, this function gives us data to plug into the
     visualization functions of Plotly.
@@ -658,7 +658,17 @@ def get_tables(annotated_data_dirs):
 
 
 def get_histogram_x(annotated_data_dirs):
-    """TODO"""
+    """Get x data values binned by Plotly when producing the histogram.
+
+    This is just the positions containing mutations, with duplicates
+    permitted for mutations shared by strains.
+
+    :param annotated_data_dirs: A dictionary containing multiple merged
+        ``get_annotated_data_dir`` return values.
+    :type annotated_data_dirs: dict
+    :return: List of x data values used in histogram view
+    :rtype: list[str]
+    """
     ret = []
     for strain in annotated_data_dirs:
         for pos in annotated_data_dirs[strain]:

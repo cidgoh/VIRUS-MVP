@@ -1,4 +1,4 @@
-"""TODO"""
+"""Functions for generating histogram view."""
 
 import json
 
@@ -9,7 +9,13 @@ from plotly.subplots import make_subplots
 
 
 def get_histogram_row_div(data):
-    """TODO"""
+    """Get Dash Bootstrap Components row containing histogram view.
+
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
+    :return: Dash Bootstrap Components row containing histogram
+    :rtype: dbc.Row
+    """
     return dbc.Row(
         dbc.Col(
             dcc.Graph(
@@ -25,7 +31,16 @@ def get_histogram_row_div(data):
 
 
 def get_histogram_fig(data):
-    """TODO"""
+    """Get Plotly figure representing histogram view.
+
+    This figure has two subplots. One for the main histogram, and the
+    other for corresponding the gene bar.
+
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
+    :return: Plotly figure representing histogram view
+    :rtype: go.Figure
+    """
     ret = make_subplots(rows=2,
                         cols=1,
                         row_heights=[0.7, 0.3],
@@ -38,10 +53,10 @@ def get_histogram_fig(data):
         plot_bgcolor="white",
         bargap=0.1,
         font={"size": 18},
-        xaxis1={"visible": False, "range": [1, 29903]},
-        xaxis2={"visible": False, "range": [1, 29903]},
-        yaxis1={"visible": False},
-        yaxis2={"visible": False},
+        xaxis1={"visible": False, "range": [1, 29903], "fixedrange": True},
+        xaxis2={"visible": False, "range": [1, 29903], "fixedrange": True},
+        yaxis1={"visible": False, "fixedrange": True},
+        yaxis2={"visible": False, "fixedrange": True},
         barmode="stack"
     )
 
@@ -49,7 +64,16 @@ def get_histogram_fig(data):
 
 
 def get_histogram_main_obj(data):
-    """TODO"""
+    """Get Plotly graph object representing bars in histogram view.
+
+    This is just the bars, without the gene bar.
+
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
+    :return: Plotly graph object representing main plot with bars in
+        histogram view.
+    :rtype: go.Histogram
+    """
     ret = go.Histogram(
         x=[int(x) for x in data["histogram_x"]],
         xbins={"start": 1, "size": 100},
@@ -61,7 +85,17 @@ def get_histogram_main_obj(data):
 
 
 def get_histogram_gene_bar_obj_list():
-    """TODO"""
+    """Get Plotly graph object list representing histogram gene bar.
+
+    We return a list so they can be stacked on top of each other in
+    ``get_histogram_fig``.
+
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
+    :return: List of plotly graph objects representing gene bar in
+        histogram view.
+    :rtype: list[go.Bar]
+    """
     with open("gene_positions.json") as fp:
         gene_positions_dict = json.load(fp)
     with open("gene_colors.json") as fp:
@@ -73,6 +107,7 @@ def get_histogram_gene_bar_obj_list():
     for gene in gene_positions_dict:
         gene_start = gene_positions_dict[gene]["start"]
         gene_end = gene_positions_dict[gene]["end"]
+        # Intergenic region before this gene--add it
         if gene_start > last_gene_end:
             intergenic_bar_len = gene_start - total_bar_len_so_far
             total_bar_len_so_far += intergenic_bar_len
@@ -84,6 +119,7 @@ def get_histogram_gene_bar_obj_list():
                                         showlegend=False,
                                         hoverinfo="skip")
             ret.append(intergenic_bar_obj)
+        # Now add intragenic bar
         intragenic_bar_len = gene_end - total_bar_len_so_far
         total_bar_len_so_far += intragenic_bar_len
         intragenic_bar_text = [gene] if intragenic_bar_len > 1000 else []

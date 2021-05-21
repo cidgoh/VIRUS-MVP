@@ -389,7 +389,7 @@ def update_mutation_freq_slider(data, old_slider_marks):
 
     If the ``data`` dcc variable is updated, this function will
     re-render the slider if the new ``data`` variable has a different
-    set of mutation frequencies. TODO
+    set of mutation frequencies.
 
     :param data: ``get_data`` return value, transported here by
         ``update_data``.
@@ -450,7 +450,16 @@ def update_heatmap(data):
     prevent_initial_call=True
 )
 def update_histogram(data):
-    """TODO"""
+    """Update histogram figure.
+
+    When the ``data`` variable in the dcc.Store is updated, the
+    histogram figure is updated to reflect the new data.
+
+    :param data: ``get_data`` return value, transported here by
+    :type data: dict
+    :return: New histogram figure corresponding to new data
+    :rtype: plotly.graph_objects.Figure
+    """
     return histogram_generator.get_histogram_fig(data)
 
 
