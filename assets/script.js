@@ -73,6 +73,25 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
       } else {
         return ret
       }
-    }
+    },
+    /**
+     * TODO
+     */
+    foo: (_) => {
+      const allTicks = $('#heatmap-center-fig').find('.x2tick>text')
+      $('#heatmap-center-div').scroll((e) => {
+        const heatmapDivBounds = e.currentTarget.getBoundingClientRect()
+        const visibleTicks = allTicks.filter((_, el) => {
+          const tickDivBounds = el.getBoundingClientRect()
+          const tickDivCenter = tickDivBounds.left + tickDivBounds.width/2
+          const tooFarLeft = tickDivCenter < heatmapDivBounds.left
+          const tooFarRight = tickDivCenter > heatmapDivBounds.right
+          return !(tooFarLeft || tooFarRight)
+        })
+        const leftBoundary = visibleTicks[0]
+        const rightBoundary = visibleTicks[visibleTicks.length - 1]
+      })
+      return null
+    },
   }
 });

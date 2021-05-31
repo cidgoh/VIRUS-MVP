@@ -90,8 +90,9 @@ def launch_app(_):
         dcc.Store(id="strain-order"),
         # Used to integrate JQuery UI drag and drop on client side. The
         # data value is meaningless, we just need an output to perform
-        # the clientside function.
-        dcc.Store(id="make-select-lineages-modal-checkboxes-draggable")
+        # the clientside function. TODO
+        dcc.Store(id="make-select-lineages-modal-checkboxes-draggable"),
+        dcc.Store(id="foo"),
     ]
 
 
@@ -522,6 +523,14 @@ app.clientside_callback(
     State({"type": "select-lineages-modal-checklist", "index": ALL}, "id"),
     State("data", "data"),
     prevent_initial_call=True
+)
+app.clientside_callback(
+    ClientsideFunction(
+        namespace="clientside",
+        function_name="foo"
+    ),
+    Output("foo", "data"),
+    Input("histogram", "id")
 )
 
 if __name__ == "__main__":
