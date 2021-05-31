@@ -531,6 +531,7 @@ app.clientside_callback(
     ),
     Output("make-histogram-rel-pos-bar-dynamic", "data"),
     Input("histogram", "id"),
+    Input("heatmap-center-fig", "figure"),
     Input("data", "data"),
 )
 

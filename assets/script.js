@@ -85,12 +85,13 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
      * Our inputs provide no relevant information, but we chose to use the data
      * dcc variable as an input because that is when the ticks in the heatmap
      * may change, and the jQuery handler needs to be replaced. The input
-     * telling you the histogram figure was rendered may prevent race
-     * conditions, since we are venturing outside Plotly and Dash here.
+     * telling you the histogram and heatmap figures were rendered may prevent
+     * race conditions, since we are venturing outside Plotly and Dash here.
      * @param _ Histogram figure rendered
-     * @param __ Data dcc variable changed
+     * @param __ Heatmap center figure rendered
+     * @param ___ Data dcc variable changed
      */
-    makeHistogramRelPosBarDynamic: (_, __) => {
+    makeHistogramRelPosBarDynamic: (_, __, ___) => {
       // A list of all ticks in the heatmap, and a sneaky calculation that tells
       // you what the last histogram bin is going to be. Plotly does not give up
       // that information easily.
