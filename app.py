@@ -70,7 +70,7 @@ def launch_app(_):
     return [
         html.Div(toolbar_generator.get_toolbar_row_div(data_)),
         html.Div(heatmap_generator.get_heatmap_row_div(data_)),
-        html.Div(histogram_generator.get_histogram_row_div(data_)),
+        html.Div(histogram_generator.get_histogram_row_divs(data_)),
         html.Div(table_generator.get_table_row_div(data_)),
         html.Div(toolbar_generator.get_select_lineages_modal()),
         # These are in-browser variables that Dash can treat as Inputs and

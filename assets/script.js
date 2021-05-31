@@ -91,7 +91,9 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
         const leftBoundary = visibleTicks[0]
         const rightBoundary = visibleTicks[visibleTicks.length - 1]
       })
+      const margins = {'margin-left': '10%','margin-right': '10%'}
+      $('#histogram-rel-pos-bar').css(margins)
       return null
-    },
+    }
   }
 });

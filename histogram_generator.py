@@ -4,30 +4,43 @@ import json
 
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
+import dash_html_components as html
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 
-def get_histogram_row_div(data):
-    """Get Dash Bootstrap Components row containing histogram view.
+def get_histogram_row_divs(data):
+    """Get Dash Bootstrap Components rows containing histogram view.
+    TODO
 
     :param data: ``data_parser.get_data`` return value
     :type data: dict
     :return: Dash Bootstrap Components row containing histogram
     :rtype: dbc.Row
     """
-    return dbc.Row(
-        dbc.Col(
-            dcc.Graph(
-                id="histogram",
-                figure=get_histogram_fig(data),
-                config={"displayModeBar": False},
-                style={"height": "7rem"}
+    return [
+        dbc.Row(
+            dbc.Col(
+                dcc.Graph(
+                    id="histogram",
+                    figure=get_histogram_fig(data),
+                    config={"displayModeBar": False},
+                    style={"height": "7rem"}
+                ),
+                width={"offset": 1, "size": 10}
             ),
-            width={"offset": 1, "size": 10}
+            className="mt-2"
         ),
-        className="mt-2"
-    )
+        dbc.Row(
+            dbc.Col(
+                html.Div(
+                    id="histogram-rel-pos-bar",
+                    style={"backgroundColor": "red", "height": "1vh"}
+                ),
+                width={"offset": 1, "size": 10}
+            )
+        )
+    ]
 
 
 def get_histogram_fig(data):
