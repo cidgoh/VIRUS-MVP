@@ -77,10 +77,15 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
     /**
      * TODO
      */
-    foo: (_) => {
+    foo: (_, __) => {
       const allTicks = $('#heatmap-center-fig').find('.x2tick>text')
-      $('#heatmap-center-div').scroll((e) => {
+      const lastHistogramBin =
+          Math.ceil(parseInt(allTicks[allTicks.length-1].textContent)/100) * 100
+      const $heatmapCenterDiv = $('#heatmap-center-div')
+      $heatmapCenterDiv.off('scroll.foo')
+      $heatmapCenterDiv.on('scroll.foo', (e) => {
         const heatmapDivBounds = e.currentTarget.getBoundingClientRect()
+        const allTicks = $('#heatmap-center-fig').find('.x2tick>text')
         const visibleTicks = allTicks.filter((_, el) => {
           const tickDivBounds = el.getBoundingClientRect()
           const tickDivCenter = tickDivBounds.left + tickDivBounds.width/2
@@ -88,11 +93,22 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
           const tooFarRight = tickDivCenter > heatmapDivBounds.right
           return !(tooFarLeft || tooFarRight)
         })
-        const leftBoundary = visibleTicks[0]
-        const rightBoundary = visibleTicks[visibleTicks.length - 1]
+        const leftBoundary =
+            parseInt(visibleTicks[0].textContent)
+        const rightBoundary =
+            parseInt(visibleTicks[visibleTicks.length-1].textContent)
+        const leftMarginPercent =
+            leftBoundary/lastHistogramBin * 100
+        const rightMarginPercent =
+            (lastHistogramBin-rightBoundary)/lastHistogramBin * 100
+        const margins = {
+          'margin-left': `${leftMarginPercent}%`,
+          'margin-right': `${rightMarginPercent}%`
+        }
+        $('#histogram-rel-pos-bar').css(margins)
       })
-      const margins = {'margin-left': '10%','margin-right': '10%'}
-      $('#histogram-rel-pos-bar').css(margins)
+      $(window).resize(() => {$heatmapCenterDiv.trigger('scroll')})
+      $heatmapCenterDiv.trigger('scroll')
       return null
     }
   }

@@ -35,7 +35,7 @@ def get_histogram_row_divs(data):
             dbc.Col(
                 html.Div(
                     id="histogram-rel-pos-bar",
-                    style={"backgroundColor": "red", "height": "1vh"}
+                    style={"backgroundColor": "black", "height": "1vh"}
                 ),
                 width={"offset": 1, "size": 10}
             )

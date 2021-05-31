@@ -530,7 +530,8 @@ app.clientside_callback(
         function_name="foo"
     ),
     Output("foo", "data"),
-    Input("histogram", "id")
+    Input("histogram", "id"),
+    Input("data", "data"),
 )
 
 if __name__ == "__main__":
