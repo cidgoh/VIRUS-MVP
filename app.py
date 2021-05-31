@@ -88,11 +88,11 @@ def launch_app(_):
         dcc.Store(id="new-upload"),
         dcc.Store(id="hidden-strains"),
         dcc.Store(id="strain-order"),
-        # Used to integrate JQuery UI drag and drop on client side. The
-        # data value is meaningless, we just need an output to perform
-        # the clientside function. TODO
+        # Used to integrate some JS functions. The data values are
+        # meaningless, we just need outputs to perform all clientside
+        # functions.
         dcc.Store(id="make-select-lineages-modal-checkboxes-draggable"),
-        dcc.Store(id="foo"),
+        dcc.Store(id="make-histogram-rel-pos-bar-dynamic"),
     ]
 
 
@@ -527,9 +527,9 @@ app.clientside_callback(
 app.clientside_callback(
     ClientsideFunction(
         namespace="clientside",
-        function_name="foo"
+        function_name="makeHistogramRelPosBarDynamic"
     ),
-    Output("foo", "data"),
+    Output("make-histogram-rel-pos-bar-dynamic", "data"),
     Input("histogram", "id"),
     Input("data", "data"),
 )

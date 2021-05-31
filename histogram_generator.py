@@ -11,7 +11,6 @@ from plotly.subplots import make_subplots
 
 def get_histogram_row_divs(data):
     """Get Dash Bootstrap Components rows containing histogram view.
-    TODO
 
     :param data: ``data_parser.get_data`` return value
     :type data: dict
@@ -35,6 +34,7 @@ def get_histogram_row_divs(data):
             dbc.Col(
                 html.Div(
                     id="histogram-rel-pos-bar",
+                    # Margins will be added dynamically clientside
                     style={"backgroundColor": "black", "height": "1vh"}
                 ),
                 width={"offset": 1, "size": 10}
