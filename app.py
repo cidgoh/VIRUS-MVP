@@ -451,11 +451,10 @@ def update_heatmap(data):
     prevent_initial_call=True
 )
 def update_histogram(data):
-    """Update histogram figure.
-    TODO
+    """Update histogram top row div.
 
-    When the ``data`` variable in the dcc.Store is updated, the
-    histogram figure is updated to reflect the new data.
+    When the ``data`` variable in the dcc.Store is updated, the top row
+    in the histogram view is updated to reflect the new data.
 
     :param data: ``get_data`` return value, transported here by
     :type data: dict

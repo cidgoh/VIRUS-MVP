@@ -13,12 +13,11 @@ from plotly.subplots import make_subplots
 
 def get_histogram_row_divs(data):
     """Get Dash Bootstrap Components rows containing histogram view.
-    TODO
 
     :param data: ``data_parser.get_data`` return value
     :type data: dict
-    :return: Dash Bootstrap Components row containing histogram
-    :rtype: dbc.Row
+    :return: Dash Bootstrap Components rows containing histogram view
+    :rtype: list[dbc.Row]
     """
     return [
         dbc.Row(
@@ -42,7 +41,18 @@ def get_histogram_row_divs(data):
 
 
 def get_histogram_top_row_div(data):
-    """TODO"""
+    """Get the top Dash Bootstrap Components row in the histogram view.
+
+    This consists of the actual histogram, and also a scatter plot
+    acting as a mock axis. A mock axis was necessary to get the
+    histogram display as intended, and to avoid breaking the histogram
+    relative position bar.
+
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
+    :return: Top Dash Bootstrap Components row in the histogram view
+    :rtype: dbc.Row
+    """
     np_histogram = get_np_histogram(data)
     ret = [
         dbc.Col(
@@ -67,7 +77,18 @@ def get_histogram_top_row_div(data):
 
 
 def get_histogram_mock_axis(np_histogram):
-    """TODO"""
+    """Get the mock axis figure next to the histogram.
+
+    This is a scatter plot, that uses the max value from the histogram
+    to produce a mock y axis.
+
+    :param np_histogram: Numpy histogram object used to produce bars in
+        histogram view.
+    :type np_histogram: tuple
+    :return: Figure containing scatter plot representing mock histogram
+        axis.
+    :rtype: go.Figure
+    """
     ret = make_subplots(rows=2,
                         cols=1,
                         row_heights=[0.7, 0.3],
@@ -94,13 +115,11 @@ def get_histogram_mock_axis(np_histogram):
 
 
 def get_histogram_fig(np_histogram):
-    """Get Plotly figure representing histogram view.TODO
+    """Get Plotly figure representing axis-less histogram and gene bar.
 
-    This figure has two subplots. One for the main histogram, and the
-    other for corresponding the gene bar.
-
-    :param data: ``data_parser.get_data`` return value
-    :type data: dict
+    :param np_histogram: Numpy histogram object used to produce bars in
+        histogram view.
+    :type np_histogram: tuple
     :return: Plotly figure representing histogram view
     :rtype: go.Figure
     """
@@ -116,6 +135,7 @@ def get_histogram_fig(np_histogram):
         plot_bgcolor="white",
         bargap=0.1,
         font={"size": 18},
+        # TODO hardcoding genome length here because I'm lazy
         xaxis1={"visible": False, "range": [1, 29903], "fixedrange": True},
         xaxis2={"visible": False, "range": [1, 29903], "fixedrange": True},
         yaxis1={"visible": False, "fixedrange": True},
@@ -128,21 +148,24 @@ def get_histogram_fig(np_histogram):
 
 def get_histogram_main_obj(np_histogram):
     """Get Plotly graph object representing bars in histogram view.
-    TODO
 
-    This is just the bars, without the gene bar.
+    This is just the axis-less bars, without the gene bar.
 
-    :param data: ``data_parser.get_data`` return value
-    :type data: dict
+    :param np_histogram: Numpy histogram object used to produce bars in
+        histogram view.
+    :type np_histogram: tuple
     :return: Plotly graph object representing main plot with bars in
         histogram view.
-    :rtype: go.Histogram
+    :rtype: go.Bar
     """
     [counts, bins] = np_histogram
     bin_medians = 0.5 * (bins[:-1] + bins[1:])
     bin_ranges = np.column_stack((bins[:-1], bins[1:]))
     hover_template = \
         "%{y} mutations across positions %{customdata}<extra></extra>"
+    # We use the ``Bar`` function instead of ``Histogram`` because we
+    # are using the numpy histogram function instead of the one
+    # provided by Plotly.
     ret = go.Bar(
         x=bin_medians,
         y=counts,
@@ -155,7 +178,20 @@ def get_histogram_main_obj(np_histogram):
 
 
 def get_np_histogram(data):
-    """TODO"""
+    """Get histogram data structure for histogram view.
+
+    We use the histogram function from numpy instead of the histogram
+    function of Plotly because it provides details on the histogram
+    after it is generated here in the server-side code. Plotly generates
+    histograms on the fly in the browser, which provides no data for
+    generating a mock axis.
+
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
+    :return: Numpy histogram object used to produce bars in histogram
+        view.
+    :rtype: tuple
+    """
     np_input = [int(x) for x in data["histogram_x"]]
     np_last_bin = int(math.ceil(max(np_input) / 100)) * 100
     ret = np.histogram(np_input, bins=range(0, np_last_bin+1, 100))
