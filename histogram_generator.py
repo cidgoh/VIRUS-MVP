@@ -35,7 +35,8 @@ def get_histogram_row_divs(data):
                     style={"backgroundColor": "black", "height": "1vh"}
                 ),
                 width={"offset": 1, "size": 10}
-            )
+            ),
+            no_gutters=True
         )
     ]
 
