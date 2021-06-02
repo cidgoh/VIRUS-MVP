@@ -1,16 +1,19 @@
 """Functions for generating histogram view."""
 
 import json
+import math
 
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
+import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 
 def get_histogram_row_divs(data):
     """Get Dash Bootstrap Components rows containing histogram view.
+    TODO
 
     :param data: ``data_parser.get_data`` return value
     :type data: dict
@@ -19,16 +22,10 @@ def get_histogram_row_divs(data):
     """
     return [
         dbc.Row(
-            dbc.Col(
-                dcc.Graph(
-                    id="histogram",
-                    figure=get_histogram_fig(data),
-                    config={"displayModeBar": False},
-                    style={"height": "7rem"}
-                ),
-                width={"offset": 1, "size": 10}
-            ),
-            className="mt-2"
+            get_histogram_top_row_div(data),
+            id="histogram-top-row-div",
+            className="mt-3",
+            no_gutters=True
         ),
         dbc.Row(
             dbc.Col(
@@ -43,8 +40,60 @@ def get_histogram_row_divs(data):
     ]
 
 
-def get_histogram_fig(data):
-    """Get Plotly figure representing histogram view.
+def get_histogram_top_row_div(data):
+    """TODO"""
+    np_histogram = get_np_histogram(data)
+    ret = [
+        dbc.Col(
+            dcc.Graph(
+                figure=get_histogram_mock_axis(np_histogram),
+                config={"displayModeBar": False},
+                style={"height": "7rem"}
+            ),
+            width={"size": 1}
+        ),
+        dbc.Col(
+            dcc.Graph(
+                    id="histogram",
+                    figure=get_histogram_fig(np_histogram),
+                    config={"displayModeBar": False},
+                    style={"height": "7rem"}
+            ),
+            width={"size": 10}
+        ),
+    ]
+    return ret
+
+
+def get_histogram_mock_axis(np_histogram):
+    """TODO"""
+    ret = make_subplots(rows=2,
+                        cols=1,
+                        row_heights=[0.7, 0.3],
+                        vertical_spacing=0)
+    counts = np_histogram[0]
+    mock_obj = go.Scatter(
+        x=[95, 95],
+        y=[0, 100],
+        mode="lines+text",
+        line={"color": "black"},
+        text=["0 ", "%s " % counts.max()],
+        textposition=["top left", "bottom left"],
+        hoverinfo="skip"
+    )
+    ret.add_trace(mock_obj, row=1, col=1)
+    ret.update_layout(
+        margin={"t": 0, "b": 0, "l": 0, "r": 0, "pad": 0},
+        plot_bgcolor="white",
+        font={"size": 18},
+        xaxis1={"visible": False, "range": [0, 100], "fixedrange": True},
+        yaxis1={"visible": False, "range": [0, 100], "fixedrange": True},
+    )
+    return ret
+
+
+def get_histogram_fig(np_histogram):
+    """Get Plotly figure representing histogram view.TODO
 
     This figure has two subplots. One for the main histogram, and the
     other for corresponding the gene bar.
@@ -58,7 +107,7 @@ def get_histogram_fig(data):
                         cols=1,
                         row_heights=[0.7, 0.3],
                         vertical_spacing=0)
-    ret.add_trace(get_histogram_main_obj(data), row=1, col=1)
+    ret.add_trace(get_histogram_main_obj(np_histogram), row=1, col=1)
     for bar_obj in get_histogram_gene_bar_obj_list():
         ret.add_trace(bar_obj, row=2, col=1)
     ret.update_layout(
@@ -76,8 +125,9 @@ def get_histogram_fig(data):
     return ret
 
 
-def get_histogram_main_obj(data):
+def get_histogram_main_obj(np_histogram):
     """Get Plotly graph object representing bars in histogram view.
+    TODO
 
     This is just the bars, without the gene bar.
 
@@ -87,13 +137,27 @@ def get_histogram_main_obj(data):
         histogram view.
     :rtype: go.Histogram
     """
-    ret = go.Histogram(
-        x=[int(x) for x in data["histogram_x"]],
-        xbins={"start": 1, "size": 100},
+    [counts, bins] = np_histogram
+    bin_medians = 0.5 * (bins[:-1] + bins[1:])
+    bin_ranges = np.column_stack((bins[:-1], bins[1:]))
+    hover_template = \
+        "%{y} mutations across positions %{customdata}<extra></extra>"
+    ret = go.Bar(
+        x=bin_medians,
+        y=counts,
         marker={"color": "black"},
         showlegend=False,
-        hovertemplate="%{y} mutations across positions %{x}<extra></extra>"
+        customdata=["%s to %s" % (x[0], x[1]) for x in bin_ranges],
+        hovertemplate=hover_template
     )
+    return ret
+
+
+def get_np_histogram(data):
+    """TODO"""
+    np_input = [int(x) for x in data["histogram_x"]]
+    np_last_bin = int(math.ceil(max(np_input) / 100)) * 100
+    ret = np.histogram(np_input, bins=range(0, np_last_bin+1, 100))
     return ret
 
 

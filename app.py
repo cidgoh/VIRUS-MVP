@@ -446,12 +446,13 @@ def update_heatmap(data):
 
 
 @app.callback(
-    Output("histogram", "figure"),
+    Output("histogram-top-row-div", "children"),
     Input("data", "data"),
     prevent_initial_call=True
 )
 def update_histogram(data):
     """Update histogram figure.
+    TODO
 
     When the ``data`` variable in the dcc.Store is updated, the
     histogram figure is updated to reflect the new data.
@@ -461,7 +462,7 @@ def update_histogram(data):
     :return: New histogram figure corresponding to new data
     :rtype: plotly.graph_objects.Figure
     """
-    return histogram_generator.get_histogram_fig(data)
+    return histogram_generator.get_histogram_top_row_div(data)
 
 
 @app.callback(
