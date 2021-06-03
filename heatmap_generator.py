@@ -70,6 +70,7 @@ def get_heatmap_row_div(data):
                     # somehow.
                     style={"width": len(data["heatmap_x"]) * 25}
                 ),
+                id="heatmap-center-div",
                 style={"overflowX": "scroll"}
             ),
             width=10

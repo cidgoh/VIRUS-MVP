@@ -22,6 +22,7 @@ import dash_html_components as html
 from data_parser import get_data, parse_gff3_file
 import toolbar_generator
 import heatmap_generator
+import histogram_generator
 import table_generator
 
 app = dash.Dash(__name__,
@@ -69,6 +70,7 @@ def launch_app(_):
     return [
         html.Div(toolbar_generator.get_toolbar_row_div(data_)),
         html.Div(heatmap_generator.get_heatmap_row_div(data_)),
+        html.Div(histogram_generator.get_histogram_row_divs(data_)),
         html.Div(table_generator.get_table_row_div(data_)),
         html.Div(toolbar_generator.get_select_lineages_modal()),
         # These are in-browser variables that Dash can treat as Inputs and
@@ -86,10 +88,11 @@ def launch_app(_):
         dcc.Store(id="new-upload"),
         dcc.Store(id="hidden-strains"),
         dcc.Store(id="strain-order"),
-        # Used to integrate JQuery UI drag and drop on client side. The
-        # data value is meaningless, we just need an output to perform
-        # the clientside function.
-        dcc.Store(id="make-select-lineages-modal-checkboxes-draggable")
+        # Used to integrate some JS functions. The data values are
+        # meaningless, we just need outputs to perform all clientside
+        # functions.
+        dcc.Store(id="make-select-lineages-modal-checkboxes-draggable"),
+        dcc.Store(id="make-histogram-rel-pos-bar-dynamic"),
     ]
 
 
@@ -387,7 +390,7 @@ def update_mutation_freq_slider(data, old_slider_marks):
 
     If the ``data`` dcc variable is updated, this function will
     re-render the slider if the new ``data`` variable has a different
-    set of mutation frequencies. TODO
+    set of mutation frequencies.
 
     :param data: ``get_data`` return value, transported here by
         ``update_data``.
@@ -440,6 +443,25 @@ def update_heatmap(data):
     right_fig = heatmap_generator.get_heatmap_right_fig(data)
     center_style = {"width": len(data["heatmap_x"]) * 25}
     return left_fig, center_fig, right_fig, center_style
+
+
+@app.callback(
+    Output("histogram-top-row-div", "children"),
+    Input("data", "data"),
+    prevent_initial_call=True
+)
+def update_histogram(data):
+    """Update histogram top row div.
+
+    When the ``data`` variable in the dcc.Store is updated, the top row
+    in the histogram view is updated to reflect the new data.
+
+    :param data: ``get_data`` return value, transported here by
+    :type data: dict
+    :return: New histogram figure corresponding to new data
+    :rtype: plotly.graph_objects.Figure
+    """
+    return histogram_generator.get_histogram_top_row_div(data)
 
 
 @app.callback(
@@ -501,6 +523,16 @@ app.clientside_callback(
     State({"type": "select-lineages-modal-checklist", "index": ALL}, "id"),
     State("data", "data"),
     prevent_initial_call=True
+)
+app.clientside_callback(
+    ClientsideFunction(
+        namespace="clientside",
+        function_name="makeHistogramRelPosBarDynamic"
+    ),
+    Output("make-histogram-rel-pos-bar-dynamic", "data"),
+    Input("histogram", "id"),
+    Input("heatmap-center-fig", "figure"),
+    Input("data", "data"),
 )
 
 if __name__ == "__main__":

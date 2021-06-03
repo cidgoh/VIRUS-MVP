@@ -5,6 +5,7 @@ Entry point is ``get_data``.
 
 from copy import deepcopy
 import csv
+import json
 import os
 
 
@@ -90,33 +91,15 @@ def map_pos_to_gene(pos):
     :return: SARS-CoV-2 gene at nucleotide position ``pos``
     :rtype: str
     """
-    if pos <= 265:
-        return "5' UTR"
-    elif 266 <= pos <= 21555:
-        return "ORF1ab"
-    elif 21563 <= pos <= 25384:
-        return "S"
-    elif 25393 <= pos <= 26220:
-        return "ORF3a"
-    elif 26245 <= pos <= 26472:
-        return "E"
-    elif 26523 <= pos <= 27191:
-        return "M"
-    elif 27202 <= pos <= 27387:
-        return "ORF6"
-    elif 27394 <= pos <= 27759:
-        return "ORF7a"
-    elif 27894 <= pos <= 28259:
-        return "ORF8"
-    elif 28274 <= pos <= 29533:
-        return "N"
-    elif 29558 <= pos <= 29674:
-        return "ORF10"
-    elif pos >= 29675:
-        return "3' UTR"
-    else:
-        # Intergenic region
-        return "n/a"
+    with open("gene_positions.json") as fp:
+        gene_positions_dict = json.load(fp)
+    for gene in gene_positions_dict:
+        start = gene_positions_dict[gene]["start"]
+        end = gene_positions_dict[gene]["end"]
+        if start <= pos <= end:
+            return gene
+    # Intergenic region
+    return "n/a"
 
 
 def parse_data_dir(dir_, file_order=None):
@@ -323,11 +306,11 @@ def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
              max_mutation_freq=None):
     """Get relevant data for Plotly visualizations in this application.
 
-    This will include table data, which is straight forward. But this
-    will also include various information related to the main heatmap,
-    including heatmap x y coordinates for mutations, insertions,
-    deletions, and hover text. This will also include information for
-    rendering the mutation frequency slider.
+    This will include table and histogram data, which is straight
+    forward. But this will also include various information related to
+    the main heatmap, including heatmap x y coordinates for mutations,
+    insertions, deletions, and hover text. This will also include
+    information for rendering the mutation frequency slider.
 
     Basically, this function gives us data to plug into the
     visualization functions of Plotly.
@@ -399,6 +382,7 @@ def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
         "deletions_x": get_deletions_x(visible_strain_data),
         "deletions_y": get_deletions_y(visible_strain_data),
         "tables": get_tables(visible_strain_data),
+        "histogram_x": get_histogram_x(visible_strain_data),
         "dir_strains": dir_strains,
         "hidden_strains": hidden_strains,
         "all_strains": get_heatmap_y(all_strain_data),
@@ -670,4 +654,25 @@ def get_tables(annotated_data_dirs):
             pos_col, mutation_name_col, ref_col, alt_col, alt_freq_col,
             functions_col
         ]
+    return ret
+
+
+def get_histogram_x(annotated_data_dirs):
+    """Get x data values binned by Plotly when producing the histogram.
+
+    This is just the positions containing mutations, with duplicates
+    permitted for mutations shared by strains.
+
+    :param annotated_data_dirs: A dictionary containing multiple merged
+        ``get_annotated_data_dir`` return values.
+    :type annotated_data_dirs: dict
+    :return: List of x data values used in histogram view
+    :rtype: list[str]
+    """
+    ret = []
+    for strain in annotated_data_dirs:
+        for pos in annotated_data_dirs[strain]:
+            hidden_cell = annotated_data_dirs[strain][pos]["hidden_cell"]
+            if not hidden_cell:
+                ret.append(pos)
     return ret
