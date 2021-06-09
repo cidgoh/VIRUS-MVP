@@ -161,7 +161,7 @@ def get_mutation_freq_slider(data):
         # numbers as floats. See https://bit.ly/3wgwh9p.
         num_val = float(str_val)
         if num_val % 1 == 0:
-            num_val = int(str_val)
+            num_val = int(num_val)
 
         if num_val < min_val:
             min_val = num_val
