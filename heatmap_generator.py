@@ -127,7 +127,10 @@ def get_heatmap_center_fig(data):
     for i, gene_label in enumerate(heatmap_center_genes_obj["text"][0]):
         x_start = heatmap_center_genes_obj["x"][i]
         x_end = heatmap_center_genes_obj["x"][i+1]
-        if (x_end - x_start) < 2:
+        # TODO: fix this hackey solution by using a monospace font, and
+        #  calculating the length of the label versus the length of the
+        #  gene bar cell.
+        if (x_end - x_start) < 3 and len(gene_label) > (x_end - x_start):
             font_size = 10
             text_angle = 90
         else:
@@ -181,8 +184,12 @@ def get_heatmap_center_fig(data):
     # Styling stuff
     ret.update_layout(xaxis1_visible=False)
     ret.update_layout(xaxis2_type="category")
-    ret.update_xaxes(range=[-0.5, len(data["heatmap_x"]) - 0.5])
-    ret.update_yaxes(visible=False)
+    ret.update_xaxes(range=[-0.5, len(data["heatmap_x"]) - 0.5],
+                     showspikes=True,
+                     fixedrange=True)
+    ret.update_yaxes(visible=False,
+                     showspikes=True,
+                     fixedrange=True)
     ret.update_layout(font={
         "size": 18
     })
@@ -194,8 +201,6 @@ def get_heatmap_center_fig(data):
         "t": 0,
         "pad": 0
     })
-    ret.update_xaxes(fixedrange=True)
-    ret.update_yaxes(fixedrange=True)
 
     return ret
 

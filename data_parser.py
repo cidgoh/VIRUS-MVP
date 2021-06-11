@@ -150,11 +150,8 @@ def parse_data_dir(dir_, file_order=None):
                     ret[strain][pos] = {}
                     ret[strain][pos]["ref"] = row["REF"]
                     ret[strain][pos]["alt"] = row["ALT"]
-                    ret[strain][pos]["alt_freq"] = row["ALT_FREQ"]
-                    ret[strain][pos]["ref_codon"] = row["REF_CODON"]
-                    ret[strain][pos]["alt_codon"] = row["ALT_CODON"]
-                    ret[strain][pos]["ref_aa"] = row["REF_AA"]
-                    ret[strain][pos]["alt_aa"] = row["ALT_AA"]
+                    ret[strain][pos]["alt_freq"] =\
+                        str(float(row["AO"].split(",")[0])/float(row["DP"]))
                     # We may update this in ``get_annotated_data_dir``
                     ret[strain][pos]["clade_defining"] = False
 
@@ -167,9 +164,9 @@ def parse_data_dir(dir_, file_order=None):
                     # We may update this later
                     ret[strain][pos]["hidden_cell"] = False
 
-                    if row["ALT"][0] == "+":
+                    if row["TYPE"] == "ins":
                         ret[strain][pos]["mutation_type"] = "insertion"
-                    elif row["ALT"][0] == "-":
+                    elif row["TYPE"] == "del":
                         ret[strain][pos]["mutation_type"] = "deletion"
                     else:
                         ret[strain][pos]["mutation_type"] = "snp"
