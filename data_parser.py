@@ -164,9 +164,9 @@ def parse_data_dir(dir_, file_order=None):
                     # We may update this later
                     ret[strain][pos]["hidden_cell"] = False
 
-                    if row["ALT"][0] == "+":
+                    if row["TYPE"] == "ins":
                         ret[strain][pos]["mutation_type"] = "insertion"
-                    elif row["ALT"][0] == "-":
+                    elif row["TYPE"] == "del":
                         ret[strain][pos]["mutation_type"] = "deletion"
                     else:
                         ret[strain][pos]["mutation_type"] = "snp"
