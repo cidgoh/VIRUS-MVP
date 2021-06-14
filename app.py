@@ -414,35 +414,37 @@ def update_mutation_freq_slider(data, old_slider_marks):
 
 @app.callback(
     Output("heatmap-left-fig", "figure"),
+    Input("data", "data"),
+    prevent_initial_call=True
+)
+def update_heatmap_left_fig(data):
+    """TODO"""
+    left_fig = heatmap_generator.get_heatmap_left_fig(data)
+    return left_fig
+
+
+@app.callback(
     Output("heatmap-center-fig", "figure"),
-    Output("heatmap-right-fig", "figure"),
     Output("heatmap-center-fig", "style"),
     Input("data", "data"),
     prevent_initial_call=True
 )
-def update_heatmap(data):
-    """Update heatmap figures and center figure style.
-
-    When the ``data`` variable in the dcc.Store is updated, the
-    left, center, and right figures of the heatmap are updated as well.
-    We update the figures instead of the whole row because it less
-    computationally expensive. We must also update the style of the
-    center figure due to a weirdness between Python Plotly and
-    JavaScript Plotly described in ``div_generator``.
-
-    :param data: ``get_data`` return value, transported here by
-        ``update_data``.
-    :type data: dict
-    :return: Left, center, and right heatmap figures, and center figure
-        style.
-    :rtype: (plotly.graph_objects.Figure, plotly.graph_objects.Figure,
-        plotly.graph_objects.Figure, dict)
-    """
-    left_fig = heatmap_generator.get_heatmap_left_fig(data)
+def update_heatmap_center_fig(data):
+    """TODO remember weirdness"""
     center_fig = heatmap_generator.get_heatmap_center_fig(data)
-    right_fig = heatmap_generator.get_heatmap_right_fig(data)
     center_style = {"width": len(data["heatmap_x"]) * 25}
-    return left_fig, center_fig, right_fig, center_style
+    return center_fig, center_style
+
+
+@app.callback(
+    Output("heatmap-right-fig", "figure"),
+    Input("data", "data"),
+    prevent_initial_call=True
+)
+def update_heatmap_right_fig(data):
+    """TODO"""
+    right_fig = heatmap_generator.get_heatmap_right_fig(data)
+    return right_fig
 
 
 @app.callback(
