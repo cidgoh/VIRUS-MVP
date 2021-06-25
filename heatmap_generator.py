@@ -46,14 +46,22 @@ def get_heatmap_row_divs(data):
     """
     ret = [
         dbc.Row([
-            dbc.Col(
-                html.Div(
-                    dcc.Graph(
-                        id="heatmap-left-fig",
-                        figure=get_heatmap_left_fig(data),
-                        config={"displayModeBar": False}
-                    )
+            dbc.Col([
+                dbc.Row(
+                    dbc.Col(
+                        None,
+                        style={"height": 40}
+                    ), no_gutters=True
                 ),
+                dbc.Row(
+                    dbc.Col(
+                        dcc.Graph(
+                            id="heatmap-left-fig",
+                            figure=get_heatmap_left_fig(data),
+                            config={"displayModeBar": False}
+                        )
+                    ), no_gutters=True
+                )],
                 width=1, style={"overflowX": "hidden"}
             ),
             dbc.Col([
@@ -64,7 +72,7 @@ def get_heatmap_row_divs(data):
                             figure=get_heatmap_gene_bar_fig(data),
                             config={"displayModeBar": False}
                         )
-                    )
+                    ), no_gutters=True
                 ),
                 dbc.Row(
                     dbc.Col(
@@ -73,7 +81,7 @@ def get_heatmap_row_divs(data):
                             figure=get_heatmap_center_fig(data),
                             config={"displayModeBar": False},
                         )
-                    )
+                    ), no_gutters=True
                 )],
                 id="heatmap-center-div",
                 width=10,
@@ -372,6 +380,7 @@ def get_heatmap_center_deletions_obj(data):
 
 def get_heatmap_left_fig(data):
     """Get Plotly figure shown in the left of the heatmap div.
+    TODO
 
     This is the y axis view. The reason we have a separate figure for
     the y axis view is that there is no native way to have a fixed y
@@ -382,39 +391,39 @@ def get_heatmap_left_fig(data):
     :return: Plotly figure containing heatmap y axis
     :rtype: go.Figure
     """
-    # We use subplots to line up better with the center heatmap fig.
-    # The top plot is empty.
-    ret = make_subplots(
-        rows=2,
-        cols=1,
-        row_heights=[0.1, 0.9],
-        vertical_spacing=0.05
+    ret = go.Figure(get_heatmap_left_base_obj(data))
+    ret.update_layout(
+        font={"size": 18},
+        margin={
+            "l": 0,
+            "r": 0,
+            "t": 0,
+            "b": 0,
+            "pad": 0
+        },
+        height=len(data["heatmap_y"]) * 30,
+        yaxis_type="linear",
+        plot_bgcolor="white"
     )
-
-    # TODO: consider interactions with heatmap_left_base_obj
-    heatmap_left_base_obj = get_heatmap_left_base_obj(data)
-    heatmap_left_labels_obj = get_heatmap_left_labels_obj(data)
-
-    ret.add_trace(heatmap_left_base_obj, row=2, col=1)
-    ret.add_trace(heatmap_left_labels_obj, row=2, col=1)
-
-    ret.update_layout(font={"size": 18})
-    ret.update_layout(margin={
-        "l": 0,
-        "r": 0,
-        "t": 0
-    })
-    ret.update_layout(plot_bgcolor="white")
-    ret.update_xaxes(visible=False)
-    ret.update_yaxes(visible=False)
-    ret.update_xaxes(fixedrange=True)
-    ret.update_yaxes(fixedrange=True)
-
+    ret.update_xaxes(visible=True,
+                     fixedrange=True,
+                     tickangle=90,
+                     showgrid=False,
+                     color="white"
+                     )
+    ret.update_yaxes(range=[-0.5, len(data["heatmap_y"])-0.5],
+                     tickmode="linear",
+                     tick0=0.5,
+                     dtick=1,
+                     zeroline=False,
+                     visible=False,
+                     fixedrange=True)
     return ret
 
 
 def get_heatmap_left_base_obj(data):
     """Get Plotly graph object of invisible, single column heatmap.
+    TODO
 
     All this object does it take up space. We overlay text over the
     cells in ``get_heatmap_left_fig`` though, to give the illusion of a
@@ -426,15 +435,13 @@ def get_heatmap_left_base_obj(data):
         invisible heatmap.
     :rtype: go.Heatmap
     """
-    ret = go.Heatmap(
-        x=[0],
-        y=data["heatmap_y"],
-        z=[[0] for _ in data["heatmap_y"]],
-        showscale=False,
-        hoverinfo="none",
-        colorscale="Greys",
-        zmin=0,
-        zmax=1
+    ret = go.Scattergl(
+        x=["  "+data["heatmap_x"][-1] for _ in range(len(data["heatmap_y"]))],
+        y=[i for i in range(len(data["heatmap_y"]))],
+        mode="text",
+        text=data["heatmap_y"],
+        hoverinfo="skip",
+        showlegend=False
     )
     return ret
 
