@@ -45,6 +45,8 @@ app.layout = dbc.Container(
     dcc.Store("first-launch"),
     fluid=True,
     id="main-container")
+# TODO go over function docstrings
+# TODO callback for heatmap gene bar
 
 
 @app.callback(
@@ -69,7 +71,7 @@ def launch_app(_):
     data_ = get_data(["reference_data", "user_data"], gff3_annotations)
     return [
         html.Div(toolbar_generator.get_toolbar_row_div(data_)),
-        html.Div(heatmap_generator.get_heatmap_row_div(data_)),
+        html.Div(heatmap_generator.get_heatmap_row_divs(data_)),
         html.Div(histogram_generator.get_histogram_row_divs(data_)),
         html.Div(table_generator.get_table_row_div(data_)),
         html.Div(toolbar_generator.get_select_lineages_modal()),
@@ -434,17 +436,6 @@ def update_heatmap_center_fig(data):
     center_fig = heatmap_generator.get_heatmap_center_fig(data)
     center_style = {"width": len(data["heatmap_x"]) * 25}
     return center_fig, center_style
-
-
-@app.callback(
-    Output("heatmap-right-fig", "figure"),
-    Input("data", "data"),
-    prevent_initial_call=True
-)
-def update_heatmap_right_fig(data):
-    """TODO"""
-    right_fig = heatmap_generator.get_heatmap_right_fig(data)
-    return right_fig
 
 
 @app.callback(
