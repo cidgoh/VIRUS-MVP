@@ -374,10 +374,6 @@ def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
     data = {
         "heatmap_x": get_heatmap_x(all_strain_data),
         "heatmap_y": get_heatmap_y(visible_strain_data),
-        "insertions_x": get_insertions_x(visible_strain_data),
-        "insertions_y": get_insertions_y(visible_strain_data),
-        "deletions_x": get_deletions_x(visible_strain_data),
-        "deletions_y": get_deletions_y(visible_strain_data),
         "tables": get_tables(visible_strain_data),
         "histogram_x": get_histogram_x(visible_strain_data),
         "dir_strains": dir_strains,
@@ -385,6 +381,18 @@ def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
         "all_strains": get_heatmap_y(all_strain_data),
         "mutation_freq_slider_vals": mutation_freq_slider_vals
     }
+    data["insertions_x"] = get_insertions_x(visible_strain_data,
+                                            data["heatmap_x"],
+                                            data["heatmap_y"])
+    data["insertions_y"] = get_insertions_y(visible_strain_data,
+                                            data["heatmap_x"],
+                                            data["heatmap_y"])
+    data["deletions_x"] = get_deletions_x(visible_strain_data,
+                                          data["heatmap_x"],
+                                          data["heatmap_y"])
+    data["deletions_y"] = get_deletions_y(visible_strain_data,
+                                          data["heatmap_x"],
+                                          data["heatmap_y"])
     data["heatmap_z"] = \
         get_heatmap_z(visible_strain_data, data["heatmap_x"])
     data["heatmap_cell_text"] = \
@@ -543,7 +551,7 @@ def get_heatmap_cell_text(annotated_data_dirs, heatmap_x):
     return ret
 
 
-def get_insertions_x(annotated_data_dirs):
+def get_insertions_x(annotated_data_dirs, heatmap_x, heatmap_y):
     """Get x coordinates of insertion markers to overlay in heatmap.
     TODO
 
@@ -554,8 +562,10 @@ def get_insertions_x(annotated_data_dirs):
     :rtype: list[int]
     """
     ret = []
-    for j, strain in enumerate(annotated_data_dirs):
-        for i, pos in enumerate(annotated_data_dirs[strain]):
+    for i, pos in enumerate(heatmap_x):
+        for j, strain in enumerate(heatmap_y):
+            if pos not in annotated_data_dirs[strain]:
+                continue
             mutation_type = annotated_data_dirs[strain][pos]["mutation_type"]
             hidden_cell = annotated_data_dirs[strain][pos]["hidden_cell"]
             if mutation_type == "insertion" and not hidden_cell:
@@ -563,7 +573,7 @@ def get_insertions_x(annotated_data_dirs):
     return ret
 
 
-def get_insertions_y(annotated_data_dirs):
+def get_insertions_y(annotated_data_dirs, heatmap_x, heatmap_y):
     """Get y coordinates of insertion markers to overlay in heatmap.
     TODO
 
@@ -574,8 +584,10 @@ def get_insertions_y(annotated_data_dirs):
     :rtype: list[str]
     """
     ret = []
-    for j, strain in enumerate(annotated_data_dirs):
-        for i, pos in enumerate(annotated_data_dirs[strain]):
+    for i, pos in enumerate(heatmap_x):
+        for j, strain in enumerate(heatmap_y):
+            if pos not in annotated_data_dirs[strain]:
+                continue
             mutation_type = annotated_data_dirs[strain][pos]["mutation_type"]
             hidden_cell = annotated_data_dirs[strain][pos]["hidden_cell"]
             if mutation_type == "insertion" and not hidden_cell:
@@ -583,7 +595,7 @@ def get_insertions_y(annotated_data_dirs):
     return ret
 
 
-def get_deletions_x(annotated_data_dirs):
+def get_deletions_x(annotated_data_dirs, heatmap_x, heatmap_y):
     """Get x coordinates of deletion markers to overlay in heatmap.
     TODO
 
@@ -594,8 +606,10 @@ def get_deletions_x(annotated_data_dirs):
     :rtype: list[int]
     """
     ret = []
-    for j, strain in enumerate(annotated_data_dirs):
-        for i, pos in enumerate(annotated_data_dirs[strain]):
+    for i, pos in enumerate(heatmap_x):
+        for j, strain in enumerate(heatmap_y):
+            if pos not in annotated_data_dirs[strain]:
+                continue
             mutation_type = annotated_data_dirs[strain][pos]["mutation_type"]
             hidden_cell = annotated_data_dirs[strain][pos]["hidden_cell"]
             if mutation_type == "deletion" and not hidden_cell:
@@ -603,7 +617,7 @@ def get_deletions_x(annotated_data_dirs):
     return ret
 
 
-def get_deletions_y(annotated_data_dirs):
+def get_deletions_y(annotated_data_dirs, heatmap_x, heatmap_y):
     """Get y coordinates of deletion markers to overlay in heatmap.
     TODO
 
@@ -614,8 +628,10 @@ def get_deletions_y(annotated_data_dirs):
     :rtype: list[str]
     """
     ret = []
-    for j, strain in enumerate(annotated_data_dirs):
-        for i, pos in enumerate(annotated_data_dirs[strain]):
+    for i, pos in enumerate(heatmap_x):
+        for j, strain in enumerate(heatmap_y):
+            if pos not in annotated_data_dirs[strain]:
+                continue
             mutation_type = annotated_data_dirs[strain][pos]["mutation_type"]
             hidden_cell = annotated_data_dirs[strain][pos]["hidden_cell"]
             if mutation_type == "deletion" and not hidden_cell:
