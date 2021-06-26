@@ -87,15 +87,22 @@ def get_heatmap_row_divs(data):
                 width=10,
                 style={"overflowX": "scroll"}
             ),
-            dbc.Col(
-                html.Div(
-                    dcc.Graph(
-                        id="heatmap-right-fig",
-                        figure=get_heatmap_right_fig(data),
-                        config={"displayModeBar": False}
-                    ),
-                    style={"width": "90vw"}, className="ml-3"
+            dbc.Col([
+                dbc.Row(
+                    dbc.Col(
+                        None,
+                        style={"height": 40},
+                    ), no_gutters=True
                 ),
+                dbc.Row(
+                    dbc.Col(
+                        dcc.Graph(
+                            id="heatmap-right-fig",
+                            figure=get_heatmap_right_fig(data),
+                            config={"displayModeBar": False}
+                        ), className="ml-3"
+                    ), no_gutters=True
+                )],
                 width=1, style={"overflowX": "hidden"}
             ),
         ], no_gutters=True, className="mt-3")
@@ -476,6 +483,7 @@ def get_heatmap_left_labels_obj(data):
 
 def get_heatmap_right_fig(data):
     """Get Plotly figure shown in the right of the heatmap div.
+    TODO
 
     This is the colorbar view. The reason we have a separate figure for
     the colorbar is that there is no native way to have a fixed
@@ -487,30 +495,20 @@ def get_heatmap_right_fig(data):
     :return: Plotly figure containing heatmap colorbar
     :rtype: go.Figure
     """
-    # We use subplots to line up better with the center heatmap fig.
-    # The top plot is empty.
-    ret = make_subplots(
-        rows=2,
-        cols=1,
-        row_heights=[0.1, 0.9],
-        vertical_spacing=0.05
+    ret = go.Figure(get_heatmap_right_base_obj(data))
+    ret.update_layout(
+        font={"size": 18},
+        margin={
+            "l": 0,
+            "r": 0,
+            "t": 0,
+            "b": 0
+        },
+        height=len(data["heatmap_y"])*30,
+        autosize=False
     )
-
-    heatmap_right_base_obj = get_heatmap_right_base_obj(data)
-
-    ret.add_trace(heatmap_right_base_obj, row=2, col=1)
-    ret.update_layout(font={"size": 18})
-    ret.update_layout(plot_bgcolor="white")
     ret.update_xaxes(visible=False)
     ret.update_yaxes(visible=False)
-    ret.update_layout(margin={
-        "l": 0,
-        "r": 0,
-        "t": 0
-    })
-    ret.update_xaxes(fixedrange=True)
-    ret.update_yaxes(fixedrange=True)
-
     return ret
 
 
@@ -528,17 +526,19 @@ def get_heatmap_right_base_obj(data):
         colorbar.
     :rtype: go.Heatmap
     """
-    ret = go.Heatmap(
-        x=["foo"],
-        y=data["heatmap_y"],
-        z=[[0] for _ in data["heatmap_y"]],
-        colorscale=get_color_scale(),
-        colorbar={
-            "x": -2,
-            "y": 0.4
+    ret = go.Scattergl(
+        x=[0],
+        y=[0],
+        mode="markers",
+        marker={
+            "color": [0],
+            "colorscale": get_color_scale(),
+            "cmin": 0,
+            "cmax": 1,
+            "showscale": True,
+            "colorbar": {
+                "x": -2
+            }
         },
-        zmin=0,
-        zmax=1,
-        hoverinfo="none"
     )
     return ret
