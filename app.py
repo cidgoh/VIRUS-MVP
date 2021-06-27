@@ -486,7 +486,7 @@ def update_table(data, click_data):
     if click_data is None:
         table_strain = data["heatmap_y"][0]
     else:
-        table_strain = click_data["points"][0]["y"]
+        table_strain = data["heatmap_y"][click_data["points"][0]["y"]]
 
     # If you click a strain, but then hide it, this condition stops
     # things from breaking.
