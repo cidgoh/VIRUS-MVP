@@ -68,7 +68,7 @@ def get_heatmap_row_divs(data):
                 dbc.Row(
                     dbc.Col(
                         dcc.Graph(
-                            id="heatmap-gene-bar",
+                            id="heatmap-gene-bar-fig",
                             figure=get_heatmap_gene_bar_fig(data),
                             config={"displayModeBar": False}
                         )

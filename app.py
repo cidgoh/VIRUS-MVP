@@ -416,13 +416,26 @@ def update_mutation_freq_slider(data, old_slider_marks):
 
 @app.callback(
     Output("heatmap-left-fig", "figure"),
-    Input("data", "data"),
+    Input("heatmap-center-fig", "figure"),
+    State("data", "data"),
     prevent_initial_call=True
 )
-def update_heatmap_left_fig(data):
+def update_heatmap_left_fig(_, data):
     """TODO"""
     left_fig = heatmap_generator.get_heatmap_left_fig(data)
     return left_fig
+
+
+@app.callback(
+    Output("heatmap-gene-bar-fig", "figure"),
+    Input("heatmap-center-fig", "figure"),
+    State("data", "data"),
+    prevent_initial_call=True
+)
+def update_heatmap_gene_bar_fig(_, data):
+    """TODO"""
+    gene_bar_fig = heatmap_generator.get_heatmap_gene_bar_fig(data)
+    return gene_bar_fig
 
 
 @app.callback(
