@@ -119,7 +119,7 @@ def get_heatmap_gene_bar_fig(data):
     ret.update_yaxes(type="linear",
                      visible=False)
     ret.update_layout(
-        width=len(data["heatmap_x"]) * 25,
+        width=len(data["heatmap_x"]) * 36,
         height=40,
         autosize=False,
         plot_bgcolor="white",
@@ -197,7 +197,7 @@ def get_heatmap_center_fig(data):
                      ticktext=data["heatmap_x"],
                      fixedrange=True,
                      zeroline=False,
-                     showgrid=False,
+                     gridcolor="lightgrey",
                      showspikes=True,
                      spikecolor="black")
     ret.update_yaxes(range=[-0.5, len(data["heatmap_y"])-0.5],
@@ -215,8 +215,8 @@ def get_heatmap_center_fig(data):
         "size": 18
     })
     ret.update_layout(
-        width=len(data["heatmap_x"]) * 25,
-        height=len(data["heatmap_y"]) * 30,
+        width=len(data["heatmap_x"]) * 36,
+        height=len(data["heatmap_y"]) * 40,
         autosize=False)
     ret.update_layout(plot_bgcolor="white")
     ret.update_layout(margin={
@@ -318,8 +318,11 @@ def get_heatmap_center_base_obj(data):
         marker={
             "color": scatter_marker_color,
             "colorscale": get_color_scale(),
+            "cmin": 0,
+            "cmax": 1,
             "symbol": "square",
-            "size": 18
+            "line": {"width": 2},
+            "size": 30
         },
         hoverlabel={
             "font_size": 18
@@ -408,7 +411,7 @@ def get_heatmap_left_fig(data):
             "b": 0,
             "pad": 0
         },
-        height=len(data["heatmap_y"]) * 30,
+        height=len(data["heatmap_y"]) * 40,
         yaxis_type="linear",
         plot_bgcolor="white"
     )
@@ -504,7 +507,7 @@ def get_heatmap_right_fig(data):
             "t": 0,
             "b": 0
         },
-        height=len(data["heatmap_y"])*30,
+        height=len(data["heatmap_y"])*40,
         autosize=False
     )
     ret.update_xaxes(visible=False)
