@@ -15,6 +15,12 @@ from plotly.subplots import make_subplots
 # TODO go over function docstrings
 
 
+def get_center_heatmap_height(data):
+    """TODO"""
+    ret = len(data["heatmap_y"]) * 40 + 10
+    return ret
+
+
 def get_color_scale():
     """Get custom Plotly color scale.
 
@@ -216,7 +222,7 @@ def get_heatmap_center_fig(data):
     })
     ret.update_layout(
         width=len(data["heatmap_x"]) * 36,
-        height=len(data["heatmap_y"]) * 40,
+        height=get_center_heatmap_height(data),
         autosize=False)
     ret.update_layout(plot_bgcolor="white")
     ret.update_layout(margin={
@@ -411,7 +417,7 @@ def get_heatmap_left_fig(data):
             "b": 0,
             "pad": 0
         },
-        height=len(data["heatmap_y"]) * 40,
+        height=get_center_heatmap_height(data),
         yaxis_type="linear",
         plot_bgcolor="white"
     )
@@ -507,7 +513,7 @@ def get_heatmap_right_fig(data):
             "t": 0,
             "b": 0
         },
-        height=len(data["heatmap_y"])*40,
+        height=get_center_heatmap_height(data),
         autosize=False
     )
     ret.update_xaxes(visible=False)
