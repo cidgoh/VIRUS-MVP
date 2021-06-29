@@ -17,7 +17,7 @@ from plotly.subplots import make_subplots
 
 def get_center_heatmap_height(data):
     """TODO"""
-    ret = len(data["heatmap_y"]) * 40 + 10
+    ret = len(data["heatmap_y"]) * 40 + 100
     return ret
 
 
