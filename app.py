@@ -95,11 +95,11 @@ def launch_app(_):
     data_ = get_data(["reference_data", "user_data"], gff3_annotations)
     return [
         # Bootstrap row containing tools at the top of the application
-        toolbar_generator.get_toolbar_row_div(data_),
+        toolbar_generator.get_toolbar_row(data_),
         # Bootstrap row containing heatmap
         heatmap_generator.get_heatmap_row_divs(data_),
         # Bootstrap row containing histogram
-        histogram_generator.get_histogram_row_divs(data_),
+        histogram_generator.get_histogram_row(data_),
         # Bootstrap row containing table
         table_generator.get_table_row_div(data_),
         # These are in-browser variables that Dash can treat as Inputs and
@@ -530,7 +530,7 @@ def update_histogram(data):
     :return: New histogram figure corresponding to new data
     :rtype: plotly.graph_objects.Figure
     """
-    return histogram_generator.get_histogram_top_row_div(data)
+    return histogram_generator.get_histogram_top_row(data)
 
 
 @app.callback(

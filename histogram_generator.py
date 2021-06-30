@@ -11,36 +11,39 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 
-def get_histogram_row_divs(data):
-    """Get Dash Bootstrap Components rows containing histogram view.
+def get_histogram_row(data):
+    """Get Dash Bootstrap Components row containing histogram view.
 
     :param data: ``data_parser.get_data`` return value
     :type data: dict
     :return: Dash Bootstrap Components rows containing histogram view
     :rtype: list[dbc.Row]
     """
-    return dbc.Row(dbc.Col([
-        dbc.Row(
-            get_histogram_top_row_div(data),
-            id="histogram-top-row-div",
-            className="mt-3",
-            no_gutters=True
-        ),
-        dbc.Row(
-            dbc.Col(
-                html.Div(
-                    id="histogram-rel-pos-bar",
-                    # Margins will be added dynamically clientside
-                    style={"backgroundColor": "black", "height": "1vh"}
+    return dbc.Row(
+        dbc.Col(
+            [
+                dbc.Row(
+                    get_histogram_top_row(data),
+                    id="histogram-top-row-div",
+                    className="mt-3",
+                    no_gutters=True
                 ),
-                width={"offset": 1, "size": 10}
-            ),
-            no_gutters=True
-        )
-    ]), no_gutters=True)
+                dbc.Row(
+                    dbc.Col(
+                        html.Div(
+                            id="histogram-rel-pos-bar",
+                            # Margins will be added dynamically clientside
+                            style={"backgroundColor": "black", "height": "1vh"}
+                        ),
+                        width={"offset": 1, "size": 10}
+                    ),
+                    no_gutters=True
+                )
+            ]
+        ), no_gutters=True)
 
 
-def get_histogram_top_row_div(data):
+def get_histogram_top_row(data):
     """Get the top Dash Bootstrap Components row in the histogram view.
 
     This consists of the actual histogram, and also a scatter plot
@@ -127,7 +130,7 @@ def get_histogram_fig(np_histogram):
                         cols=1,
                         row_heights=[0.7, 0.3],
                         vertical_spacing=0)
-    ret.add_trace(get_histogram_main_obj(np_histogram), row=1, col=1)
+    ret.add_trace(get_histogram_fig_obj(np_histogram), row=1, col=1)
     for bar_obj in get_histogram_gene_bar_obj_list():
         ret.add_trace(bar_obj, row=2, col=1)
     ret.update_layout(
@@ -146,7 +149,7 @@ def get_histogram_fig(np_histogram):
     return ret
 
 
-def get_histogram_main_obj(np_histogram):
+def get_histogram_fig_obj(np_histogram):
     """Get Plotly graph object representing bars in histogram view.
 
     This is just the axis-less bars, without the gene bar.

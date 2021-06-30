@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 
 
-def get_toolbar_row_div(data):
+def get_toolbar_row(data):
     """Get Dash Bootstrap Components row that sits above heatmap.
 
     This contains a col with buttons for selecting and uploading
@@ -17,32 +17,35 @@ def get_toolbar_row_div(data):
         defining mutations switch.
     :rtype: dbc.Row
     """
-    ret = dbc.Row([
-        dbc.Col(
-            dbc.ButtonGroup([
-                get_select_lineages_toolbar_btn(),
-                get_file_upload_component()
-            ]),
-            className="my-auto",
-            width={"offset": 1}
-        ),
-        get_select_lineages_modal(),
-        dbc.Col(
-            # Empty on launch
-            className="my-auto",
-            id="dialog-col"
-        ),
-        dbc.Col(
-            get_mutation_freq_slider(data),
-            className="my-auto",
-            id="mutation-freq-slider-col",
-            width={"size": 2}
-        ),
-        dbc.Col(
-            get_clade_defining_mutations_switch_form_group(),
-            className="my-auto",
-            width={"size": 2}
-        )],
+    ret = dbc.Row(
+        [
+            dbc.Col(
+                dbc.ButtonGroup([
+                    get_select_lineages_toolbar_btn(),
+                    get_file_upload_component()
+                ]),
+                className="my-auto",
+                width={"offset": 1}
+            ),
+            get_select_lineages_modal(),
+            dbc.Col(
+                # Empty on launch
+                className="my-auto",
+                id="dialog-col"
+            ),
+            dbc.Col(
+                get_mutation_freq_slider(data),
+                className="my-auto",
+                id="mutation-freq-slider-col",
+                width={"size": 2}
+            ),
+            dbc.Col(
+                get_clade_defining_mutations_switch_form_group(),
+                className="my-auto",
+                width={"size": 2}
+            ),
+            get_select_lineages_modal()
+        ],
         className="mt-3"
     )
     return ret
