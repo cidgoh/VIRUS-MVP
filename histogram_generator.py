@@ -130,7 +130,7 @@ def get_histogram_fig(np_histogram):
                         cols=1,
                         row_heights=[0.7, 0.3],
                         vertical_spacing=0)
-    ret.add_trace(get_histogram_fig_obj(np_histogram), row=1, col=1)
+    ret.add_trace(get_histogram_graph_obj(np_histogram), row=1, col=1)
     for bar_obj in get_histogram_gene_bar_obj_list():
         ret.add_trace(bar_obj, row=2, col=1)
     ret.update_layout(
@@ -149,7 +149,7 @@ def get_histogram_fig(np_histogram):
     return ret
 
 
-def get_histogram_fig_obj(np_histogram):
+def get_histogram_graph_obj(np_histogram):
     """Get Plotly graph object representing bars in histogram view.
 
     This is just the axis-less bars, without the gene bar.

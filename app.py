@@ -62,8 +62,6 @@ app.layout = dbc.Container(
     dcc.Store("first-launch"),
     fluid=True,
     id="main-container")
-# TODO go over function docstrings
-# TODO callback for heatmap gene bar
 
 
 @app.callback(
@@ -97,7 +95,7 @@ def launch_app(_):
         # Bootstrap row containing tools at the top of the application
         toolbar_generator.get_toolbar_row(data_),
         # Bootstrap row containing heatmap
-        heatmap_generator.get_heatmap_row_divs(data_),
+        heatmap_generator.get_heatmap_row(data_),
         # Bootstrap row containing histogram
         histogram_generator.get_histogram_row(data_),
         # Bootstrap row containing table
@@ -461,8 +459,8 @@ def update_heatmap_y_axis_fig(_, data):
     :return: New heatmap y axis fig
     :rtype: plotly.graph_objects.Figure
     """
-    left_fig = heatmap_generator.get_heatmap_left_fig(data)
-    return left_fig
+    y_axis_fig = heatmap_generator.get_heatmap_y_axis_fig(data)
+    return y_axis_fig
 
 
 @app.callback(
@@ -508,7 +506,7 @@ def update_heatmap_main_fig(data):
     :return: New heatmap main fig
     :rtype: plotly.graph_objects.Figure
     """
-    main_fig = heatmap_generator.get_heatmap_center_fig(data)
+    main_fig = heatmap_generator.get_heatmap_main_fig(data)
     main_style = {"width": len(data["heatmap_x"]) * 25}
     return main_fig, main_style
 
