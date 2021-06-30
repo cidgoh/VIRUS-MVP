@@ -553,7 +553,11 @@ def get_heatmap_cell_text(annotated_data_dirs, heatmap_x):
 
 def get_insertions_x(annotated_data_dirs, heatmap_x, heatmap_y):
     """Get x coordinates of insertion markers to overlay in heatmap.
-    TODO
+
+    Since the underlying structure of the heatmap does not usual
+    categorical values for the x-axis, for performance reasons, and
+    instead uses the indices of ``heatmap_x``, we must specify the
+    indices here--not actual nucleotide positions.
 
     :param annotated_data_dirs: A dictionary containing multiple merged
         ``get_annotated_data_dir`` return values.
@@ -575,7 +579,11 @@ def get_insertions_x(annotated_data_dirs, heatmap_x, heatmap_y):
 
 def get_insertions_y(annotated_data_dirs, heatmap_x, heatmap_y):
     """Get y coordinates of insertion markers to overlay in heatmap.
-    TODO
+
+    Since the underlying structure of the heatmap does not usual
+    categorical values for the y-axis, for performance reasons, and
+    instead uses the indices of ``heatmap_y``, we must specify the
+    indices here--not actual nucleotide positions.
 
     :param annotated_data_dirs: A dictionary containing multiple merged
         ``get_annotated_data_dir`` return values.
@@ -597,7 +605,11 @@ def get_insertions_y(annotated_data_dirs, heatmap_x, heatmap_y):
 
 def get_deletions_x(annotated_data_dirs, heatmap_x, heatmap_y):
     """Get x coordinates of deletion markers to overlay in heatmap.
-    TODO
+
+    Since the underlying structure of the heatmap does not usual
+    categorical values for the x-axis, for performance reasons, and
+    instead uses the indices of ``heatmap_x``, we must specify the
+    indices here--not actual nucleotide positions.
 
     :param annotated_data_dirs: A dictionary containing multiple merged
         ``get_annotated_data_dir`` return values.
@@ -619,7 +631,11 @@ def get_deletions_x(annotated_data_dirs, heatmap_x, heatmap_y):
 
 def get_deletions_y(annotated_data_dirs, heatmap_x, heatmap_y):
     """Get y coordinates of deletion markers to overlay in heatmap.
-    TODO
+
+    Since the underlying structure of the heatmap does not usual
+    categorical values for the y-axis, for performance reasons, and
+    instead uses the indices of ``heatmap_y``, we must specify the
+    indices here--not actual nucleotide positions.
 
     :param annotated_data_dirs: A dictionary containing multiple merged
         ``get_annotated_data_dir`` return values.
