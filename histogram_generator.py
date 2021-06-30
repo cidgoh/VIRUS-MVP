@@ -19,7 +19,7 @@ def get_histogram_row_divs(data):
     :return: Dash Bootstrap Components rows containing histogram view
     :rtype: list[dbc.Row]
     """
-    return [
+    return dbc.Row(dbc.Col([
         dbc.Row(
             get_histogram_top_row_div(data),
             id="histogram-top-row-div",
@@ -37,7 +37,7 @@ def get_histogram_row_divs(data):
             ),
             no_gutters=True
         )
-    ]
+    ]), no_gutters=True)
 
 
 def get_histogram_top_row_div(data):

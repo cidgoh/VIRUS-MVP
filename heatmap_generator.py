@@ -50,7 +50,7 @@ def get_heatmap_row_divs(data):
         columns producing the overall heatmap view.
     :rtype: dbc.Row
     """
-    ret = [
+    ret = dbc.Row(dbc.Col([
         dbc.Row([
             dbc.Col([
                 dbc.Row(
@@ -62,7 +62,7 @@ def get_heatmap_row_divs(data):
                 dbc.Row(
                     dbc.Col(
                         dcc.Graph(
-                            id="heatmap-left-fig",
+                            id="heatmap-y-axis-fig",
                             figure=get_heatmap_left_fig(data),
                             config={"displayModeBar": False}
                         )
@@ -83,7 +83,7 @@ def get_heatmap_row_divs(data):
                 dbc.Row(
                     dbc.Col(
                         dcc.Graph(
-                            id="heatmap-center-fig",
+                            id="heatmap-main-fig",
                             figure=get_heatmap_center_fig(data),
                             config={"displayModeBar": False},
                         )
@@ -112,7 +112,7 @@ def get_heatmap_row_divs(data):
                 width=1, style={"overflowX": "hidden"}
             ),
         ], no_gutters=True, className="mt-3")
-    ]
+    ]), no_gutters=True)
     return ret
 
 

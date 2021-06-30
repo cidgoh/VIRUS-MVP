@@ -95,7 +95,7 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
       // A list of all ticks in the heatmap, and a sneaky calculation that tells
       // you what the last histogram bin is going to be. Plotly does not give up
       // that information easily.
-      const allTicks = $('#heatmap-center-fig').find('.xtick>text')
+      const allTicks = $('#heatmap-main-fig').find('.xtick>text')
       const lastHistogramBin =
           Math.ceil(parseInt(allTicks[allTicks.length-1].textContent)/100) * 100
 

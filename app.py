@@ -1,12 +1,19 @@
-"""Entry point of the codebase.
+"""Entry point of the application.
 
 This is the Python script that is run to launch the visualization
 application.
 
-Unfortunately, all callbacks must be located in this file, and Dash
-does not allow multiple callbacks to share outputs, so the callbacks
-are not as organized as I would like. I have tried my best, but please
-read the function docstrings and comments if you are confused.
+Dash expects you to place all your Python callbacks in this file, so
+that is what I have done. This file is quite long and unmodularized as
+a result. There are some callbacks that are written in JavaScript,
+which are referenced in this file, but implemented in
+``assets/script.js``.
+
+Dash will execute callbacks in parallel when given the opportunity,
+and I have setup my callbacks to take advantage of this for performance
+benefits. However, due to what I assume is a limited number of workers,
+I have unparallelized some callbacks, which allows certain callbacks to
+run faster.
 """
 
 from base64 import b64decode
@@ -17,7 +24,6 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 from dash.dependencies import ALL, ClientsideFunction, Input, Output, State
 from dash.exceptions import PreventUpdate
-import dash_html_components as html
 
 from data_parser import get_data, parse_gff3_file
 import toolbar_generator
@@ -25,7 +31,12 @@ import heatmap_generator
 import histogram_generator
 import table_generator
 
+# This is the only global variable Dash plays nice with, and it
+# contains the visualization that is deployed by this file, when
+# ``app`` is served.
 app = dash.Dash(__name__,
+                # We bring in jQuery for some of the JavaScript
+                # callbacks.
                 external_scripts=[
                     "https://code.jquery.com/jquery-2.2.4.min.js",
                     "https://code.jquery.com/ui/1.12.1/jquery-ui.min.js",
@@ -38,10 +49,16 @@ app = dash.Dash(__name__,
                 # until ``launch_app`` has finished executing.
                 suppress_callback_exceptions=True)
 
+# The ``layout`` attribute determines what HTML ``app`` renders when it
+# is served. We start with an empty bootstrap container, but it will be
+# populated soon after by the ``launch_app`` callback.
 app.layout = dbc.Container(
-    # In-browser variable only used when page is first loaded. This
-    # variable helps us avoid global variables, which cause problems on
-    # refresh with Dash, as Dash is stateless.
+    # ``first-launch`` is an in-browser variable, which is only used
+    # when the page is first loaded. Assigning this variable here
+    # triggers the ``launch_app`` callback, which populates this
+    # container with the appropriate content when the page is first
+    # loaded. More detail on why this is necessary is in the callback
+    # docstring.
     dcc.Store("first-launch"),
     fluid=True,
     id="main-container")
@@ -54,27 +71,37 @@ app.layout = dbc.Container(
     Input("first-launch", "data")
 )
 def launch_app(_):
-    """Generate initial layout on page load.
+    """Populate empty container in initial layout served by ``app``.
+    *also
 
-    ``first-launch`` should only receive input when the page is loaded.
-    We do not care about its value, as we just use it to indicate the
-    page was loaded.
+    This not only adds HTML, but also several in-browser variables that
+    are useful for triggering other callbacks.
 
-    Populating the initial layout with a callback, instead of in the
+    When the ``first-launch`` in-browser variable is assigned, it
+    triggers this callback. This callback should not be triggered
+    again. This callback is only used to serve HTML and in-browser
+    variables once, when the application is first launched and the main
+    container is created.
+
+    Generating the content below with a callback, instead of in the
     global scope, prevents the application from breaking on page
     reload. Dash is stateless, so it does not recalculate global
     variables on page refreshes after the application is first deployed
     to a server. So new data between page reloads may not be displayed
-    if you populate the initial layout in the global scope.
+    if you do the following in the global scope--which you may be
+    tempted to do because we are only doing it once!
     """
     gff3_annotations = parse_gff3_file("gff3_annotations.tsv")
     data_ = get_data(["reference_data", "user_data"], gff3_annotations)
     return [
-        html.Div(toolbar_generator.get_toolbar_row_div(data_)),
-        html.Div(heatmap_generator.get_heatmap_row_divs(data_)),
-        html.Div(histogram_generator.get_histogram_row_divs(data_)),
-        html.Div(table_generator.get_table_row_div(data_)),
-        html.Div(toolbar_generator.get_select_lineages_modal()),
+        # Bootstrap row containing tools at the top of the application
+        toolbar_generator.get_toolbar_row_div(data_),
+        # Bootstrap row containing heatmap
+        heatmap_generator.get_heatmap_row_divs(data_),
+        # Bootstrap row containing histogram
+        histogram_generator.get_histogram_row_divs(data_),
+        # Bootstrap row containing table
+        table_generator.get_table_row_div(data_),
         # These are in-browser variables that Dash can treat as Inputs and
         # Outputs, in addition to more conventional Dash components like
         # HTML divs and Plotly figures. ``data`` is the data used to
@@ -90,7 +117,7 @@ def launch_app(_):
         dcc.Store(id="new-upload"),
         dcc.Store(id="hidden-strains"),
         dcc.Store(id="strain-order"),
-        # Used to integrate some JS functions. The data values are
+        # Used to integrate some JS callbacks. The data values are
         # meaningless, we just need outputs to perform all clientside
         # functions.
         dcc.Store(id="make-select-lineages-modal-checkboxes-draggable"),
@@ -415,40 +442,75 @@ def update_mutation_freq_slider(data, old_slider_marks):
 
 
 @app.callback(
-    Output("heatmap-left-fig", "figure"),
-    Input("heatmap-center-fig", "figure"),
+    Output("heatmap-y-axis-fig", "figure"),
+    Input("heatmap-main-fig", "figure"),
     State("data", "data"),
     prevent_initial_call=True
 )
-def update_heatmap_left_fig(_, data):
-    """TODO"""
+def update_heatmap_y_axis_fig(_, data):
+    """Update heatmap y axis fig.
+
+    We do this after the main heatmap fig with cells and x axis is
+    updated. The application seems to run more smoothly when we do not
+    attempt to update absolutely everything in parallel.
+
+    :param _: Main heatmap fig updated
+    :param data: Current value for ``data`` variable; see ``get_data``
+        return value.
+    :type data: dict
+    :return: New heatmap y axis fig
+    :rtype: plotly.graph_objects.Figure
+    """
     left_fig = heatmap_generator.get_heatmap_left_fig(data)
     return left_fig
 
 
 @app.callback(
     Output("heatmap-gene-bar-fig", "figure"),
-    Input("heatmap-center-fig", "figure"),
+    Input("heatmap-main-fig", "figure"),
     State("data", "data"),
     prevent_initial_call=True
 )
 def update_heatmap_gene_bar_fig(_, data):
-    """TODO"""
+    """Update heatmap gene bar fig.
+
+    We do this after the main heatmap fig with cells and x axis is
+    updated. The application seems to run more smoothly when we do not
+    attempt to update absolutely everything in parallel.
+
+    :param _: Main heatmap fig updated
+    :param data: Current value for ``data`` variable; see ``get_data``
+        return value.
+    :type data: dict
+    :return: New heatmap gene bar fig
+    :rtype: plotly.graph_objects.Figure
+    """
     gene_bar_fig = heatmap_generator.get_heatmap_gene_bar_fig(data)
     return gene_bar_fig
 
 
 @app.callback(
-    Output("heatmap-center-fig", "figure"),
-    Output("heatmap-center-fig", "style"),
+    Output("heatmap-main-fig", "figure"),
+    Output("heatmap-main-fig", "style"),
     Input("data", "data"),
     prevent_initial_call=True
 )
-def update_heatmap_center_fig(data):
-    """TODO remember weirdness"""
-    center_fig = heatmap_generator.get_heatmap_center_fig(data)
-    center_style = {"width": len(data["heatmap_x"]) * 25}
-    return center_fig, center_style
+def update_heatmap_main_fig(data):
+    """Update main heatmap fig and style.
+
+    This is the fig with the heatmap cells and x axis. We return style
+    because width may need to be bigger due to changes in data
+    ``heatmap_x`` value.
+
+    :param data: Current value for ``data`` variable; see ``get_data``
+        return value.
+    :type data: dict
+    :return: New heatmap main fig
+    :rtype: plotly.graph_objects.Figure
+    """
+    main_fig = heatmap_generator.get_heatmap_center_fig(data)
+    main_style = {"width": len(data["heatmap_x"]) * 25}
+    return main_fig, main_style
 
 
 @app.callback(
@@ -460,7 +522,8 @@ def update_histogram(data):
     """Update histogram top row div.
 
     When the ``data`` variable in the dcc.Store is updated, the top row
-    in the histogram view is updated to reflect the new data.
+    in the histogram view is updated to reflect the new data. This
+    includes the actual histogram bars, and the y axis.
 
     :param data: ``get_data`` return value, transported here by
     :type data: dict
@@ -474,7 +537,7 @@ def update_histogram(data):
     Output("table", "figure"),
     inputs=[
         Input("data", "data"),
-        Input("heatmap-center-fig", "clickData"),
+        Input("heatmap-main-fig", "clickData"),
     ],
     prevent_initial_call=True
 )
@@ -489,7 +552,7 @@ def update_table(data, click_data):
 
     :param data: ``get_data`` return value, transported here by
     :type data: dict
-    :param click_data: Dictionary describing cell in heatmap center
+    :param click_data: Dictionary describing cell in heatmap main
         figure that the user clicked.
     :type click_data: dict
     :return: New table figure corresponding to new data, or user
@@ -537,9 +600,10 @@ app.clientside_callback(
     ),
     Output("make-histogram-rel-pos-bar-dynamic", "data"),
     Input("histogram", "id"),
-    Input("heatmap-center-fig", "figure"),
+    Input("heatmap-main-fig", "figure"),
     Input("data", "data"),
 )
 
 if __name__ == "__main__":
+    # Serve ``app``
     app.run_server(debug=True)

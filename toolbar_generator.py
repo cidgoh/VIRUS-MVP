@@ -26,6 +26,7 @@ def get_toolbar_row_div(data):
             className="my-auto",
             width={"offset": 1}
         ),
+        get_select_lineages_modal(),
         dbc.Col(
             # Empty on launch
             className="my-auto",
