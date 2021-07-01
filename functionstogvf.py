@@ -73,6 +73,8 @@ def convertfile(gvf_file, annotation_file):
         else:
             merged_df = merged_df.drop(indices) #if not, drop group rows, leaving the remaining indices unchanged
 
+    #change semicolons in function descriptions to em-dashes
+    merged_df['function_description'] = merged_df['function_description'].str.replace(';','--')
     #add key-value pairs to attributes column
     for column in ['function_category', 'source', 'citation', 'comb_mutation', 'function_description']:
         key = column.lower()
