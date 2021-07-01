@@ -2,21 +2,43 @@
 
 The heatmap view is composed of several figures, because native figure
 functionality did not provide the view we wanted.
+
+We are not using the Plotly heatmap object. It is too slow. We are
+using the Plotly scattergl object, and making it look like a heatmap.
 """
 
 import json
 
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
-import dash_html_components as html
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+
+
+def get_main_heatmap_fig_height(data):
+    """Get the height in pixels for the main heatmap fig.
+
+    This is the fig with the heatmap cells and x-axis.
+
+    Good to put this in a function because several other figs have to
+    be the same height.
+
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
+    :return: Main heatmap fig height in pixels
+    :rtype: int
+    """
+    # Multiply the number of strains along the y-axis by some number,
+    # and add a number to account for the space used by the x-axis.
+    # This enables the vertical space between heatmap cells to remain
+    # relatively constant as the number of strains displayed changes.
+    ret = len(data["heatmap_y"])*40 + 100
+    return ret
 
 
 def get_color_scale():
     """Get custom Plotly color scale.
 
-    This can be plugged into the colorscale value for Plotly heatmap
+    This can be plugged into the colorscale value for Plotly graph
     objects.
 
     :return: Acceptable Plotly colorscale value, with custom colours.
@@ -30,103 +52,207 @@ def get_color_scale():
     return ret
 
 
-def get_heatmap_row_div(data):
+def get_heatmap_row(data):
     """Get Dash Bootstrap Components row containing heatmap columns.
 
-    Several columns are necessary to get the heatmap view the way we
-    want it.
+    Several nested rows and columns are necessary to get the heatmap
+    view the way we want it.
 
     :param data: ``data_parser.get_data`` return value
     :type data: dict
-    :return: Dash Bootstrap Components row with left, center, and right
-        columns producing the overall heatmap view.
+    :return: Dash Bootstrap Components row with multiple nested rows
+        and cols for heatmap view.
     :rtype: dbc.Row
     """
-    ret = dbc.Row([
-        dbc.Col(
-            html.Div(
-                dcc.Graph(
-                    id="heatmap-left-fig",
-                    figure=get_heatmap_left_fig(data),
-                    config={"displayModeBar": False}
-                )
+    ret = dbc.Row(
+        [
+            dbc.Col(
+                [
+                    # Empty space above y axis fig
+                    dbc.Row(
+                        dbc.Col(
+                            None,
+                            style={"height": 40}
+                        ),
+                        no_gutters=True
+                    ),
+                    # Space for y-axis fig
+                    dbc.Row(
+                        dbc.Col(
+                            dcc.Graph(
+                                id="heatmap-y-axis-fig",
+                                figure=get_heatmap_y_axis_fig(data),
+                                config={"displayModeBar": False}
+                            )
+                        ),
+                        no_gutters=True
+                    )
+                ],
+                width=1,
+                style={"overflowX": "hidden"}
             ),
-            width=1, style={"overflowX": "hidden"}
-        ),
-        dbc.Col(
-            html.Div(
-                dcc.Graph(
-                    id="heatmap-center-fig",
-                    figure=get_heatmap_center_fig(data),
-                    config={"displayModeBar": False},
-                    # There is some sort of weirdness that
-                    # overrides figure layout autosize=False value
-                    # when the heatmap is re-rendered after launch,
-                    # through callbacks. I suspect it is some sort
-                    # of race condition between Plotly Python
-                    # autosize and PlotlyJs responding to window
-                    # resizing. See https://bit.ly/3nfRux2 section
-                    # on responsiveness. This line fixes it,
-                    # somehow.
-                    style={"width": len(data["heatmap_x"]) * 25}
-                ),
+            dbc.Col(
+                [
+                    # Gene bar above main heatmap fig
+                    dbc.Row(
+                        dbc.Col(
+                            dcc.Graph(
+                                id="heatmap-gene-bar-fig",
+                                figure=get_heatmap_gene_bar_fig(data),
+                                config={"displayModeBar": False}
+                            )
+                        ),
+                        no_gutters=True
+                    ),
+                    # Main heatmap fig with cells and x-axis
+                    dbc.Row(
+                        dbc.Col(
+                            dcc.Graph(
+                                id="heatmap-main-fig",
+                                figure=get_heatmap_main_fig(data),
+                                config={"displayModeBar": False},
+                            )
+                        ),
+                        no_gutters=True
+                    )
+                ],
                 id="heatmap-center-div",
+                width=10,
                 style={"overflowX": "scroll"}
             ),
-            width=10
-        ),
-        dbc.Col(
-            html.Div(
-                dcc.Graph(
-                    id="heatmap-right-fig",
-                    figure=get_heatmap_right_fig(data),
-                    config={"displayModeBar": False}
-                ),
-                style={"width": "90vw"}, className="ml-3"
+            dbc.Col(
+                [
+                    # Empty space above colorbar fig
+                    dbc.Row(
+                        dbc.Col(
+                            None,
+                            style={"height": 40},
+                        ),
+                        no_gutters=True
+                    ),
+                    # Space for colorbar fig
+                    dbc.Row(
+                        dbc.Col(
+                            dcc.Graph(
+                                id="heatmap-colorbar-fig",
+                                figure=get_heatmap_colorbar_fig(data),
+                                config={"displayModeBar": False}
+                            ),
+                            className="ml-3"
+                        ),
+                        no_gutters=True
+                    )
+                ],
+                width=1,
+                style={"overflowX": "hidden"}
             ),
-            width=1, style={"overflowX": "hidden"}
-        ),
-    ], no_gutters=True, className="mt-3")
+        ],
+        no_gutters=True,
+        className="mt-3"
+    )
     return ret
 
 
-def get_heatmap_center_fig(data):
-    """Get Plotly figure shown in the center of the heatmap div.
+def get_heatmap_y_axis_fig(data):
+    """Get Plotly figure used as a mock y-axis for the heatmap.
 
-    This is the majority of the heatmap view. It has the cells, x axis,
-    insertion markers, deletion markers, and gene bar above the
-    heatmap. This figure is composed of two Plotly graph objects. An
-    object on top corresponding to the gene bar, and an object on the
-    bottom corresponding to the heatmap cells and x axis.
+    The reason we have a separate figure for the y axis view is that
+    there is no native way to have a fixed y axis as you scroll the
+    main heatmap figure.
 
     :param data: ``data_parser.get_data`` return value
     :type data: dict
-    :return: Plotly figure containing heatmap cells, x axis, insertion
-        markers, deletion markers, and gene bar.
+    :return: Plotly figure containing heatmap y axis
     :rtype: go.Figure
     """
-    ret = make_subplots(
-        rows=2,
-        cols=1,
-        row_heights=[0.1, 0.9],
-        vertical_spacing=0.05
+    ret = go.Figure(get_heatmap_y_axis_graph_obj(data))
+    ret.update_layout(
+        font={"size": 18},
+        margin={
+            "l": 0,
+            "r": 0,
+            "t": 0,
+            "b": 0,
+            "pad": 0
+        },
+        height=get_main_heatmap_fig_height(data),
+        yaxis_type="linear",
+        plot_bgcolor="white"
     )
+    ret.update_xaxes(visible=True,
+                     fixedrange=True,
+                     tickangle=90,
+                     showgrid=False,
+                     color="white"
+                     )
+    ret.update_yaxes(range=[-0.5, len(data["heatmap_y"])-0.5],
+                     tickmode="linear",
+                     tick0=0.5,
+                     dtick=1,
+                     zeroline=False,
+                     visible=False,
+                     fixedrange=True)
+    return ret
 
-    # Gene bar
-    heatmap_center_genes_obj = get_heatmap_center_genes_obj(data)
-    ret.add_trace(heatmap_center_genes_obj, row=1, col=1)
 
+def get_heatmap_y_axis_graph_obj(data):
+    """Get Plotly graph object that forms the base of the mock y-axis.
+
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
+    :return: Plotly scattergl object containing text of all the strains
+        as points to resemble a y-axis for the heatmap view.
+    :rtype: go.Scattergl
+    """
+    ret = go.Scattergl(
+        x=["  "+data["heatmap_x"][-1] for _ in range(len(data["heatmap_y"]))],
+        y=[i for i in range(len(data["heatmap_y"]))],
+        mode="text",
+        text=data["heatmap_y"],
+        hoverinfo="skip",
+        showlegend=False
+    )
+    return ret
+
+
+def get_heatmap_gene_bar_fig(data):
+    """Get Plotly figure used as a gene bar above the heatmap.
+
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
+    :return: Plotly figure containing heatmap y axis
+    :rtype: go.Figure
+    """
+    heatmap_gene_bar_obj = get_heatmap_gene_bar_graph_obj(data)
+    ret = go.Figure(heatmap_gene_bar_obj)
+    ret.update_xaxes(type="linear",
+                     visible=False)
+    ret.update_yaxes(type="linear",
+                     visible=False)
+    ret.update_layout(
+        width=len(data["heatmap_x"]) * 36,
+        height=40,
+        autosize=False,
+        plot_bgcolor="white",
+        margin={
+            "l": 0,
+            "r": 0,
+            "t": 0,
+            "b": 0,
+            "pad": 0
+        }
+    )
     # This bit of hackey code is needed to display the labels on the
     # gene bar where we want them. The labels are in the middle, and
     # appear differently if the bars are too small.
     midpoints = []
-    endpoints = heatmap_center_genes_obj["x"]
+    endpoints = heatmap_gene_bar_obj["x"]
     for i, val in enumerate(endpoints[:-1]):
         midpoint = ((endpoints[i+1] - endpoints[i]) / 2) + endpoints[i]
         midpoints.append(midpoint)
-    for i, gene_label in enumerate(heatmap_center_genes_obj["text"][0]):
-        x_start = heatmap_center_genes_obj["x"][i]
-        x_end = heatmap_center_genes_obj["x"][i+1]
+    for i, gene_label in enumerate(heatmap_gene_bar_obj["text"][0]):
+        x_start = heatmap_gene_bar_obj["x"][i]
+        x_end = heatmap_gene_bar_obj["x"][i+1]
         # TODO: fix this hackey solution by using a monospace font, and
         #  calculating the length of the label versus the length of the
         #  gene bar cell.
@@ -140,73 +266,22 @@ def get_heatmap_center_fig(data):
             xref="x1",
             yref="y1",
             x=midpoints[i],
-            y=heatmap_center_genes_obj["y"][0],
+            y=heatmap_gene_bar_obj["y"][0],
             text=gene_label,
             textangle=text_angle,
             showarrow=False,
             font={"color": "white", "size": font_size}
         )
-
-    # Cells and x axis
-    heatmap_center_base_obj = get_heatmap_center_base_obj(data)
-    ret.add_trace(heatmap_center_base_obj, row=2, col=1)
-
-    # Add lines between rows of cells
-    # TODO I'm lazy--any way to not hardcode "data" here?
-    our_strains = data["dir_strains"]["reference_data"]
-    visible_strains = data["heatmap_y"]
-    thick_line_y = \
-        len([strain for strain in visible_strains if strain in our_strains])
-    for y, _ in enumerate(heatmap_center_base_obj["y"]):
-        if y == thick_line_y:
-            width = 4
-        else:
-            width = 2
-        ret.add_shape({
-            "type": "line",
-            "xref": "x2",
-            "yref": "y2",
-            "x0": -0.5,
-            "x1": len(heatmap_center_base_obj["x"]) - 0.5,
-            "y0": y-0.5,
-            "y1": y-0.5,
-            "line": {"width": width}
-        })
-
-    # Overlay insertions over cells
-    heatmap_center_insertions_object = get_heatmap_center_insertions_obj(data)
-    ret.add_trace(heatmap_center_insertions_object, row=2, col=1)
-
-    # Overlay deletions over cells
-    heatmap_center_deletions_object = get_heatmap_center_deletions_obj(data)
-    ret.add_trace(heatmap_center_deletions_object, row=2, col=1)
-
-    # Styling stuff
-    ret.update_layout(xaxis1_visible=False)
-    ret.update_layout(xaxis2_type="category")
-    ret.update_xaxes(range=[-0.5, len(data["heatmap_x"]) - 0.5],
-                     showspikes=True,
-                     fixedrange=True)
-    ret.update_yaxes(visible=False,
-                     showspikes=True,
-                     fixedrange=True)
-    ret.update_layout(font={
-        "size": 18
-    })
-    ret.update_layout(width=len(data["heatmap_x"]) * 25, autosize=False)
-    ret.update_layout(plot_bgcolor="white")
-    ret.update_layout(margin={
-        "l": 0,
-        "r": 0,
-        "t": 0,
-        "pad": 0
-    })
-
     return ret
 
 
-def get_heatmap_center_genes_obj(data):
+def get_heatmap_gene_bar_graph_obj(data):
     """Get Plotly graph object corresponding to gene bar.
+
+    # TODO this is way out of date, back when we used heatmap objects
+    #  instead of scatter traces. The way we implement this gene bar is
+    #  too convoluted, we need to revisit this. This docstring is
+    #  incorrect.
 
     The way we produce this gene bar is quite hackey. To ensure the bar
     lines up perfectly with the main heatmap view, the gene bar is a
@@ -215,7 +290,7 @@ def get_heatmap_center_genes_obj(data):
     heatmap cells. We use mock z values to assign colors to the gene
     bar cells.
 
-    The gene bar labels are added later in ``get_heatmap_center_fig``.
+    The gene bar labels are added later in ``get_heatmap_main_fig``.
     This is because individual section gene bars are composed of
     multiple cells, so we cannot simply add labels to the cells.
 
@@ -264,46 +339,118 @@ def get_heatmap_center_genes_obj(data):
     return ret
 
 
-def get_heatmap_center_base_obj(data):
-    """Get Plotly graph object representing heatmap cells and x axis.
+def get_heatmap_main_fig(data):
+    """Get Plotly figure shown that shows the heatmap cells and x-axis.
 
     :param data: ``data_parser.get_data`` return value
     :type data: dict
-    :return: Plotly heatmap object containing cells and x axis
-    :rtype: go.Heatmap
+    :return: Plotly figure containing heatmap cells, x-axis, insertion
+        markers, and deletion markers.
+    :rtype: go.Figure
     """
-    ret = go.Heatmap(
-        x=data["heatmap_x"],
-        y=data["heatmap_y"],
-        z=data["heatmap_z"],
-        colorscale=get_color_scale(),
-        zmin=0,
-        zmax=1,
+    ret = go.Figure(get_heatmap_main_graph_obj(data))
+    ret.add_trace(get_heatmap_main_insertions_graph_obj(data))
+    ret.add_trace(get_heatmap_main_deletions_graph_obj(data))
+
+    ret.update_layout(
+        xaxis_type="linear",
+        yaxis_type="linear",
+        width=len(data["heatmap_x"]) * 36,
+        height=get_main_heatmap_fig_height(data),
+        autosize=False,
+        plot_bgcolor="white",
+        font={
+            "size": 18
+        },
+        margin={
+            "l": 0,
+            "r": 0,
+            "t": 0,
+            "b": 0,
+            "pad": 0
+        }
+    )
+    ret.update_xaxes(range=[-0.5, len(data["heatmap_x"])-0.5],
+                     tickmode="array",
+                     tickvals=list(range(len(data["heatmap_x"]))),
+                     ticktext=data["heatmap_x"],
+                     fixedrange=True,
+                     zeroline=False,
+                     gridcolor="lightgrey",
+                     showspikes=True,
+                     spikecolor="black")
+    ret.update_yaxes(range=[-0.5, len(data["heatmap_y"])-0.5],
+                     tickmode="linear",
+                     tick0=0.5,
+                     dtick=1,
+                     fixedrange=True,
+                     visible=True,
+                     showticklabels=False,
+                     zeroline=False,
+                     gridcolor="black",
+                     showspikes=True,
+                     spikecolor="black")
+
+    return ret
+
+
+def get_heatmap_main_graph_obj(data):
+    """Get Plotly graph object representing heatmap cells and x axis.
+
+    This is actually a scattergl object, not a heatmap object. We make
+    it look like a heatmap object. This is faster.
+
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
+    :return: Plotly graph object containing cells and x axis
+    :rtype: go.Scattergl
+    """
+    scatter_y = []
+    scatter_x = []
+    scatter_marker_color = []
+    scatter_text = []
+    for i, pos in enumerate(data["heatmap_x"]):
+        for j, strain in enumerate(data["heatmap_y"]):
+            freq = data["heatmap_z"][j][i]
+            if freq is not None:
+                scatter_x.append(i)
+                scatter_y.append(j)
+                scatter_marker_color.append(float(freq))
+                scatter_text.append(data["heatmap_cell_text"][j][i])
+    ret = go.Scattergl(
+        x=scatter_x,
+        y=scatter_y,
+        mode="markers",
+        marker={
+            "color": scatter_marker_color,
+            "colorscale": get_color_scale(),
+            "cmin": 0,
+            "cmax": 1,
+            "symbol": "square",
+            "line": {"width": 2},
+            "size": 30
+        },
         hoverlabel={
             "font_size": 18
         },
-        hoverongaps=False,
         hovertemplate="%{text}<extra></extra>",
-        text=data["heatmap_cell_text"],
-        xgap=10,
-        ygap=10,
-        showscale=False
+        text=scatter_text,
+        showlegend=False
     )
     return ret
 
 
-def get_heatmap_center_insertions_obj(data):
+def get_heatmap_main_insertions_graph_obj(data):
     """Get Plotly graph object of heatmap insertion markers.
 
-    This is actually a scatterplot object that we overlay on the
-    heatmap in ``get_heatmap_center_fig``.
+    We overlay this on the base trace containing the cells.
 
     :param data: ``data_parser.get_data`` return value
     :type data: dict
     :return: Plotly scatterplot object containing insertion markers
-    :rtype: go.Scatter
+    :rtype: go.Scattergl
     """
-    ret = go.Scatter(
+    ret = go.Scattergl(
         x=data["insertions_x"],
         y=data["insertions_y"],
         hoverinfo="skip",
@@ -319,18 +466,17 @@ def get_heatmap_center_insertions_obj(data):
     return ret
 
 
-def get_heatmap_center_deletions_obj(data):
+def get_heatmap_main_deletions_graph_obj(data):
     """Get Plotly graph object of heatmap deletion markers.
 
-    This is actually a scatterplot object that we overlay on the
-    heatmap in ``get_heatmap_center_fig``.
+    We overlay this on the base trace containing the cells.
 
     :param data: ``data_parser.get_data`` return value
     :type data: dict
     :return: Plotly scatterplot object containing deletion markers
-    :rtype: go.Scatter
+    :rtype: go.Scattergl
     """
-    ret = go.Scatter(
+    ret = go.Scattergl(
         x=data["deletions_x"],
         y=data["deletions_y"],
         hoverinfo="skip",
@@ -346,105 +492,8 @@ def get_heatmap_center_deletions_obj(data):
     return ret
 
 
-def get_heatmap_left_fig(data):
-    """Get Plotly figure shown in the left of the heatmap div.
-
-    This is the y axis view. The reason we have a separate figure for
-    the y axis view is that there is no native way to have a fixed y
-    axis as you scroll the center heatmap figure.
-
-    :param data: ``data_parser.get_data`` return value
-    :type data: dict
-    :return: Plotly figure containing heatmap y axis
-    :rtype: go.Figure
-    """
-    # We use subplots to line up better with the center heatmap fig.
-    # The top plot is empty.
-    ret = make_subplots(
-        rows=2,
-        cols=1,
-        row_heights=[0.1, 0.9],
-        vertical_spacing=0.05
-    )
-
-    # TODO: consider interactions with heatmap_left_base_obj
-    heatmap_left_base_obj = get_heatmap_left_base_obj(data)
-    heatmap_left_labels_obj = get_heatmap_left_labels_obj(data)
-
-    ret.add_trace(heatmap_left_base_obj, row=2, col=1)
-    ret.add_trace(heatmap_left_labels_obj, row=2, col=1)
-
-    ret.update_layout(font={"size": 18})
-    ret.update_layout(margin={
-        "l": 0,
-        "r": 0,
-        "t": 0
-    })
-    ret.update_layout(plot_bgcolor="white")
-    ret.update_xaxes(visible=False)
-    ret.update_yaxes(visible=False)
-    ret.update_xaxes(fixedrange=True)
-    ret.update_yaxes(fixedrange=True)
-
-    return ret
-
-
-def get_heatmap_left_base_obj(data):
-    """Get Plotly graph object of invisible, single column heatmap.
-
-    All this object does it take up space. We overlay text over the
-    cells in ``get_heatmap_left_fig`` though, to give the illusion of a
-    fixed y axis.
-
-    :param data: ``data_parser.get_data`` return value
-    :type data: dict
-    :return: Plotly heatmap object containing a single column,
-        invisible heatmap.
-    :rtype: go.Heatmap
-    """
-    ret = go.Heatmap(
-        x=[0],
-        y=data["heatmap_y"],
-        z=[[0] for _ in data["heatmap_y"]],
-        showscale=False,
-        hoverinfo="none",
-        colorscale="Greys",
-        zmin=0,
-        zmax=1
-    )
-    return ret
-
-
-def get_heatmap_left_labels_obj(data):
-    """Get Plotly graph object of y axis text.
-
-    This is actually a scatterplot of text markers. These markers gets
-    overlayed on the return value of ``get_heatmap_left_base_obj`` in
-    ``get_heatmap_left_fig`` to give the illusion of a fixed y axis.
-
-    :param data: ``data_parser.get_data`` return value
-    :type data: dict
-    :return: Plotly heatmap object containing a single column,
-        invisible heatmap.
-    :rtype: go.Scatter
-    """
-    ret = go.Scatter(
-        y=data["heatmap_y"],
-        x=[0 for _ in data["heatmap_y"]],
-        hoverinfo="skip",
-        mode="markers+text",
-        marker={
-            "color": "white",
-            "size": 1
-        },
-        text=data["heatmap_y"],
-        textposition="middle center"
-    )
-    return ret
-
-
-def get_heatmap_right_fig(data):
-    """Get Plotly figure shown in the right of the heatmap div.
+def get_heatmap_colorbar_fig(data):
+    """Get Plotly figure used as mock colorbar.
 
     This is the colorbar view. The reason we have a separate figure for
     the colorbar is that there is no native way to have a fixed
@@ -456,58 +505,46 @@ def get_heatmap_right_fig(data):
     :return: Plotly figure containing heatmap colorbar
     :rtype: go.Figure
     """
-    # We use subplots to line up better with the center heatmap fig.
-    # The top plot is empty.
-    ret = make_subplots(
-        rows=2,
-        cols=1,
-        row_heights=[0.1, 0.9],
-        vertical_spacing=0.05
+    ret = go.Figure(get_heatmap_colorbar_graph_obj())
+    ret.update_layout(
+        font={"size": 18},
+        margin={
+            "l": 0,
+            "r": 0,
+            "t": 0,
+            "b": 0
+        },
+        height=get_main_heatmap_fig_height(data),
+        autosize=False
     )
-
-    heatmap_right_base_obj = get_heatmap_right_base_obj(data)
-
-    ret.add_trace(heatmap_right_base_obj, row=2, col=1)
-    ret.update_layout(font={"size": 18})
-    ret.update_layout(plot_bgcolor="white")
     ret.update_xaxes(visible=False)
     ret.update_yaxes(visible=False)
-    ret.update_layout(margin={
-        "l": 0,
-        "r": 0,
-        "t": 0
-    })
-    ret.update_xaxes(fixedrange=True)
-    ret.update_yaxes(fixedrange=True)
-
     return ret
 
 
-def get_heatmap_right_base_obj(data):
+def get_heatmap_colorbar_graph_obj():
     """Get Plotly graph object of colorbar.
 
-    This is a single column heatmap with a colorbar. We have to use CSS
-    styling in ``div_generator.get_heatmap_row_div`` to only show the
-    colorbar. Essentially, the colorbar is on the left, and we hide the
-    heatmap column on the right.
+    This is an essentially empty scatterplot with a colorbar. We're
+    only interested in displaying the colorbar.
 
-    :param data: ``data_parser.get_data`` return value
-    :type data: dict
-    :return: Plotly heatmap object containing a single column and
+    :return: Plotly scatterplot object containing a single column and
         colorbar.
-    :rtype: go.Heatmap
+    :rtype: go.Scattergl
     """
-    ret = go.Heatmap(
-        x=["foo"],
-        y=data["heatmap_y"],
-        z=[[0] for _ in data["heatmap_y"]],
-        colorscale=get_color_scale(),
-        colorbar={
-            "x": -2,
-            "y": 0.4
-        },
-        zmin=0,
-        zmax=1,
-        hoverinfo="none"
+    ret = go.Scattergl(
+        x=[0],
+        y=[0],
+        mode="markers",
+        marker={
+            "color": [0],
+            "colorscale": get_color_scale(),
+            "cmin": 0,
+            "cmax": 1,
+            "showscale": True,
+            "colorbar": {
+                "x": -2
+            }
+        }
     )
     return ret
