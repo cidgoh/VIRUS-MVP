@@ -40,7 +40,7 @@ def parse_gvf_dir(dir_, file_order=None):
 
     ret = {}
     with os.scandir(dir_) as it:
-        # Iterate through tsv files in dir_ sorted by ``file_order``
+        # Iterate through gvf files in dir_ sorted by ``file_order``
         # first, and then modification time.
         def key(e):
             if e.name in file_order:

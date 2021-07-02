@@ -235,21 +235,21 @@ def update_new_upload(file_contents, filename, old_data):
     # TODO more thorough validation, maybe once we finalize data
     #  standards.
     new_strain, ext = filename.rsplit(".", 1)
-    if ext != "tsv":
+    if ext != "gvf":
         status = "error"
-        msg = "Filename must end in \".tsv\"."
+        msg = "Filename must end in \".gvf\"."
     elif new_strain in old_data["heatmap_y"]:
         status = "error"
-        msg = "Filename must not conflict with existing voc."
+        msg = "Filename must not conflict with existing variant."
     else:
         # Dash splits MIME type and the actual str with a comma
         _, base64_str = file_contents.split(",")
         # File gets written to ``user_data`` folder
         # TODO: eventually replace with database
         with open("user_data/" + filename, "w") as fp:
-            tsv_str_bytes = b64decode(base64_str)
-            tsv_str_utf8 = tsv_str_bytes.decode("utf-8")
-            fp.write(tsv_str_utf8)
+            gvf_str_bytes = b64decode(base64_str)
+            gvf_str_utf8 = gvf_str_bytes.decode("utf-8")
+            fp.write(gvf_str_utf8)
         status = "ok"
         msg = ""
     return {"filename": filename, "msg": msg, "status": status}
