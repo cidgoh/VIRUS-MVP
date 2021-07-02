@@ -25,7 +25,7 @@ import dash_core_components as dcc
 from dash.dependencies import ALL, ClientsideFunction, Input, Output, State
 from dash.exceptions import PreventUpdate
 
-from data_parser import get_data, parse_gff3_file
+from data_parser import get_data
 import toolbar_generator
 import heatmap_generator
 import histogram_generator
@@ -89,8 +89,7 @@ def launch_app(_):
     if you do the following in the global scope--which you may be
     tempted to do because we are only doing it once!
     """
-    gff3_annotations = parse_gff3_file("gff3_annotations.tsv")
-    data_ = get_data(["reference_data", "user_data"], gff3_annotations)
+    data_ = get_data(["reference_data", "user_data"])
     return [
         # Bootstrap row containing tools at the top of the application
         toolbar_generator.get_toolbar_row(data_),
@@ -106,7 +105,6 @@ def launch_app(_):
         # generate the heatmap and table. A bit confusing, but dcc.Store
         # variables have data attributes. So ``data`` has a ``data``
         # attribute.
-        dcc.Store(id="gff3-annotations", data=gff3_annotations),
         dcc.Store(id="data", data=data_),
         # The following in-browser variables simply exist to help
         # modularize the callbacks below, by alerting us when ``data``
@@ -132,13 +130,10 @@ def launch_app(_):
         Input("strain-order", "data"),
         Input("mutation-freq-slider", "value")
     ],
-    state=[
-        State("gff3-annotations", "data")
-    ],
     prevent_initial_call=True
 )
 def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
-                mutation_freq_vals, gff3_annotations):
+                mutation_freq_vals):
     """Update ``data`` variable in dcc.Store.
 
     This is a central callback. It triggers a change to the ``data``
@@ -183,7 +178,6 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
         min_mutation_freq, max_mutation_freq = None, None
 
     return get_data(["reference_data", "user_data"],
-                    gff3_annotations,
                     clade_defining=show_clade_defining,
                     hidden_strains=hidden_strains,
                     strain_order=strain_order,
