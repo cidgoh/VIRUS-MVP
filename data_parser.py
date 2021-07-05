@@ -9,78 +9,6 @@ import json
 import os
 
 
-def parse_gff3_file(path):
-    """Parses relevant visualization data from gff3 file.
-
-    The return type is like:
-    ``{strain1: {pos1: [gff3_attributes_dicts], pos2:
-    [gff3_attributes_dicts], strain2: ...}``, where
-    ``gff3_attributes_dicts`` are dictionaries containing attribute
-    information for >1 mutations that may be at a nuceleotide position.
-
-    :param path: Path to gff3 file
-    :type path: str
-    :return: Dictionary containing information parsed from gff3 file
-    :rtype: dict
-    """
-    # TODO eventually the functions will be included in the gff3 file
-    functional_annotations_dict = {}
-    functional_annotations_tsv_path = \
-        "VOC clade-defining mutations - functional_annotation.tsv"
-    with open(functional_annotations_tsv_path) as fp:
-        reader = csv.DictReader(fp, delimiter="\t")
-        for row in reader:
-            strain = row["lineage"]
-            mutation_name = row["aa_name"]
-            functions = row["function_category"]
-            if functions == "":
-                continue
-            functions = functions.split("|")
-            functions = [x.strip() for x in functions]
-            # TODO: This gets formatted in Plotly hover text. In the
-            #  spirit of this function, we should make this a list, and
-            #  format it in ``get_data``.
-            functions = "<br>".join(functions)
-            if strain not in functional_annotations_dict:
-                functional_annotations_dict[strain] = {}
-            functional_annotations_dict[strain][mutation_name] = functions
-
-    annotations_dict = {}
-    with open(path) as fp:
-        reader = csv.DictReader(fp, delimiter="\t")
-        for row in reader:
-            if row["#start"] == "":
-                continue
-
-            attributes_list = row["#attributes"].split(";")
-            attributes_nested_list = [x.split("=") for x in attributes_list]
-            attributes_dict = {}
-            for nested_list in attributes_nested_list:
-                if len(nested_list) >= 2:
-                    key = nested_list[0]
-                    val = nested_list[1]
-                    attributes_dict[key] = val
-
-            strain = attributes_dict["voc_name"]
-            pos = int(row["#start"])
-            if strain not in annotations_dict:
-                annotations_dict[strain] = {}
-            if pos not in annotations_dict[strain]:
-                annotations_dict[strain][pos] = []
-
-            mutation_name = attributes_dict["Alias"]
-            if strain in functional_annotations_dict \
-                    and mutation_name in functional_annotations_dict[strain]:
-                attributes_dict["functions"] = \
-                    functional_annotations_dict[strain][mutation_name]
-            else:
-                attributes_dict["functions"] = ""
-
-            annotations_dict[strain][pos].append(attributes_dict)
-
-    return annotations_dict
-
-
 def map_pos_to_gene(pos):
     """Map a nucleotide position to a SARS-CoV-2 gene.
 
@@ -102,28 +30,18 @@ def map_pos_to_gene(pos):
     return "n/a"
 
 
-def parse_data_dir(dir_, file_order=None):
-    """Parses relevant visualization data from ``dir_``.
+def parse_gvf_dir(dir_, file_order=None):
+    """Parse a directory with gvf files for relevant data.
 
-    This function assists ``get_data``, which is a function that
-    prepares data in a format suitable for Plotly functions. However,
-    ``parse_data_dir`` does not care about Plotly. It simply parses
-    tsv files that are in the format of tsv files found in data/, and
-    puts them into an easy to iterate Dictionary for ``get_data`` to
-    manipulate for Plotly. The filename of these tsv files is
-    interpreted to be the strain name.
+    This supplies ``get_data`` with the relevant information it needs
+    from gvf files to generate the data used in visualizations.
 
-    The files are parsed in order of modification date. However, this
-    can be overridden by listing the files you want parsed first in
-    ``file_order``. Any files not found in ``file_order`` will still be
-    parsed by modification date.
-
-    :param dir_: Path to folder to parse tsv files from
+    :param dir_: Path to directory to parse
     :type dir_: str
-    :param file_order: List of filenames corresponding to files to
-        parse first, if they exist in ``dir_``.
+    :param file_order: List of files you want parsed first in order,
+        otherwise files are parsed in order of modification time.
     :type file_order: list[str]
-    :return: Select column data parsed from tsv files in ``dir_``
+    :return: Relevant strain data from gvf files used by ``get_data``
     :rtype: dict
     """
     if file_order is None:
@@ -131,7 +49,7 @@ def parse_data_dir(dir_, file_order=None):
 
     ret = {}
     with os.scandir(dir_) as it:
-        # Iterate through tsv files in dir_ sorted by ``file_order``
+        # Iterate through gvf files in dir_ sorted by ``file_order``
         # first, and then modification time.
         def key(e):
             if e.name in file_order:
@@ -140,165 +58,99 @@ def parse_data_dir(dir_, file_order=None):
                 return os.path.getmtime(e)
         for entry in sorted(it, key=key):
             strain, ext = entry.name.rsplit(".", 1)
-            if ext != "tsv":
+            if ext != "gvf":
                 continue
             ret[strain] = {}
             with open(entry.path) as fp:
                 reader = csv.DictReader(fp, delimiter="\t")
                 for row in reader:
-                    pos = row["POS"]
-                    ret[strain][pos] = {}
-                    ret[strain][pos]["ref"] = row["REF"]
-                    ret[strain][pos]["alt"] = row["ALT"]
-                    ret[strain][pos]["alt_freq"] =\
-                        str(float(row["AO"].split(",")[0])/float(row["DP"]))
-                    # We may update this in ``get_annotated_data_dir``
-                    ret[strain][pos]["clade_defining"] = False
+                    attrs_first_split = row["#attributes"].split(";")[:-1]
+                    attrs_second_split = \
+                        [x.split("=", 1) for x in attrs_first_split]
+                    attrs = {k: v for k, v in attrs_second_split}
 
-                    ret[strain][pos]["gene"] = map_pos_to_gene(int(pos))
+                    pos = row["#start"]
+                    if pos not in ret[strain]:
+                        ret[strain][pos] = {}
+                        ret[strain][pos]["ref"] = attrs["Reference_seq"]
+                        ret[strain][pos]["alt"] = \
+                            attrs["Variant_seq"].split(",")[0]
+                        ret[strain][pos]["gene"] = attrs["gene"]
 
-                    # We may update these in ``get_annotated_data_dir``
-                    ret[strain][pos]["mutation_name"] = "n/a"
-                    ret[strain][pos]["functions"] = "n/a"
+                        ao = float(attrs["ao"].split(",")[0])
+                        dp = float(attrs["dp"])
+                        ret[strain][pos]["alt_freq"] = str(ao / dp)
 
-                    # We may update this later
-                    ret[strain][pos]["hidden_cell"] = False
+                        ret[strain][pos]["clade_defining"] = \
+                            attrs["clade_defining"]
 
-                    if row["TYPE"] == "ins":
-                        ret[strain][pos]["mutation_type"] = "insertion"
-                    elif row["TYPE"] == "del":
-                        ret[strain][pos]["mutation_type"] = "deletion"
-                    else:
-                        ret[strain][pos]["mutation_type"] = "snp"
+                        ret[strain][pos]["hidden_cell"] = False
+
+                        if attrs["Name"]:
+                            ret[strain][pos]["mutation_name"] = attrs["Name"]
+                        else:
+                            ret[strain][pos]["mutation_name"] = "n/a"
+
+                        ref_len = len(ret[strain][pos]["ref"])
+                        alt_len = len(ret[strain][pos]["alt"])
+                        if ref_len < alt_len:
+                            ret[strain][pos]["mutation_type"] = "insertion"
+                        elif ref_len > alt_len:
+                            ret[strain][pos]["mutation_type"] = "deletion"
+                        else:
+                            ret[strain][pos]["mutation_type"] = "snp"
+
+                        ret[strain][pos]["functions"] = []
+
+                    if attrs["function_category"]:
+                        function = attrs["function_category"]
+                        ret[strain][pos]["functions"] += [function]
     return ret
 
 
-def get_annotated_data_dir(parsed_data_dir, gff3_annotations):
-    """Annotate ``parse_data_dir`` val with ``parse_gff3_file`` val.
+def filter_parsed_gvf_dirs_by_clade_defining(parsed_gvf_dirs):
+    """Hide non-clade defining mutations from parsed gvf file.
 
-    Although ``parse_data_dir`` provides the information needed for a
-    barebones visualization, such as mutation positions and frequency,
-    there is information returned by ``parse_gff3_file`` that is also
-    valuable for visualization purposes, such as clade defining
-    mutations and mutation functions.
-
-    :param parsed_data_dir: ``parse_data_dir`` return value
-    :type parsed_data_dir: dict
-    :param gff3_annotations: ``parse_gff3_file`` return value
-    :type gff3_annotations: dict
-    :return: ``parsed_data_dir`` with additional information added from
-        ``gff3_annotations``.
+    :param parsed_gvf_dirs: ``parse_gvf_dir`` return value
+    :type parsed_gvf_dirs: dict
+    :return: ``parsed_gvf_dirs`` with non-clade defining mutations
+        labeled as hidden.
     :rtype: dict
     """
-    annotated_data_dir = deepcopy(parsed_data_dir)
-    for strain in parsed_data_dir:
-        if strain not in gff3_annotations:
-            continue
-        for pos in parsed_data_dir[strain]:
-            if pos not in gff3_annotations[strain]:
-                continue
-            parsed_data_dir_mutation = parsed_data_dir[strain][pos]
-            # There is some syntax differences between the gff3 and
-            # data files, so we need to modify the ref to alt mutation
-            # from the data file we are looking for to match the format
-            # expected by the gff3 file.
-            matching_gff3_del = parsed_data_dir_mutation["ref"]
-            matching_gff3_ins = parsed_data_dir_mutation["alt"]
-            if len(matching_gff3_ins) and matching_gff3_ins[0] in ["-", "+"]:
-                matching_gff3_ins = matching_gff3_ins[1:]
-
-            gff3_annotations_mutation = None
-            for mutation in gff3_annotations[strain][pos]:
-                if mutation["del"] == matching_gff3_del \
-                        and mutation["ins"] == matching_gff3_ins:
-                    gff3_annotations_mutation = mutation
-                    break
-            # We found a mutation in the gff3 file that corresponds to
-            # the mutation in the data dir we are currently visiting in
-            # the for loop.
-            if gff3_annotations_mutation:
-                if gff3_annotations_mutation["clade_defining"] == "true":
-                    annotated_data_dir[strain][pos]["clade_defining"] = True
-                if gff3_annotations_mutation["Name"]:
-                    annotated_data_dir[strain][pos]["mutation_name"] = \
-                        gff3_annotations_mutation["Name"]
-                if gff3_annotations_mutation["functions"]:
-                    annotated_data_dir[strain][pos]["functions"] = \
-                        gff3_annotations_mutation["functions"]
-    return annotated_data_dir
-
-
-def filter_clade_defining_mutations(annotated_data_dirs, weak_filter):
-    """Filter ``annotated_data_dirs`` for clade defining mutations.
-
-    Returns a copy of ``annotated_data_dirs``, with the ``hidden_cell``
-    property of non clade defining mutations set to ``True``. You can
-    specify strains in ``annotated_data_dirs`` to apply a weak filter
-    to. Strains that are filtered weakly will not be filtered by the
-    clade defining attribute, but will instead have their mutations
-    filtered based on whether their mutations share a position with
-    clade defining mutations from non-weakly filtered strains. This is
-    useful for user uploaded strains.
-
-    :param annotated_data_dirs: A dictionary containing multiple merged
-        ``get_annotated_data_dir`` return values.
-    :type annotated_data_dirs: dict
-    :param weak_filter: List of strains to filter based on whether they
-        share a nucleotide position with clade defining mutations from
-        other strains, instead of the clade defining attribute of the
-        mutations themselves.
-    :type weak_filter: list[str]
-    :return: Filtered copy of ``annotated_data_dirs``, containing clade
-        defining mutations only.
-    :rtype: dict
-    """
-    seen_pos_set = set()
-    ret = deepcopy(annotated_data_dirs)
-    for strain in annotated_data_dirs:
-        if strain in weak_filter:
-            continue
-        for pos in annotated_data_dirs[strain]:
-            if annotated_data_dirs[strain][pos]["clade_defining"]:
-                seen_pos_set.add(pos)
-            else:
-                ret[strain][pos]["hidden_cell"] = True
-    for strain in weak_filter:
-        for pos in annotated_data_dirs[strain]:
-            if pos not in seen_pos_set:
+    ret = deepcopy(parsed_gvf_dirs)
+    for strain in parsed_gvf_dirs:
+        for pos in parsed_gvf_dirs[strain]:
+            if not parsed_gvf_dirs[strain][pos]["clade_defining"]:
                 ret[strain][pos]["hidden_cell"] = True
     return ret
 
 
-def filter_mutations_by_freq(annotated_data_dirs, min_mutation_freq,
-                             max_mutation_freq):
-    """Filter ``annotated_data_dirs`` by mutation frequency.
+def filter_parsed_gvf_dirs_by_freq(parsed_gvf_dirs, min_mutation_freq,
+                                   max_mutation_freq):
+    """Hide mutations of specific frequencies from parsed gvf file.
 
-    Returns a copy of ``annotated_data_dirs``, with the ``hidden_cell``
-    property of mutations with a frequency outside a specific range set
-    to ``True``.
-
-    :param annotated_data_dirs: A dictionary containing multiple merged
-        ``get_annotated_data_dir`` return values.
-    :type annotated_data_dirs: dict
-    :param min_mutation_freq: Minimum mutation frequency to filter
-        mutations by.
-    :type min_mutation_freq: int|float
-    :param max_mutation_freq: Maximum mutation frequency to filter
-        mutations by.
-    :type max_mutation_freq: int|float
-    :return:
-    :rtype:
+    :param parsed_gvf_dirs: ``parse_gvf_dir`` return value
+    :type parsed_gvf_dirs: dict
+    :param min_mutation_freq: Minimum mutation frequency required to
+        not hide mutations.
+    :type min_mutation_freq: float
+    :param max_mutation_freq: Maximum mutation frequency required to
+        not hide mutations.
+    :type max_mutation_freq: float
+    :return: ``parsed_gvf_dirs`` with mutations of specified
+        frequencies labeled as hidden.
+    :rtype: dict
     """
-    ret = deepcopy(annotated_data_dirs)
-    for strain in annotated_data_dirs:
-        for pos in annotated_data_dirs[strain]:
+    ret = deepcopy(parsed_gvf_dirs)
+    for strain in parsed_gvf_dirs:
+        for pos in parsed_gvf_dirs[strain]:
             alt_freq = float(ret[strain][pos]["alt_freq"])
             if alt_freq < min_mutation_freq or alt_freq > max_mutation_freq:
                 ret[strain][pos]["hidden_cell"] = True
     return ret
 
 
-def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
+def get_data(dirs, clade_defining=False, hidden_strains=None,
              strain_order=None, min_mutation_freq=None,
              max_mutation_freq=None):
     """Get relevant data for Plotly visualizations in this application.
@@ -312,22 +164,19 @@ def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
     Basically, this function gives us data to plug into the
     visualization functions of Plotly.
 
-    This relevant data is parsed from tsv files across one or more
-    folders, with each tsv file in the form of the tsv files found in
-    ``data/``, and from annotations parsed from a gff3 file, in the
-    form of ``gff3_annotations.tsv``.
+    This relevant data is parsed from gvf files across one or more
+    folders, with each gvf file in the form of the files found in
+    ``reference_data/``.
 
     :param dirs: List of paths to folders to obtain data from
     :type dirs: list[str]
-    :param gff3_annotations: ``parse_gff3_file`` return value
-    :type gff3_annotations: dict
     :param clade_defining: Set non-clade defining mutations as hidden
     :type clade_defining: bool
     :param hidden_strains: List of strains from the dirs that the user
         does not want to display in the heatmap and table.
     :type hidden_strains: list[str]
     :param strain_order: Order of strains from the dirs that the user
-        wants to display in the heatmap and table.
+        wants to display in the heatmap.
     :type strain_order: list[str]
     :param min_mutation_freq: Set mutations with a lower frequency than
         this as hidden.
@@ -335,7 +184,7 @@ def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
     :param max_mutation_freq: Set mutations with a higher frequency
         than this as hidden.
     :type max_mutation_freq: int|float
-    :return: Information on relevant columns in tsv files stored in
+    :return: Information on relevant columns in gvf files stored in
         folders listed in dirs.
     :rtype: dict
     """
@@ -344,102 +193,99 @@ def get_data(dirs, gff3_annotations, clade_defining=False, hidden_strains=None,
     if strain_order is None:
         strain_order = []
 
-    annotated_data_dirs = {}
     dir_strains = {}
-    file_order = [strain + ".tsv" for strain in strain_order]
+    file_order = [strain + ".gvf" for strain in strain_order]
+    parsed_gvf_dirs = {}
     for dir_ in dirs:
-        parsed_data_dir = parse_data_dir(dir_, file_order)
-        annotated_data_dir = \
-            get_annotated_data_dir(parsed_data_dir, gff3_annotations)
-        annotated_data_dirs = {**annotated_data_dirs, **annotated_data_dir}
-        dir_strains[dir_] = list(parsed_data_dir.keys())
+        parsed_gvf_dir = parse_gvf_dir(dir_, file_order)
+        parsed_gvf_dirs = {**parsed_gvf_dirs, **parsed_gvf_dir}
+        dir_strains[dir_] = list(parsed_gvf_dir.keys())
+
+    visible_parsed_gvf_dirs = \
+        {k: v for k, v in parsed_gvf_dirs.items() if k not in hidden_strains}
 
     if clade_defining:
-        weak_filter = dir_strains["user_data"]
-        annotated_data_dirs = \
-            filter_clade_defining_mutations(annotated_data_dirs,
-                                            weak_filter=weak_filter)
-
-    all_strain_data = annotated_data_dirs
-    visible_strain_data = \
-        {k: v for k, v in all_strain_data.items() if k not in hidden_strains}
+        visible_parsed_gvf_dirs = \
+            filter_parsed_gvf_dirs_by_clade_defining(visible_parsed_gvf_dirs)
 
     mutation_freq_slider_vals = \
-        get_mutation_freq_slider_vals(visible_strain_data)
+        get_mutation_freq_slider_vals(visible_parsed_gvf_dirs)
     if min_mutation_freq and max_mutation_freq:
-        visible_strain_data = filter_mutations_by_freq(visible_strain_data,
-                                                       min_mutation_freq,
-                                                       max_mutation_freq)
+        visible_parsed_gvf_dirs = \
+            filter_parsed_gvf_dirs_by_freq(visible_parsed_gvf_dirs,
+                                           min_mutation_freq,
+                                           max_mutation_freq)
 
-    data = {
-        "heatmap_x": get_heatmap_x(all_strain_data),
-        "heatmap_y": get_heatmap_y(visible_strain_data),
-        "tables": get_tables(visible_strain_data),
-        "histogram_x": get_histogram_x(visible_strain_data),
+    ret = {
+        "heatmap_x": get_heatmap_x(parsed_gvf_dirs),
+        "heatmap_y": get_heatmap_y(visible_parsed_gvf_dirs),
+        "tables": get_tables(visible_parsed_gvf_dirs),
+        "histogram_x": get_histogram_x(visible_parsed_gvf_dirs),
         "dir_strains": dir_strains,
         "hidden_strains": hidden_strains,
-        "all_strains": get_heatmap_y(all_strain_data),
+        "all_strains": get_heatmap_y(parsed_gvf_dirs),
         "mutation_freq_slider_vals": mutation_freq_slider_vals
     }
-    data["insertions_x"] = get_insertions_x(visible_strain_data,
-                                            data["heatmap_x"],
-                                            data["heatmap_y"])
-    data["insertions_y"] = get_insertions_y(visible_strain_data,
-                                            data["heatmap_x"],
-                                            data["heatmap_y"])
-    data["deletions_x"] = get_deletions_x(visible_strain_data,
-                                          data["heatmap_x"],
-                                          data["heatmap_y"])
-    data["deletions_y"] = get_deletions_y(visible_strain_data,
-                                          data["heatmap_x"],
-                                          data["heatmap_y"])
-    data["heatmap_z"] = \
-        get_heatmap_z(visible_strain_data, data["heatmap_x"])
-    data["heatmap_cell_text"] = \
-        get_heatmap_cell_text(visible_strain_data, data["heatmap_x"])
-    data["heatmap_x_genes"] =\
-        get_heatmap_x_genes(data["heatmap_x"])
-    return data
+    ret["insertions_x"] = get_insertions_x(visible_parsed_gvf_dirs,
+                                           ret["heatmap_x"],
+                                           ret["heatmap_y"])
+    ret["insertions_y"] = get_insertions_y(visible_parsed_gvf_dirs,
+                                           ret["heatmap_x"],
+                                           ret["heatmap_y"])
+    ret["deletions_x"] = get_deletions_x(visible_parsed_gvf_dirs,
+                                         ret["heatmap_x"],
+                                         ret["heatmap_y"])
+    ret["deletions_y"] = get_deletions_y(visible_parsed_gvf_dirs,
+                                         ret["heatmap_x"],
+                                         ret["heatmap_y"])
+    ret["heatmap_z"] = \
+        get_heatmap_z(visible_parsed_gvf_dirs, ret["heatmap_x"])
+    ret["heatmap_cell_text"] = \
+        get_heatmap_cell_text(visible_parsed_gvf_dirs, ret["heatmap_x"])
+    ret["heatmap_x_genes"] = \
+        get_heatmap_x_genes(ret["heatmap_x"])
+
+    return ret
 
 
-def get_mutation_freq_slider_vals(annotated_data_dirs):
-    """Get the mutation freq slider vals from ``annotated_data_dirs``.
+def get_mutation_freq_slider_vals(parsed_gvf_dirs):
+    """Get the mutation freq slider vals from ``parsed_gvf_dirs``.
 
     This value is ultimately used when rendering the mutation frequency
     slider. This is really just a sorted list of unique mutation
-    frequencies from visible cells in ``annotated_data_dirs``.
+    frequencies from visible cells in ``parsed_gvf_dirs``.
 
-    :param annotated_data_dirs: A dictionary containing multiple merged
-        ``get_annotated_data_dir`` return values.
-    :type annotated_data_dirs: dict
+    :param parsed_gvf_dirs: A dictionary containing multiple merged
+        ``parsed_gvf_dir`` return values.
+    :type parsed_gvf_dirs: dict
     :return: Lowest to highest sorted list of unique mutation
-        frequencies from visible cells in ``annotated_data_dirs``.
+        frequencies from visible cells in ``parsed_gvf_dirs``.
     :rtype: list[str]
     """
     alt_freq_set = set()
-    for strain in annotated_data_dirs:
-        for pos in annotated_data_dirs[strain]:
-            if not annotated_data_dirs[strain][pos]["hidden_cell"]:
-                alt_freq_set.add(annotated_data_dirs[strain][pos]["alt_freq"])
+    for strain in parsed_gvf_dirs:
+        for pos in parsed_gvf_dirs[strain]:
+            if not parsed_gvf_dirs[strain][pos]["hidden_cell"]:
+                alt_freq_set.add(parsed_gvf_dirs[strain][pos]["alt_freq"])
     ret = sorted(list(alt_freq_set), key=float)
     return ret
 
 
-def get_heatmap_x(annotated_data_dirs):
+def get_heatmap_x(parsed_gvf_dirs):
     """Get x axis values of heatmap cells.
 
     These are the nucleotide position of mutations.
 
-    :param annotated_data_dirs: A dictionary containing multiple merged
-        ``get_annotated_data_dir`` return values.
-    :type annotated_data_dirs: dict
+    :param parsed_gvf_dirs: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return values.
+    :type parsed_gvf_dirs: dict
     :return: List of x axis values
     :rtype: list[str]
     """
     seen = set()
     ret = []
-    for strain in annotated_data_dirs:
-        for pos in annotated_data_dirs[strain]:
+    for strain in parsed_gvf_dirs:
+        for pos in parsed_gvf_dirs[strain]:
             if pos not in seen:
                 seen.add(pos)
                 ret.append(pos)
@@ -450,9 +296,9 @@ def get_heatmap_x(annotated_data_dirs):
 def get_heatmap_x_genes(heatmap_x):
     """Get gene values corresponding to x axis values in heatmap.
 
-    :param annotated_data_dirs: A dictionary containing multiple merged
-        ``get_annotated_data_dir`` return values.
-    :type annotated_data_dirs: dict
+    :param parsed_gvf_dirs: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return values.
+    :type parsed_gvf_dirs: dict
     :param heatmap_x: ``get_heatmap_x`` return value
     :type heatmap_x: list[str]
     :return: List of genes for each x in ``heatmap_x``
@@ -464,57 +310,57 @@ def get_heatmap_x_genes(heatmap_x):
     return ret
 
 
-def get_heatmap_y(annotated_data_dirs):
+def get_heatmap_y(parsed_gvf_dirs):
     """Get y axis values of heatmap cells.
 
     These are the VOC strains.
 
-    :param annotated_data_dirs: A dictionary containing multiple merged
-        ``get_annotated_data_dir`` return values.
-    :type annotated_data_dirs: dict
+    :param parsed_gvf_dirs: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return values.
+    :type parsed_gvf_dirs: dict
     :return: List of y axis values
     :rtype: list[str]
     """
     ret = []
-    for strain in annotated_data_dirs:
+    for strain in parsed_gvf_dirs:
         ret.append(strain)
     return ret
 
 
-def get_heatmap_z(annotated_data_dirs, heatmap_x):
+def get_heatmap_z(parsed_gvf_dirs, heatmap_x):
     """Get z values of heatmap cells.
 
     These are the mutation frequencies, and the z values dictate the
     colours of the heatmap cells.
 
-    :param annotated_data_dirs: A dictionary containing multiple merged
-        ``get_annotated_data_dir`` return values.
-    :type annotated_data_dirs: dict
+    :param parsed_gvf_dirs: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return values.
+    :type parsed_gvf_dirs: dict
     :param heatmap_x: ``get_heatmap_x`` return value
     :type heatmap_x: list[int]
     :return: List of z values
     :rtype: list[str]
     """
     ret = []
-    for strain in annotated_data_dirs:
+    for strain in parsed_gvf_dirs:
         row = []
         for pos in heatmap_x:
-            cond = pos in annotated_data_dirs[strain] \
-                   and not annotated_data_dirs[strain][pos]["hidden_cell"]
+            cond = pos in parsed_gvf_dirs[strain] \
+                   and not parsed_gvf_dirs[strain][pos]["hidden_cell"]
             if cond:
-                row.append(annotated_data_dirs[strain][pos]["alt_freq"])
+                row.append(parsed_gvf_dirs[strain][pos]["alt_freq"])
             else:
                 row.append(None)
         ret.append(row)
     return ret
 
 
-def get_heatmap_cell_text(annotated_data_dirs, heatmap_x):
+def get_heatmap_cell_text(parsed_gvf_dirs, heatmap_x):
     """Get hover text of heatmap cells.
 
-    :param annotated_data_dirs: A dictionary containing multiple merged
-        ``get_annotated_data_dir`` return values.
-    :type annotated_data_dirs: dict
+    :param parsed_gvf_dirs: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return values.
+    :type parsed_gvf_dirs: dict
     :param heatmap_x: ``get_heatmap_x`` return value
     :type heatmap_x: list[int]
     :return: List of D3 formatted text values for each x y coordinate
@@ -522,11 +368,20 @@ def get_heatmap_cell_text(annotated_data_dirs, heatmap_x):
     :rtype: list[str]
     """
     ret = []
-    for strain in annotated_data_dirs:
+    for strain in parsed_gvf_dirs:
         row = []
         for pos in heatmap_x:
-            if pos in annotated_data_dirs[strain]:
-                cell_data = annotated_data_dirs[strain][pos]
+            if pos in parsed_gvf_dirs[strain]:
+                cell_data = parsed_gvf_dirs[strain][pos]
+
+                functions_set = set(cell_data["functions"])
+                functions_str = ""
+                for i, fn in enumerate(functions_set):
+                    if i == 8:
+                        functions_str += "...click for more<br>"
+                        break
+                    functions_str += fn + "<br>"
+
                 cell_text_str = "<b>Mutation name: %s</b><br>" \
                                 "<br>" \
                                 "<b>Position:</b> %s<br>" \
@@ -536,14 +391,14 @@ def get_heatmap_cell_text(annotated_data_dirs, heatmap_x):
                                 "<b>Alternate:</b> %s<br>" \
                                 "<b>Alternate frequency:</b> %s<br>" \
                                 "<br>" \
-                                "<b>Functions:</b> <br>%s<br>"
+                                "<b>Functions:</b> <br>%s"
                 cell_text_params = (cell_data["mutation_name"],
                                     pos,
                                     cell_data["gene"],
                                     cell_data["ref"],
                                     cell_data["alt"],
                                     cell_data["alt_freq"],
-                                    cell_data["functions"])
+                                    functions_str)
                 row.append(cell_text_str % cell_text_params)
             else:
                 row.append(None)
@@ -551,7 +406,7 @@ def get_heatmap_cell_text(annotated_data_dirs, heatmap_x):
     return ret
 
 
-def get_insertions_x(annotated_data_dirs, heatmap_x, heatmap_y):
+def get_insertions_x(parsed_gvf_dirs, heatmap_x, heatmap_y):
     """Get x coordinates of insertion markers to overlay in heatmap.
 
     Since the underlying structure of the heatmap does not usual
@@ -559,25 +414,25 @@ def get_insertions_x(annotated_data_dirs, heatmap_x, heatmap_y):
     instead uses the indices of ``heatmap_x``, we must specify the
     indices here--not actual nucleotide positions.
 
-    :param annotated_data_dirs: A dictionary containing multiple merged
-        ``get_annotated_data_dir`` return values.
-    :type annotated_data_dirs: dict
+    :param parsed_gvf_dirs: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return values.
+    :type parsed_gvf_dirs: dict
     :return: List of x coordinate values to display insertion markers
     :rtype: list[int]
     """
     ret = []
     for i, pos in enumerate(heatmap_x):
         for j, strain in enumerate(heatmap_y):
-            if pos not in annotated_data_dirs[strain]:
+            if pos not in parsed_gvf_dirs[strain]:
                 continue
-            mutation_type = annotated_data_dirs[strain][pos]["mutation_type"]
-            hidden_cell = annotated_data_dirs[strain][pos]["hidden_cell"]
+            mutation_type = parsed_gvf_dirs[strain][pos]["mutation_type"]
+            hidden_cell = parsed_gvf_dirs[strain][pos]["hidden_cell"]
             if mutation_type == "insertion" and not hidden_cell:
                 ret.append(i)
     return ret
 
 
-def get_insertions_y(annotated_data_dirs, heatmap_x, heatmap_y):
+def get_insertions_y(parsed_gvf_dirs, heatmap_x, heatmap_y):
     """Get y coordinates of insertion markers to overlay in heatmap.
 
     Since the underlying structure of the heatmap does not usual
@@ -585,25 +440,25 @@ def get_insertions_y(annotated_data_dirs, heatmap_x, heatmap_y):
     instead uses the indices of ``heatmap_y``, we must specify the
     indices here--not actual nucleotide positions.
 
-    :param annotated_data_dirs: A dictionary containing multiple merged
-        ``get_annotated_data_dir`` return values.
-    :type annotated_data_dirs: dict
+    :param parsed_gvf_dirs: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return values.
+    :type parsed_gvf_dirs: dict
     :return: List of y coordinate values to display insertion markers
     :rtype: list[str]
     """
     ret = []
     for i, pos in enumerate(heatmap_x):
         for j, strain in enumerate(heatmap_y):
-            if pos not in annotated_data_dirs[strain]:
+            if pos not in parsed_gvf_dirs[strain]:
                 continue
-            mutation_type = annotated_data_dirs[strain][pos]["mutation_type"]
-            hidden_cell = annotated_data_dirs[strain][pos]["hidden_cell"]
+            mutation_type = parsed_gvf_dirs[strain][pos]["mutation_type"]
+            hidden_cell = parsed_gvf_dirs[strain][pos]["hidden_cell"]
             if mutation_type == "insertion" and not hidden_cell:
                 ret.append(j)
     return ret
 
 
-def get_deletions_x(annotated_data_dirs, heatmap_x, heatmap_y):
+def get_deletions_x(parsed_gvf_dirs, heatmap_x, heatmap_y):
     """Get x coordinates of deletion markers to overlay in heatmap.
 
     Since the underlying structure of the heatmap does not usual
@@ -611,25 +466,25 @@ def get_deletions_x(annotated_data_dirs, heatmap_x, heatmap_y):
     instead uses the indices of ``heatmap_x``, we must specify the
     indices here--not actual nucleotide positions.
 
-    :param annotated_data_dirs: A dictionary containing multiple merged
-        ``get_annotated_data_dir`` return values.
-    :type annotated_data_dirs: dict
+    :param parsed_gvf_dirs: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return values.
+    :type parsed_gvf_dirs: dict
     :return: List of x coordinate values to display insertion markers
     :rtype: list[int]
     """
     ret = []
     for i, pos in enumerate(heatmap_x):
         for j, strain in enumerate(heatmap_y):
-            if pos not in annotated_data_dirs[strain]:
+            if pos not in parsed_gvf_dirs[strain]:
                 continue
-            mutation_type = annotated_data_dirs[strain][pos]["mutation_type"]
-            hidden_cell = annotated_data_dirs[strain][pos]["hidden_cell"]
+            mutation_type = parsed_gvf_dirs[strain][pos]["mutation_type"]
+            hidden_cell = parsed_gvf_dirs[strain][pos]["hidden_cell"]
             if mutation_type == "deletion" and not hidden_cell:
                 ret.append(i)
     return ret
 
 
-def get_deletions_y(annotated_data_dirs, heatmap_x, heatmap_y):
+def get_deletions_y(parsed_gvf_dirs, heatmap_x, heatmap_y):
     """Get y coordinates of deletion markers to overlay in heatmap.
 
     Since the underlying structure of the heatmap does not usual
@@ -637,47 +492,47 @@ def get_deletions_y(annotated_data_dirs, heatmap_x, heatmap_y):
     instead uses the indices of ``heatmap_y``, we must specify the
     indices here--not actual nucleotide positions.
 
-    :param annotated_data_dirs: A dictionary containing multiple merged
-        ``get_annotated_data_dir`` return values.
-    :type annotated_data_dirs: dict
+    :param parsed_gvf_dirs: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return values.
+    :type parsed_gvf_dirs: dict
     :return: List of y coordinate values to display deletion markers
     :rtype: list[str]
     """
     ret = []
     for i, pos in enumerate(heatmap_x):
         for j, strain in enumerate(heatmap_y):
-            if pos not in annotated_data_dirs[strain]:
+            if pos not in parsed_gvf_dirs[strain]:
                 continue
-            mutation_type = annotated_data_dirs[strain][pos]["mutation_type"]
-            hidden_cell = annotated_data_dirs[strain][pos]["hidden_cell"]
+            mutation_type = parsed_gvf_dirs[strain][pos]["mutation_type"]
+            hidden_cell = parsed_gvf_dirs[strain][pos]["hidden_cell"]
             if mutation_type == "deletion" and not hidden_cell:
                 ret.append(j)
     return ret
 
 
-def get_tables(annotated_data_dirs):
+def get_tables(parsed_gvf_dirs):
     """Get table column data for each y axis value or strain.
 
     The columns are represented as lists.
 
-    :param annotated_data_dirs: A dictionary containing multiple merged
-        ``get_annotated_data_dir`` return values.
-    :type annotated_data_dirs: dict
+    :param parsed_gvf_dirs: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return values.
+    :type parsed_gvf_dirs: dict
     :return: Dictionary with keys for each strain, and a list of lists
         values representing columns for each strain.
     :rtype: dict[str, list[list]]
     """
     ret = {}
-    for strain in annotated_data_dirs:
+    for strain in parsed_gvf_dirs:
         pos_col = []
         mutation_name_col = []
         ref_col = []
         alt_col = []
         alt_freq_col = []
         functions_col = []
-        for pos in annotated_data_dirs[strain]:
+        for pos in parsed_gvf_dirs[strain]:
             pos_col.append(pos)
-            cell_data = annotated_data_dirs[strain][pos]
+            cell_data = parsed_gvf_dirs[strain][pos]
             mutation_name_col.append(cell_data["mutation_name"])
             ref_col.append(cell_data["ref"])
             alt_col.append(cell_data["alt"])
@@ -690,22 +545,22 @@ def get_tables(annotated_data_dirs):
     return ret
 
 
-def get_histogram_x(annotated_data_dirs):
+def get_histogram_x(parsed_gvf_dirs):
     """Get x data values binned by Plotly when producing the histogram.
 
     This is just the positions containing mutations, with duplicates
     permitted for mutations shared by strains.
 
-    :param annotated_data_dirs: A dictionary containing multiple merged
-        ``get_annotated_data_dir`` return values.
-    :type annotated_data_dirs: dict
+    :param parsed_gvf_dirs: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return values.
+    :type parsed_gvf_dirs: dict
     :return: List of x data values used in histogram view
     :rtype: list[str]
     """
     ret = []
-    for strain in annotated_data_dirs:
-        for pos in annotated_data_dirs[strain]:
-            hidden_cell = annotated_data_dirs[strain][pos]["hidden_cell"]
+    for strain in parsed_gvf_dirs:
+        for pos in parsed_gvf_dirs[strain]:
+            hidden_cell = parsed_gvf_dirs[strain][pos]["hidden_cell"]
             if not hidden_cell:
                 ret.append(pos)
     return ret
