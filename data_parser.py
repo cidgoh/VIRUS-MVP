@@ -64,7 +64,8 @@ def parse_gvf_dir(dir_, file_order=None):
                     if pos not in ret[strain]:
                         ret[strain][pos] = {}
                         ret[strain][pos]["ref"] = attrs["Reference_seq"]
-                        ret[strain][pos]["alt"] = attrs["Variant_seq"]
+                        ret[strain][pos]["alt"] = \
+                            attrs["Variant_seq"].split(",")[0]
                         ret[strain][pos]["gene"] = attrs["gene"]
 
                         ao = float(attrs["ao"].split(",")[0])
@@ -81,8 +82,8 @@ def parse_gvf_dir(dir_, file_order=None):
                         else:
                             ret[strain][pos]["mutation_name"] = "n/a"
 
-                        ref_len = len(attrs["Reference_seq"])
-                        alt_len = len(attrs["Variant_seq"])
+                        ref_len = len(ret[strain][pos]["ref"])
+                        alt_len = len(ret[strain][pos]["alt"])
                         if ref_len < alt_len:
                             ret[strain][pos]["mutation_type"] = "insertion"
                         elif ref_len > alt_len:
