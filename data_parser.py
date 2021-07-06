@@ -240,8 +240,10 @@ def get_data(dirs, clade_defining=False, hidden_strains=None,
                                          ret["heatmap_y"])
     ret["heatmap_z"] = \
         get_heatmap_z(visible_parsed_gvf_dirs, ret["heatmap_x"])
-    ret["heatmap_cell_text"] = \
-        get_heatmap_cell_text(visible_parsed_gvf_dirs, ret["heatmap_x"])
+    ret["heatmap_hover_text"] = \
+        get_heatmap_hover_text(visible_parsed_gvf_dirs, ret["heatmap_x"])
+    ret["heatmap_mutation_details"] = \
+        get_heatmap_mutation_details(visible_parsed_gvf_dirs, ret["heatmap_x"])
     ret["heatmap_x_genes"] = \
         get_heatmap_x_genes(ret["heatmap_x"])
 
@@ -355,7 +357,7 @@ def get_heatmap_z(parsed_gvf_dirs, heatmap_x):
     return ret
 
 
-def get_heatmap_cell_text(parsed_gvf_dirs, heatmap_x):
+def get_heatmap_hover_text(parsed_gvf_dirs, heatmap_x):
     """Get hover text of heatmap cells.
 
     :param parsed_gvf_dirs: A dictionary containing multiple merged
@@ -400,6 +402,25 @@ def get_heatmap_cell_text(parsed_gvf_dirs, heatmap_x):
                                     cell_data["alt_freq"],
                                     functions_str)
                 row.append(cell_text_str % cell_text_params)
+            else:
+                row.append(None)
+        ret.append(row)
+    return ret
+
+
+def get_heatmap_mutation_details(parsed_gvf_dirs, heatmap_x):
+    """TODO"""
+    ret = []
+    for strain in parsed_gvf_dirs:
+        row = []
+        for pos in heatmap_x:
+            if pos in parsed_gvf_dirs[strain]:
+                cell_data = parsed_gvf_dirs[strain][pos]
+                details_dict = {
+                    "name": cell_data["mutation_name"],
+                    "functions": cell_data["functions"]
+                }
+                row.append(details_dict)
             else:
                 row.append(None)
         ret.append(row)

@@ -506,6 +506,34 @@ def update_heatmap_main_fig(data):
 
 
 @app.callback(
+    Output("mutation-details-modal", "is_open"),
+    Output("mutation-details-modal-header", "children"),
+    Output("mutation-details-modal-body", "children"),
+    Output("heatmap-main-fig", "clickData"),
+    Input("heatmap-main-fig", "clickData"),
+    Input("mutation-details-close-btn", "n_clicks"),
+    State("data", "data"),
+    prevent_initial_call=True
+)
+def toggle_mutation_details_modal(click_data, _, data):
+    """TODO"""
+    ctx = dash.callback_context
+    triggered_prop_id = ctx.triggered[0]["prop_id"]
+    # We only open the modal when the heatmap is clicked
+    if triggered_prop_id == "heatmap-main-fig.clickData":
+        x = click_data["points"][0]["x"]
+        y = click_data["points"][0]["y"]
+        mutation_details = data["heatmap_mutation_details"][y][x]
+        mutation_name = mutation_details["name"]
+        mutation_fns = mutation_details["functions"]
+        body = heatmap_generator.get_mutation_details_modal_body(mutation_fns)
+        return True, mutation_name, body, None
+    else:
+        # No need to populate modal body if the modal is closed
+        return False, None, None, None
+
+
+@app.callback(
     Output("histogram-top-row-div", "children"),
     Input("data", "data"),
     prevent_initial_call=True

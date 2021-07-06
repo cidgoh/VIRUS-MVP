@@ -10,6 +10,7 @@ using the Plotly scattergl object, and making it look like a heatmap.
 import json
 
 import dash_bootstrap_components as dbc
+import dash_html_components as html
 import dash_core_components as dcc
 import plotly.graph_objects as go
 
@@ -146,6 +147,7 @@ def get_heatmap_row(data):
                 width=1,
                 style={"overflowX": "hidden"}
             ),
+            get_mutation_details_modal()
         ],
         no_gutters=True,
         className="mt-3"
@@ -416,7 +418,7 @@ def get_heatmap_main_graph_obj(data):
                 scatter_x.append(i)
                 scatter_y.append(j)
                 scatter_marker_color.append(float(freq))
-                scatter_text.append(data["heatmap_cell_text"][j][i])
+                scatter_text.append(data["heatmap_hover_text"][j][i])
     ret = go.Scattergl(
         x=scatter_x,
         y=scatter_y,
@@ -547,4 +549,27 @@ def get_heatmap_colorbar_graph_obj():
             }
         }
     )
+    return ret
+
+
+def get_mutation_details_modal():
+    """TODO"""
+    return dbc.Modal([
+        # Empty at launch; populated when user opens modal
+        dbc.ModalHeader(None, id="mutation-details-modal-header"),
+        # Empty at launch; populated when user opens modal
+        dbc.ModalBody(None, id="mutation-details-modal-body"),
+        dbc.ModalFooter(
+            dbc.Button("Close",
+                       color="secondary",
+                       id="mutation-details-close-btn")
+        )
+    ], id="mutation-details-modal")
+
+
+def get_mutation_details_modal_body(mutation_functions):
+    """TODO"""
+    ret = []
+    for fn in {x.strip('"') for x in set(mutation_functions)}:
+        ret.append(html.P(html.B(fn)))
     return ret
