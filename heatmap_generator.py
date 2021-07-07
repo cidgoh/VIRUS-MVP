@@ -10,6 +10,7 @@ using the Plotly scattergl object, and making it look like a heatmap.
 import json
 
 import dash_bootstrap_components as dbc
+import dash_html_components as html
 import dash_core_components as dcc
 import plotly.graph_objects as go
 
@@ -146,6 +147,7 @@ def get_heatmap_row(data):
                 width=1,
                 style={"overflowX": "hidden"}
             ),
+            get_mutation_details_modal()
         ],
         no_gutters=True,
         className="mt-3"
@@ -416,7 +418,7 @@ def get_heatmap_main_graph_obj(data):
                 scatter_x.append(i)
                 scatter_y.append(j)
                 scatter_marker_color.append(float(freq))
-                scatter_text.append(data["heatmap_cell_text"][j][i])
+                scatter_text.append(data["heatmap_hover_text"][j][i])
     ret = go.Scattergl(
         x=scatter_x,
         y=scatter_y,
@@ -547,4 +549,55 @@ def get_heatmap_colorbar_graph_obj():
             }
         }
     )
+    return ret
+
+
+def get_mutation_details_modal():
+    """Returns mutation details modal.
+
+    This modal is initially closed, and the header and body are empty.
+
+    :return: Initially closed Dash Bootstrap Components modal for
+        displaying details on mutations.
+    :rtype: dbc.Modal
+    """
+    return dbc.Modal([
+        # Empty at launch; populated when user opens modal
+        dbc.ModalHeader(None, id="mutation-details-modal-header"),
+        # Empty at launch; populated when user opens modal
+        dbc.ModalBody(None, id="mutation-details-modal-body"),
+        dbc.ModalFooter(
+            dbc.Button("Close",
+                       color="secondary",
+                       id="mutation-details-close-btn")
+        )
+    ], id="mutation-details-modal", scrollable=True, size="xl")
+
+
+def get_mutation_details_modal_body(mutation_fns):
+    """Returns mutation details modal body.
+
+    :param mutation_fns: A dictionary containing information on some
+        mutation functions, as seen as a property for the return value
+        of ``get_data``.
+    :type mutation_fns: dict
+    :return: A list group with displaying the information in
+        ``mutation_fns``.
+    :rtype: dbc.ListGroup
+    """
+    outer_list_group = []
+    for fn_category in mutation_fns:
+        inner_list_group = [dbc.ListGroupItemHeading(fn_category)]
+        for fn_desc in mutation_fns[fn_category]:
+            inner_list_group.append(dbc.ListGroupItemText(fn_desc))
+            fn_source = mutation_fns[fn_category][fn_desc]["source"]
+            fn_citation = mutation_fns[fn_category][fn_desc]["citation"]
+            a = html.A(fn_citation,
+                       href=fn_source,
+                       target="_blank",
+                       # https://bit.ly/3qQjB7Y
+                       rel="noopener noreferrer")
+            inner_list_group.append(dbc.ListGroupItemText(a))
+        outer_list_group.append(dbc.ListGroupItem(inner_list_group))
+    ret = dbc.ListGroup(outer_list_group)
     return ret

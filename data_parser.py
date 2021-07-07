@@ -86,10 +86,7 @@ def parse_gvf_dir(dir_, file_order=None):
 
                         ret[strain][pos]["hidden_cell"] = False
 
-                        if attrs["Name"]:
-                            ret[strain][pos]["mutation_name"] = attrs["Name"]
-                        else:
-                            ret[strain][pos]["mutation_name"] = "n/a"
+                        ret[strain][pos]["mutation_name"] = attrs["Name"]
 
                         ref_len = len(ret[strain][pos]["ref"])
                         alt_len = len(ret[strain][pos]["alt"])
@@ -100,11 +97,17 @@ def parse_gvf_dir(dir_, file_order=None):
                         else:
                             ret[strain][pos]["mutation_type"] = "snp"
 
-                        ret[strain][pos]["functions"] = []
+                        ret[strain][pos]["functions"] = {}
 
-                    if attrs["function_category"]:
-                        function = attrs["function_category"]
-                        ret[strain][pos]["functions"] += [function]
+                    fn_category = attrs["function_category"].strip('"')
+                    fn_desc = attrs["function_description"].strip('"')
+                    fn_source = attrs["source"].strip('"')
+                    fn_citation = attrs["citation"].strip('"')
+                    if fn_category:
+                        if fn_category not in ret[strain][pos]["functions"]:
+                            ret[strain][pos]["functions"][fn_category] = {}
+                        ret[strain][pos]["functions"][fn_category][fn_desc] = \
+                            {"source": fn_source, "citation": fn_citation}
     return ret
 
 
@@ -240,8 +243,12 @@ def get_data(dirs, clade_defining=False, hidden_strains=None,
                                          ret["heatmap_y"])
     ret["heatmap_z"] = \
         get_heatmap_z(visible_parsed_gvf_dirs, ret["heatmap_x"])
-    ret["heatmap_cell_text"] = \
-        get_heatmap_cell_text(visible_parsed_gvf_dirs, ret["heatmap_x"])
+    ret["heatmap_hover_text"] = \
+        get_heatmap_hover_text(visible_parsed_gvf_dirs, ret["heatmap_x"])
+    ret["heatmap_mutation_names"] = \
+        get_heatmap_mutation_names(visible_parsed_gvf_dirs, ret["heatmap_x"])
+    ret["heatmap_mutation_fns"] = \
+        get_heatmap_mutation_fns(visible_parsed_gvf_dirs, ret["heatmap_x"])
     ret["heatmap_x_genes"] = \
         get_heatmap_x_genes(ret["heatmap_x"])
 
@@ -355,7 +362,7 @@ def get_heatmap_z(parsed_gvf_dirs, heatmap_x):
     return ret
 
 
-def get_heatmap_cell_text(parsed_gvf_dirs, heatmap_x):
+def get_heatmap_hover_text(parsed_gvf_dirs, heatmap_x):
     """Get hover text of heatmap cells.
 
     :param parsed_gvf_dirs: A dictionary containing multiple merged
@@ -374,13 +381,18 @@ def get_heatmap_cell_text(parsed_gvf_dirs, heatmap_x):
             if pos in parsed_gvf_dirs[strain]:
                 cell_data = parsed_gvf_dirs[strain][pos]
 
-                functions_set = set(cell_data["functions"])
+                mutation_name = cell_data["mutation_name"]
+                if not mutation_name:
+                    mutation_name = "n/a"
+
                 functions_str = ""
-                for i, fn in enumerate(functions_set):
+                for i, fn_category in enumerate(cell_data["functions"]):
                     if i == 8:
                         functions_str += "...click for more<br>"
                         break
-                    functions_str += fn + "<br>"
+                    functions_str += fn_category + "<br>"
+                if not functions_str:
+                    functions_str = "n/a"
 
                 cell_text_str = "<b>Mutation name: %s</b><br>" \
                                 "<br>" \
@@ -392,7 +404,7 @@ def get_heatmap_cell_text(parsed_gvf_dirs, heatmap_x):
                                 "<b>Alternate frequency:</b> %s<br>" \
                                 "<br>" \
                                 "<b>Functions:</b> <br>%s"
-                cell_text_params = (cell_data["mutation_name"],
+                cell_text_params = (mutation_name,
                                     pos,
                                     cell_data["gene"],
                                     cell_data["ref"],
@@ -400,6 +412,69 @@ def get_heatmap_cell_text(parsed_gvf_dirs, heatmap_x):
                                     cell_data["alt_freq"],
                                     functions_str)
                 row.append(cell_text_str % cell_text_params)
+            else:
+                row.append(None)
+        ret.append(row)
+    return ret
+
+
+def get_heatmap_mutation_names(parsed_gvf_dirs, heatmap_x):
+    """Get mutation names associated with heatmap cells.
+
+    This is useful when allowing users to click on heatmap cells for
+    mutation details.
+
+    :param parsed_gvf_dirs: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return values.
+    :type parsed_gvf_dirs: dict
+    :param heatmap_x: ``get_heatmap_x`` return value
+    :type heatmap_x: list[int]
+    :return: Mutation names for each x y coordinate in heatmap.
+    :rtype: list[list[str]]
+    """
+    ret = []
+    for strain in parsed_gvf_dirs:
+        row = []
+        for pos in heatmap_x:
+            if pos in parsed_gvf_dirs[strain]:
+                cell_data = parsed_gvf_dirs[strain][pos]
+                mutation_name = cell_data["mutation_name"]
+                if mutation_name:
+                    row.append(mutation_name)
+                else:
+                    row.append(None)
+            else:
+                row.append(None)
+        ret.append(row)
+    return ret
+
+
+def get_heatmap_mutation_fns(parsed_gvf_dirs, heatmap_x):
+    """Get mutation fns associated with heatmap cells.
+
+    This is useful when allowing users to click on heatmap cells for
+    mutation details.
+
+    :param parsed_gvf_dirs: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return values.
+    :type parsed_gvf_dirs: dict
+    :param heatmap_x: ``get_heatmap_x`` return value
+    :type heatmap_x: list[int]
+    :return: Mutation functions for each x y coordinate in heatmap, as
+        structured in dict format used by ``parsed_gvf_dirs``.
+    :rtype: list[list[dict]]
+    """
+    ret = []
+    for strain in parsed_gvf_dirs:
+        row = []
+        for pos in heatmap_x:
+            if pos in parsed_gvf_dirs[strain]:
+                cell_data = parsed_gvf_dirs[strain][pos]
+                functions = cell_data["functions"]
+                if functions:
+                    row.append(functions)
+                else:
+                    row.append(None)
             else:
                 row.append(None)
         ret.append(row)
@@ -537,7 +612,7 @@ def get_tables(parsed_gvf_dirs):
             ref_col.append(cell_data["ref"])
             alt_col.append(cell_data["alt"])
             alt_freq_col.append(cell_data["alt_freq"])
-            functions_col.append(cell_data["functions"])
+            functions_col.append([fn for fn in cell_data["functions"]])
         ret[strain] = [
             pos_col, mutation_name_col, ref_col, alt_col, alt_freq_col,
             functions_col

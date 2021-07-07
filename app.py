@@ -506,6 +506,57 @@ def update_heatmap_main_fig(data):
 
 
 @app.callback(
+    Output("mutation-details-modal", "is_open"),
+    Output("mutation-details-modal-header", "children"),
+    Output("mutation-details-modal-body", "children"),
+    Output("heatmap-main-fig", "clickData"),
+    Input("heatmap-main-fig", "clickData"),
+    Input("mutation-details-close-btn", "n_clicks"),
+    State("data", "data"),
+    prevent_initial_call=True
+)
+def toggle_mutation_details_modal(click_data, _, data):
+    """Open or close mutation details modal.
+
+    Not only is this function in charge of opening or closing the
+    mutation details modal, it is also in charge of dynamically
+    populating the mutation details modal body when the modal is
+    opened.
+
+    :param click_data: Information on last heatmap cell clicked
+    :type click_data: dict
+    :param _: Close button in mutation details modal was clicked
+    :param data: Current value for ``data`` variable; see ``get_data``
+        return value.
+    :type data: dict or None
+    :return: Boolean representing whether the mutation details modal is
+        open or closed, mutation details modal header, mutation details
+        body, and a new value for the click data stored by Dash, which
+        we reset to None to allow repeated triggers from clicks of the
+        same cell.
+    :rtype: (bool, str, dbc.ListGroup, None)"""
+    ctx = dash.callback_context
+    triggered_prop_id = ctx.triggered[0]["prop_id"]
+    # We only open the modal when the heatmap is clicked
+    if triggered_prop_id == "heatmap-main-fig.clickData":
+        x = click_data["points"][0]["x"]
+        y = click_data["points"][0]["y"]
+        mutation_name = data["heatmap_mutation_names"][y][x]
+        if not mutation_name:
+            mutation_name = "n/a"
+        mutation_fns = data["heatmap_mutation_fns"][y][x]
+        if not mutation_fns:
+            body = "n/a"
+        else:
+            body = \
+                heatmap_generator.get_mutation_details_modal_body(mutation_fns)
+        return True, mutation_name, body, None
+    else:
+        # No need to populate modal body if the modal is closed
+        return False, None, None, None
+
+
+@app.callback(
     Output("histogram-top-row-div", "children"),
     Input("data", "data"),
     prevent_initial_call=True
