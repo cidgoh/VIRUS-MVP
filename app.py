@@ -523,10 +523,15 @@ def toggle_mutation_details_modal(click_data, _, data):
     if triggered_prop_id == "heatmap-main-fig.clickData":
         x = click_data["points"][0]["x"]
         y = click_data["points"][0]["y"]
-        mutation_details = data["heatmap_mutation_details"][y][x]
-        mutation_name = mutation_details["name"]
-        mutation_fns = mutation_details["functions"]
-        body = heatmap_generator.get_mutation_details_modal_body(mutation_fns)
+        mutation_name = data["heatmap_mutation_names"][y][x]
+        if not mutation_name:
+            mutation_name = "n/a"
+        mutation_fns = data["heatmap_mutation_fns"][y][x]
+        if not mutation_fns:
+            body = "n/a"
+        else:
+            body = \
+                heatmap_generator.get_mutation_details_modal_body(mutation_fns)
         return True, mutation_name, body, None
     else:
         # No need to populate modal body if the modal is closed
