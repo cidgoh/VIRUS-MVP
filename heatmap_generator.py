@@ -553,7 +553,14 @@ def get_heatmap_colorbar_graph_obj():
 
 
 def get_mutation_details_modal():
-    """TODO"""
+    """Returns mutation details modal.
+
+    This modal is initially closed, and the header and body are empty.
+
+    :return: Initially closed Dash Bootstrap Components modal for
+        displaying details on mutations.
+    :rtype: dbc.Modal
+    """
     return dbc.Modal([
         # Empty at launch; populated when user opens modal
         dbc.ModalHeader(None, id="mutation-details-modal-header"),
@@ -568,13 +575,21 @@ def get_mutation_details_modal():
 
 
 def get_mutation_details_modal_body(mutation_fns):
-    """TODO"""
+    """Returns mutation details modal body.
+
+    :param mutation_fns: A dictionary containing information on some
+        mutation functions, as seen as a property for the return value
+        of ``get_data``.
+    :type mutation_fns: dict
+    :return: A list group with displaying the information in
+        ``mutation_fns``.
+    :rtype: dbc.ListGroup
+    """
     outer_list_group = []
     for fn_category in mutation_fns:
         inner_list_group = [dbc.ListGroupItemHeading(fn_category)]
         for fn_desc in mutation_fns[fn_category]:
             inner_list_group.append(dbc.ListGroupItemText(fn_desc))
-
             fn_source = mutation_fns[fn_category][fn_desc]["source"]
             fn_citation = mutation_fns[fn_category][fn_desc]["citation"]
             a = html.A(fn_citation,

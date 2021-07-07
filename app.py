@@ -516,7 +516,25 @@ def update_heatmap_main_fig(data):
     prevent_initial_call=True
 )
 def toggle_mutation_details_modal(click_data, _, data):
-    """TODO"""
+    """Open or close mutation details modal.
+
+    Not only is this function in charge of opening or closing the
+    mutation details modal, it is also in charge of dynamically
+    populating the mutation details modal body when the modal is
+    opened.
+
+    :param click_data: Information on last heatmap cell clicked
+    :type click_data: dict
+    :param _: Close button in mutation details modal was clicked
+    :param data: Current value for ``data`` variable; see ``get_data``
+        return value.
+    :type data: dict or None
+    :return: Boolean representing whether the mutation details modal is
+        open or closed, mutation details modal header, mutation details
+        body, and a new value for the click data stored by Dash, which
+        we reset to None to allow repeated triggers from clicks of the
+        same cell.
+    :rtype: (bool, str, dbc.ListGroup, None)"""
     ctx = dash.callback_context
     triggered_prop_id = ctx.triggered[0]["prop_id"]
     # We only open the modal when the heatmap is clicked

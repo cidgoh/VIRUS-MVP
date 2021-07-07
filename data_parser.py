@@ -419,7 +419,19 @@ def get_heatmap_hover_text(parsed_gvf_dirs, heatmap_x):
 
 
 def get_heatmap_mutation_names(parsed_gvf_dirs, heatmap_x):
-    """TODO"""
+    """Get mutation names associated with heatmap cells.
+
+    This is useful when allowing users to click on heatmap cells for
+    mutation details.
+
+    :param parsed_gvf_dirs: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return values.
+    :type parsed_gvf_dirs: dict
+    :param heatmap_x: ``get_heatmap_x`` return value
+    :type heatmap_x: list[int]
+    :return: Mutation names for each x y coordinate in heatmap.
+    :rtype: list[list[str]]
+    """
     ret = []
     for strain in parsed_gvf_dirs:
         row = []
@@ -438,7 +450,20 @@ def get_heatmap_mutation_names(parsed_gvf_dirs, heatmap_x):
 
 
 def get_heatmap_mutation_fns(parsed_gvf_dirs, heatmap_x):
-    """TODO"""
+    """Get mutation fns associated with heatmap cells.
+
+    This is useful when allowing users to click on heatmap cells for
+    mutation details.
+
+    :param parsed_gvf_dirs: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return values.
+    :type parsed_gvf_dirs: dict
+    :param heatmap_x: ``get_heatmap_x`` return value
+    :type heatmap_x: list[int]
+    :return: Mutation functions for each x y coordinate in heatmap, as
+        structured in dict format used by ``parsed_gvf_dirs``.
+    :rtype: list[list[dict]]
+    """
     ret = []
     for strain in parsed_gvf_dirs:
         row = []
