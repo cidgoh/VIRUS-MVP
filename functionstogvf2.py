@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jun 10 15:53:01 2021
+Created on Thu Jul  8 10:58:54 2021
 
 @author: madeline
 """
@@ -41,11 +41,10 @@ def convertfile(gvf_file, annotation_file):
 
 
     #collect all mutation groups (including reference mutation) in a column, sorted alphabetically
-    #this is more roundabout than it needs to be; streamline with grouby() later
     merged_df["mutation_group"] = merged_df["comb_mutation"].astype(str) + ", '" + merged_df["mutation"].astype(str) + "'"
+    merged_df["mutation_group"] = merged_df["mutation_group"].str.replace("'| ",'')
     mutation_groups = merged_df["mutation_group"].str.split(pat=',').apply(pd.Series)
-    mutation_groups = mutation_groups.apply(lambda s:s.str.replace("'", ""))
-    mutation_groups = mutation_groups.apply(lambda s:s.str.replace(" ", ""))
+    print(mutation_groups)
     mutation_groups = mutation_groups.transpose() 
     sorted_df = mutation_groups
     for column in mutation_groups.columns:
@@ -87,18 +86,8 @@ def convertfile(gvf_file, annotation_file):
     merged_df["#attributes"] = merged_df["#attributes"].astype(str) + "clade_defining=True;" #placeholder for now
     merged_df["#attributes"] = 'ID=' + merged_df['id'].astype(str) + ';' + merged_df["#attributes"].astype(str)
     
+    return merged_df
     
-    #get list of names in tsv but not in functional annotations, and vice versa, saved as a .tsv
-    tsv_names = gvf["mutation"].unique()
-    pokay_names = df["mutation"].unique()
-    print(str(tsv_names.shape[0]) + " unique protein names in the .tsv")
-    print(str(pokay_names.shape[0]) + " unique protein names in pokay")
-    print(str(np.setdiff1d(tsv_names, pokay_names).shape[0]) + "/" + str(tsv_names.shape[0]) + " .tsv names were not found in pokay")
-    in_pokay_only = pd.DataFrame({'in_pokay_only':np.setdiff1d(pokay_names, tsv_names)})
-    in_tsv_only = pd.DataFrame({'in_tsv_only':np.setdiff1d(tsv_names, pokay_names)})
-    leftover_names = pd.concat([in_pokay_only,in_tsv_only], axis=1)
-    print(leftover_names)
-    return merged_df, leftover_names
 
 #process all gvf files in the data folder and save them inside merged_gvf_files
 folderpath = "reference_data_/08_07_2021" #folder containing annotated VCFs
@@ -112,13 +101,9 @@ gvf_columns = ['#seqid','#source','#type','#start','#end','#score','#strand','#p
 parent_directory = os.path.dirname(os.path.dirname(os.getcwd())) #path to voc_prototype main folder
 annotation_file = parent_directory + '/functional_annotation_V.0.2.tsv'
 
-print("Processing:")
+print("Merged files saved as:")
 for file in glob.glob('./gvf_files/*.gvf'): #process all .gvf files
-    print("")
-    print("tsv: " + file)
-    result, leftover_names = convertfile(file, annotation_file)
-    result_filepath = "./merged_gvf_files/" + file.rsplit('/', 1)[-1][:-3] + "merged.gvf.tsv"
-    result.to_csv(result_filepath, sep='\t', index=False, columns=gvf_columns)
-    leftover_names_filepath = "./merged_gvf_files/" + file.rsplit('/', 1)[-1][:-3] + "leftover_names.tsv"
-    leftover_names.to_csv(leftover_names_filepath, sep='\t', index=False)
-    print("saved as: " + result_filepath)
+    result = convertfile(file, annotation_file)
+    filepath = "./merged_gvf_files/" + file.rsplit('/', 1)[-1][:-3] + "merged.gvf"
+    result.to_csv(filepath, sep='\t', index=False, columns=gvf_columns)
+    print(filepath)
