@@ -165,5 +165,5 @@ def convertfolder(folderpath):
 
 
 
-folder = "reference_data_/08_07_2021" #folder containing annotated VCFs
+folder = "reference_data_/31_05_2021" #folder containing annotated VCFs
 convertfolder(folder)
