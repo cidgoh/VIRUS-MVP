@@ -21,8 +21,8 @@ import glob
 import os
 import numpy as np
 
-
-def convertfile(gvf_file, annotation_file):
+#takes 3 arguments: an output file of vcftogvf.py, Anoosha's annotation file from Pokay, and the clade defining mutations tsv.
+def convertfile(gvf_file, annotation_file, clade_file):
     
     #extract strain name from gvf_file filename
     pat = r'.*?gvf_files/(.*)_ids.*'
@@ -32,7 +32,8 @@ def convertfile(gvf_file, annotation_file):
     #load files into Pandas dataframes
     df = pd.read_csv(annotation_file, sep='\t', header=0) #load functional annotations spreadsheet
     gvf = pd.read_csv(gvf_file, sep='\t', header=0) #load entire GVF file for modification
-
+    clades = pd.read_csv(clade_file, sep='\t', header=0, usecols=['strain', 'mutation']) #load entire GVF file for modification
+    clades = clades.loc[clades.strain == strain]
     attributes = gvf["#attributes"].str.split(pat=';').apply(pd.Series)
 
     hgvs_protein = attributes[0].str.split(pat='=').apply(pd.Series)[1]
@@ -43,7 +44,8 @@ def convertfile(gvf_file, annotation_file):
     #merge annotated vcf and functional annotation files by 'mutation' column in the gvf
     for column in df.columns:
         df[column] = df[column].str.lstrip()
-    merged_df = pd.merge(df, gvf, on=['mutation'], how='right')
+    merged_df = pd.merge(df, gvf, on=['mutation'], how='right') #add functional annotations
+    merged_df = pd.merge(clades, merged_df, on=['mutation'], how='right') #add clade-defining mutations
 
 
     #collect all mutation groups (including reference mutation) in a column, sorted alphabetically
@@ -90,7 +92,11 @@ def convertfile(gvf_file, annotation_file):
         else:
             merged_df["#attributes"] = merged_df["#attributes"].astype(str) + key + '=' + merged_df[column].astype(str) + ';'
 
-    merged_df["#attributes"] = merged_df["#attributes"].astype(str) + "clade_defining=True;" #placeholder for now
+    #change clade-defining attribute to True/False depending on content of 'strain' column
+    merged_df.loc[merged_df.strain == strain, "#attributes"] = merged_df.loc[merged_df.strain == strain, "#attributes"].astype(str)  + "clade_defining=True;"
+    merged_df.loc[merged_df.strain != strain, "#attributes"] = merged_df.loc[merged_df.strain != strain, "#attributes"].astype(str)  + "clade_defining=False;"
+
+    #add ID to attributes
     merged_df["#attributes"] = 'ID=' + merged_df['id'].astype(str) + ';' + merged_df["#attributes"].astype(str)
     
     
@@ -119,6 +125,7 @@ def convertfolder(folderpath):
 
     parent_directory = os.path.dirname(os.path.dirname(os.getcwd())) #path to voc_prototype main folder
     annotation_file = parent_directory + '/functional_annotation_V.0.2.tsv'
+    clade_defining_file = parent_directory + '/clade_defining_mutations.tsv'
 
     #make empty list in which to store mutation names from all strains in the folder together
     all_strains_mutations = []
@@ -128,7 +135,7 @@ def convertfolder(folderpath):
     for file in glob.glob('./gvf_files/*.gvf'): #process all .gvf files
         print("")
         print("tsv: " + file)
-        result, leftover_names, mutations = convertfile(file, annotation_file)
+        result, leftover_names, mutations = convertfile(file, annotation_file, clade_defining_file)
         result_filepath = "./merged_gvf_files/" + file.rsplit('/', 1)[-1][:-3] + "merged.gvf.tsv"
         result.to_csv(result_filepath, sep='\t', index=False, columns=gvf_columns)
         print("saved as: " + result_filepath)
