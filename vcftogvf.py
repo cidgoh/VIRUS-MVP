@@ -9,6 +9,9 @@ Created on Thu May 13 14:59:11 2021
 '''
 This script converts VCF files that have been annotated by snpEFF into GVF files,
 ignoring pragmas as this is an intermediate step to the final GVF that will contain functional annotations.
+
+TO-DO:
+-correct end points
 '''
 
 import pandas as pd
@@ -103,5 +106,5 @@ def convertfolder(folderpath):
         result.to_csv(filepath, sep='\t', index=False, columns=gvf_columns)
         
 
-folder = "reference_data_/08_07_2021" #folder containing annotated VCFs
+folder = "reference_data_/31_05_2021" #folder containing annotated VCFs
 convertfolder(folder)

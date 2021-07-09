@@ -23,7 +23,13 @@ import numpy as np
 
 
 def convertfile(gvf_file, annotation_file):
+    
+    #extract strain name from gvf_file filename
+    pat = r'.*?gvf_files/(.*)_ids.*'
+    match = re.search(pat, gvf_file)
+    strain = match.group(1)
 
+    #load files into Pandas dataframes
     df = pd.read_csv(annotation_file, sep='\t', header=0) #load functional annotations spreadsheet
     gvf = pd.read_csv(gvf_file, sep='\t', header=0) #load entire GVF file for modification
 
@@ -91,17 +97,20 @@ def convertfile(gvf_file, annotation_file):
     #get list of names in tsv but not in functional annotations, and vice versa, saved as a .tsv
     tsv_names = gvf["mutation"].unique()
     pokay_names = df["mutation"].unique()
-    print(str(tsv_names.shape[0]) + " unique protein names in the .tsv")
-    print(str(pokay_names.shape[0]) + " unique protein names in pokay")
     print(str(np.setdiff1d(tsv_names, pokay_names).shape[0]) + "/" + str(tsv_names.shape[0]) + " .tsv names were not found in pokay")
     in_pokay_only = pd.DataFrame({'in_pokay_only':np.setdiff1d(pokay_names, tsv_names)})
     in_tsv_only = pd.DataFrame({'in_tsv_only':np.setdiff1d(tsv_names, pokay_names)})
-    leftover_names = pd.concat([in_pokay_only,in_tsv_only], axis=1)
-    print(leftover_names)
-    return merged_df, leftover_names
+    #leftover_names = pd.concat([in_pokay_only,in_tsv_only], axis=1)
+    leftover_names = in_tsv_only
+    leftover_names["strain"] = strain
+    
+    return merged_df, leftover_names, gvf["mutation"].tolist()
+
+
+
 
 #process all gvf files in the data folder and save them inside merged_gvf_files
-folderpath = "reference_data_/08_07_2021" #folder containing annotated VCFs
+folderpath = "reference_data_/31_05_2021" #folder containing annotated VCFs
 new_folder = folderpath + "/merged_gvf_files" #gvf files from this script will be stored in here
 if not os.path.exists(new_folder):
     os.makedirs(new_folder)
@@ -112,13 +121,29 @@ gvf_columns = ['#seqid','#source','#type','#start','#end','#score','#strand','#p
 parent_directory = os.path.dirname(os.path.dirname(os.getcwd())) #path to voc_prototype main folder
 annotation_file = parent_directory + '/functional_annotation_V.0.2.tsv'
 
+#make empty list in which to store mutation names from all strains in the folder together
+all_strains_mutations = []
+leftover_df = pd.DataFrame() #empty dataframe to hold unmatched names
+
 print("Processing:")
 for file in glob.glob('./gvf_files/*.gvf'): #process all .gvf files
     print("")
     print("tsv: " + file)
-    result, leftover_names = convertfile(file, annotation_file)
+    result, leftover_names, mutations = convertfile(file, annotation_file)
     result_filepath = "./merged_gvf_files/" + file.rsplit('/', 1)[-1][:-3] + "merged.gvf.tsv"
     result.to_csv(result_filepath, sep='\t', index=False, columns=gvf_columns)
-    leftover_names_filepath = "./merged_gvf_files/" + file.rsplit('/', 1)[-1][:-3] + "leftover_names.tsv"
-    leftover_names.to_csv(leftover_names_filepath, sep='\t', index=False)
     print("saved as: " + result_filepath)
+    
+    all_strains_mutations.append(mutations)
+    leftover_df = leftover_df.append(leftover_names)
+
+leftover_names_filepath = "./merged_gvf_files/" + "leftover_names.tsv"
+leftover_df.to_csv(leftover_names_filepath, sep='\t', index=False)
+print("")
+print("Unmatched names from .tsvs saved in " + leftover_names_filepath)
+
+#print number of unique mutations across all strains    
+flattened = [val for sublist in all_strains_mutations for val in sublist]
+arr = np.array(flattened)
+print("")
+print("# unique mutations across all strains: ", np.unique(arr).shape[0])
