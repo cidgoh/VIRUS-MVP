@@ -107,12 +107,12 @@ def launch_app(_):
         # attribute.
         dcc.Store(id="data", data=data_),
         # The following in-browser variables simply exist to help
-        # modularize the callbacks below, by alerting us when ``data``
-        # should be changed.
+        # modularize the callbacks below.
         dcc.Store(id="show-clade-defining"),
         dcc.Store(id="new-upload"),
         dcc.Store(id="hidden-strains"),
         dcc.Store(id="strain-order"),
+        dcc.Store(id="last-heatmap-cell-clicked"),
         # Used to integrate some JS callbacks. The data values are
         # meaningless, we just need outputs to perform all clientside
         # functions.
@@ -506,57 +506,6 @@ def update_heatmap_main_fig(data):
 
 
 @app.callback(
-    Output("mutation-details-modal", "is_open"),
-    Output("mutation-details-modal-header", "children"),
-    Output("mutation-details-modal-body", "children"),
-    Output("heatmap-main-fig", "clickData"),
-    Input("heatmap-main-fig", "clickData"),
-    Input("mutation-details-close-btn", "n_clicks"),
-    State("data", "data"),
-    prevent_initial_call=True
-)
-def toggle_mutation_details_modal(click_data, _, data):
-    """Open or close mutation details modal.
-
-    Not only is this function in charge of opening or closing the
-    mutation details modal, it is also in charge of dynamically
-    populating the mutation details modal body when the modal is
-    opened.
-
-    :param click_data: Information on last heatmap cell clicked
-    :type click_data: dict
-    :param _: Close button in mutation details modal was clicked
-    :param data: Current value for ``data`` variable; see ``get_data``
-        return value.
-    :type data: dict or None
-    :return: Boolean representing whether the mutation details modal is
-        open or closed, mutation details modal header, mutation details
-        body, and a new value for the click data stored by Dash, which
-        we reset to None to allow repeated triggers from clicks of the
-        same cell.
-    :rtype: (bool, str, dbc.ListGroup, None)"""
-    ctx = dash.callback_context
-    triggered_prop_id = ctx.triggered[0]["prop_id"]
-    # We only open the modal when the heatmap is clicked
-    if triggered_prop_id == "heatmap-main-fig.clickData":
-        x = click_data["points"][0]["x"]
-        y = click_data["points"][0]["y"]
-        mutation_name = data["heatmap_mutation_names"][y][x]
-        if not mutation_name:
-            mutation_name = "n/a"
-        mutation_fns = data["heatmap_mutation_fns"][y][x]
-        if not mutation_fns:
-            body = "n/a"
-        else:
-            body = \
-                heatmap_generator.get_mutation_details_modal_body(mutation_fns)
-        return True, mutation_name, body, None
-    else:
-        # No need to populate modal body if the modal is closed
-        return False, None, None, None
-
-
-@app.callback(
     Output("histogram-top-row-div", "children"),
     Input("data", "data"),
     prevent_initial_call=True
@@ -577,10 +526,94 @@ def update_histogram(data):
 
 
 @app.callback(
+    Output("heatmap-main-fig", "clickData"),
+    Output("last-heatmap-cell-clicked", "data"),
+    Input("heatmap-main-fig", "clickData"),
+    prevent_initial_call=True
+)
+def route_heatmap_main_fig_click(click_data):
+    """Store click data from heatmap in "last-heatmap-cell-clicked".
+
+    The built-in ``clickData`` variable does not allow repeated
+    callbacks following consecutive clicks of the same point. We get
+    around this by receiving the ``clickData``, storing it in
+    ``last-heatmap-cell-clicked``, and setting ``clickData`` to None.
+    When ``clickData`` is set to None, it can be updated by clicking
+    the same point again, which triggers ``last-heatmap-cell-clicked``
+    to be updated as well. ``last-heatmap-cell-clicked`` is the
+    clickData input detected by callbacks.
+
+    The logical question is, "why do the callbacks not just use
+    ``clickData`` as input, and reset it to None each time? Why use
+    this middle-man?" Because multiple callbacks use ``clickData`` in
+    parallel, and if you reset it to None in one when that callback is
+    finished, the other callbacks may not receive it in time. We never
+    reset ``last-heatmap-cell-clicked`` to None in any callbacks,
+    because we do not need to.
+
+    :param click_data: ``heatmap-main-fig.clickData`` value
+    :type click_data: dict
+    :return: ``None`` to reset heatmap ``clickData`` attribute, and a
+        copy of  this attribute before resetting
+    :rtype: (None, dict)
+    """
+    return None, click_data
+
+
+@app.callback(
+    Output("mutation-details-modal", "is_open"),
+    Output("mutation-details-modal-header", "children"),
+    Output("mutation-details-modal-body", "children"),
+    Input("last-heatmap-cell-clicked", "data"),
+    Input("mutation-details-close-btn", "n_clicks"),
+    State("data", "data"),
+    prevent_initial_call=True
+)
+def toggle_mutation_details_modal(click_data, _, data):
+    """Open or close mutation details modal.
+
+    Not only is this function in charge of opening or closing the
+    mutation details modal, it is also in charge of dynamically
+    populating the mutation details modal body when the modal is
+    opened.
+
+    :param click_data: ``last-heatmap-cell-clicked`` in-browser
+        variable value.
+    :type click_data: dict
+    :param _: Close button in mutation details modal was clicked
+    :param data: Current value for ``data`` variable; see ``get_data``
+        return value.
+    :type data: dict or None
+    :return: Boolean representing whether the mutation details modal is
+        open or closed, mutation details modal header, and mutation
+        details body.
+    :rtype: (bool, str, dbc.ListGroup)"""
+    ctx = dash.callback_context
+    triggered_prop_id = ctx.triggered[0]["prop_id"]
+    # We only open the modal when the heatmap is clicked
+    if triggered_prop_id == "last-heatmap-cell-clicked.data":
+        x = click_data["points"][0]["x"]
+        y = click_data["points"][0]["y"]
+        mutation_name = data["heatmap_mutation_names"][y][x]
+        if not mutation_name:
+            mutation_name = "n/a"
+        mutation_fns = data["heatmap_mutation_fns"][y][x]
+        if not mutation_fns:
+            body = "n/a"
+        else:
+            body = \
+                heatmap_generator.get_mutation_details_modal_body(mutation_fns)
+        return True, mutation_name, body
+    else:
+        # No need to populate modal body if the modal is closed
+        return False, None, None
+
+
+@app.callback(
     Output("table", "figure"),
     inputs=[
         Input("data", "data"),
-        Input("heatmap-main-fig", "clickData"),
+        Input("last-heatmap-cell-clicked", "data"),
     ],
     prevent_initial_call=True
 )
@@ -591,18 +624,19 @@ def update_table(data, click_data):
     figure is updated as well. The table figure is also updated when
     the user clicks a heatmap cell. If no cell was clicked, a default
     strain is shown.
-    TODO only update when user clicks cell in new row
 
     :param data: ``get_data`` return value, transported here by
     :type data: dict
-    :param click_data: Dictionary describing cell in heatmap main
-        figure that the user clicked.
+    :param click_data: ``last-heatmap-cell-clicked`` in-browser
+        variable value.
     :type click_data: dict
     :return: New table figure corresponding to new data, or user
         selected strain.
     :rtype: plotly.graph_objects.Figure
     """
-    if click_data is None:
+    ctx = dash.callback_context
+    triggered_prop_id = ctx.triggered[0]["prop_id"]
+    if triggered_prop_id is "data.data":
         table_strain = data["heatmap_y"][0]
     else:
         table_strain = data["heatmap_y"][click_data["points"][0]["y"]]
