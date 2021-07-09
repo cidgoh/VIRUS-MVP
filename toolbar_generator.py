@@ -176,7 +176,7 @@ def get_mutation_freq_slider(data):
             "style": {"display": "none"}
         }
     marks[min_val]["style"].pop("display")
-    marks[min_val]["label"] = "Alt freq= " + marks[min_val]["label"]
+    marks[min_val]["label"] = "Freq=" + marks[min_val]["label"]
     marks[max_val]["style"].pop("display")
     return dcc.RangeSlider(id="mutation-freq-slider",
                            className="p-0",
