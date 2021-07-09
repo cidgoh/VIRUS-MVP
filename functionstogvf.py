@@ -108,42 +108,47 @@ def convertfile(gvf_file, annotation_file):
 
 
 
-
+def convertfolder(folderpath):
 #process all gvf files in the data folder and save them inside merged_gvf_files
-folderpath = "reference_data_/31_05_2021" #folder containing annotated VCFs
-new_folder = folderpath + "/merged_gvf_files" #gvf files from this script will be stored in here
-if not os.path.exists(new_folder):
-    os.makedirs(new_folder)
-os.chdir(folderpath)
+    new_folder = folderpath + "/merged_gvf_files" #gvf files from this script will be stored in here
+    if not os.path.exists(new_folder):
+        os.makedirs(new_folder)
+    os.chdir(folderpath)
 
-gvf_columns = ['#seqid','#source','#type','#start','#end','#score','#strand','#phase','#attributes']
+    gvf_columns = ['#seqid','#source','#type','#start','#end','#score','#strand','#phase','#attributes']
 
-parent_directory = os.path.dirname(os.path.dirname(os.getcwd())) #path to voc_prototype main folder
-annotation_file = parent_directory + '/functional_annotation_V.0.2.tsv'
+    parent_directory = os.path.dirname(os.path.dirname(os.getcwd())) #path to voc_prototype main folder
+    annotation_file = parent_directory + '/functional_annotation_V.0.2.tsv'
 
-#make empty list in which to store mutation names from all strains in the folder together
-all_strains_mutations = []
-leftover_df = pd.DataFrame() #empty dataframe to hold unmatched names
+    #make empty list in which to store mutation names from all strains in the folder together
+    all_strains_mutations = []
+    leftover_df = pd.DataFrame() #empty dataframe to hold unmatched names
 
-print("Processing:")
-for file in glob.glob('./gvf_files/*.gvf'): #process all .gvf files
+    print("Processing:")
+    for file in glob.glob('./gvf_files/*.gvf'): #process all .gvf files
+        print("")
+        print("tsv: " + file)
+        result, leftover_names, mutations = convertfile(file, annotation_file)
+        result_filepath = "./merged_gvf_files/" + file.rsplit('/', 1)[-1][:-3] + "merged.gvf.tsv"
+        result.to_csv(result_filepath, sep='\t', index=False, columns=gvf_columns)
+        print("saved as: " + result_filepath)
+
+        all_strains_mutations.append(mutations)
+        leftover_df = leftover_df.append(leftover_names)
+
+    #save unmatched names across all strains to a .tsv file
+    leftover_names_filepath = "./merged_gvf_files/" + "leftover_names.tsv"
+    leftover_df.to_csv(leftover_names_filepath, sep='\t', index=False)
     print("")
-    print("tsv: " + file)
-    result, leftover_names, mutations = convertfile(file, annotation_file)
-    result_filepath = "./merged_gvf_files/" + file.rsplit('/', 1)[-1][:-3] + "merged.gvf.tsv"
-    result.to_csv(result_filepath, sep='\t', index=False, columns=gvf_columns)
-    print("saved as: " + result_filepath)
-    
-    all_strains_mutations.append(mutations)
-    leftover_df = leftover_df.append(leftover_names)
+    print("Unmatched names from .tsvs saved in " + leftover_names_filepath)
 
-leftover_names_filepath = "./merged_gvf_files/" + "leftover_names.tsv"
-leftover_df.to_csv(leftover_names_filepath, sep='\t', index=False)
-print("")
-print("Unmatched names from .tsvs saved in " + leftover_names_filepath)
+    #print number of unique mutations across all strains    
+    flattened = [val for sublist in all_strains_mutations for val in sublist]
+    arr = np.array(flattened)
+    print("")
+    print("# unique mutations across all strains: ", np.unique(arr).shape[0])
 
-#print number of unique mutations across all strains    
-flattened = [val for sublist in all_strains_mutations for val in sublist]
-arr = np.array(flattened)
-print("")
-print("# unique mutations across all strains: ", np.unique(arr).shape[0])
+
+
+folder = "reference_data_/31_05_2021" #folder containing annotated VCFs
+convertfolder(folder)
