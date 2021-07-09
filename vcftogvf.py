@@ -106,5 +106,5 @@ def convertfolder(folderpath):
         result.to_csv(filepath, sep='\t', index=False, columns=gvf_columns)
         
 
-folder = "reference_data_/31_05_2021" #folder containing annotated VCFs
+folder = "reference_data_/08_07_2021" #folder containing annotated VCFs
 convertfolder(folder)

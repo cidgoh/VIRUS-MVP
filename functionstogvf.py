@@ -9,10 +9,6 @@ Created on Thu Jun 10 15:53:01 2021
 '''
 Merges the functional annotation .tsv with the gvf file produced by vcftogvf.py.  
 Assigns a unique ID of the form ID_n to each unique set of mutations that share a functional effect.
-
-TO-DO:
--change clade_defining attribute to correct True/False values
--tidy up code
 '''
 
 import pandas as pd
@@ -110,7 +106,11 @@ def convertfile(gvf_file, annotation_file, clade_file):
     leftover_names = in_tsv_only
     leftover_names["strain"] = strain
     
-    return merged_df, leftover_names, gvf["mutation"].tolist()
+    clade_names = clades["mutation"].unique()
+    leftover_clade_names = pd.DataFrame({'unmatched_clade_names':np.setdiff1d(clade_names, tsv_names)})
+    leftover_clade_names["strain"] = strain
+    
+    return merged_df, leftover_names, gvf["mutation"].tolist(), leftover_clade_names
 
 
 
@@ -130,24 +130,32 @@ def convertfolder(folderpath):
     #make empty list in which to store mutation names from all strains in the folder together
     all_strains_mutations = []
     leftover_df = pd.DataFrame() #empty dataframe to hold unmatched names
+    unmatched_clade_names = pd.DataFrame() #empty dataframe to hold unmatched clade-defining mutation names
 
     print("Processing:")
     for file in glob.glob('./gvf_files/*.gvf'): #process all .gvf files
         print("")
         print("tsv: " + file)
-        result, leftover_names, mutations = convertfile(file, annotation_file, clade_defining_file)
+        result, leftover_names, mutations, leftover_clade_names = convertfile(file, annotation_file, clade_defining_file)
         result_filepath = "./merged_gvf_files/" + file.rsplit('/', 1)[-1][:-3] + "merged.gvf.tsv"
         result.to_csv(result_filepath, sep='\t', index=False, columns=gvf_columns)
         print("saved as: " + result_filepath)
 
         all_strains_mutations.append(mutations)
         leftover_df = leftover_df.append(leftover_names)
+        unmatched_clade_names = unmatched_clade_names.append(leftover_clade_names)
 
-    #save unmatched names across all strains to a .tsv file
+    #save unmatched names (in tsv but not in Pokay) across all strains to a .tsv file
     leftover_names_filepath = "./merged_gvf_files/" + "leftover_names.tsv"
     leftover_df.to_csv(leftover_names_filepath, sep='\t', index=False)
     print("")
-    print("Unmatched names from .tsvs saved in " + leftover_names_filepath)
+    print("Mutation names not found in Pokay saved to " + leftover_names_filepath)
+    
+    #save unmatched clade-defining mutation names across all strains to a .tsv file
+    leftover_clade_names_filepath = "./merged_gvf_files/" + "leftover_clade_defining_names.tsv"
+    unmatched_clade_names.to_csv(leftover_clade_names_filepath, sep='\t', index=False)
+    print("")
+    print("Clade-defining mutation names not found in the annotated .tsvs saved to " + leftover_clade_names_filepath)
 
     #print number of unique mutations across all strains    
     flattened = [val for sublist in all_strains_mutations for val in sublist]
@@ -157,5 +165,5 @@ def convertfolder(folderpath):
 
 
 
-folder = "reference_data_/31_05_2021" #folder containing annotated VCFs
+folder = "reference_data_/08_07_2021" #folder containing annotated VCFs
 convertfolder(folder)
