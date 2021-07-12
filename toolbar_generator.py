@@ -201,7 +201,7 @@ def get_clade_defining_mutations_switch_form_group():
     ret = dbc.FormGroup([
         dbc.Checklist(
             options=[{
-                "label": "Clade defining mutations",
+                "label": "Clade defining",
                 "value": 1
             }],
             value=[],
