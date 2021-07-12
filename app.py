@@ -636,7 +636,7 @@ def update_table(data, click_data):
     """
     ctx = dash.callback_context
     triggered_prop_id = ctx.triggered[0]["prop_id"]
-    if triggered_prop_id is "data.data":
+    if triggered_prop_id == "data.data":
         table_strain = data["heatmap_y"][0]
     else:
         table_strain = data["heatmap_y"][click_data["points"][0]["y"]]
