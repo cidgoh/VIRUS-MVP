@@ -61,7 +61,9 @@ app.layout = dbc.Container(
     # docstring.
     dcc.Store("first-launch"),
     fluid=True,
-    id="main-container")
+    id="main-container",
+    className="px-0"
+)
 
 
 @app.callback(
