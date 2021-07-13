@@ -25,7 +25,7 @@ def get_toolbar_row(data):
                         get_select_lineages_toolbar_btn(),
                         get_file_upload_component()
                     ],
-                    className="pl-3"
+                    className="pl-4 pl-xl-5"
                 ),
                 width=3
             ),
@@ -42,7 +42,7 @@ def get_toolbar_row(data):
             ),
             dbc.Col(
                 get_clade_defining_mutations_switch_form_group(),
-                className="my-auto pl-4",
+                className="my-auto pl-xl-5",
                 width=2
             ),
             get_select_lineages_modal()
@@ -209,6 +209,6 @@ def get_clade_defining_mutations_switch_form_group():
             id="clade-defining-mutations-switch",
             switch=True
         )],
-        className="mb-0"
+        className="mb-0 pl-xl-2"
     )
     return ret
