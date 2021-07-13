@@ -84,13 +84,13 @@ def get_heatmap_row(data):
                                 id="heatmap-y-axis-fig",
                                 figure=get_heatmap_y_axis_fig(data),
                                 config={"displayModeBar": False},
-                                style={"width": "110%"}
+                                style={"width": "160%"}
                             )
                         ),
                         no_gutters=True
                     )
                 ],
-                className="pr-2 pr-xl-0",
+                className="pr-5",
                 width=2,
                 style={"overflowX": "visible"}
             ),
@@ -120,7 +120,7 @@ def get_heatmap_row(data):
                     )
                 ],
                 id="heatmap-center-div",
-                className="px-2 px-xl-0",
+                className="pl-4",
                 width=8,
                 style={"overflowX": "scroll"}
             ),
@@ -214,7 +214,6 @@ def get_heatmap_y_axis_graph_obj(data):
         y=[i for i in range(len(data["heatmap_y"]))],
         mode="text",
         text=data["heatmap_y"],
-        textposition="middle left",
         hoverinfo="skip",
         showlegend=False
     )
