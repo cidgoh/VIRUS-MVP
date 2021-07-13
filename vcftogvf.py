@@ -9,6 +9,9 @@ Created on Thu May 13 14:59:11 2021
 '''
 This script converts VCF files that have been annotated by snpEFF into GVF files,
 ignoring pragmas as this is an intermediate step to the final GVF that will contain functional annotations.
+
+TO-DO:
+-correct end points
 '''
 
 import pandas as pd
@@ -47,12 +50,16 @@ def convertfile(var_data):
     new_df['#attributes'] = new_df['#attributes'].astype(str) + 'mutation_type=' + eff_info[1] + ';'    
     
     #columns copied straight from Zohaib's file
-    for column in ['REF','ALT','AO', 'DP', 'RO']:
+    for column in ['REF','ALT','ALT_DP', 'DP', 'REF_DP']:
         key = column.lower()
         if key=='ref':
             key = 'Reference_seq'
         elif key=='alt':
             key = 'Variant_seq'
+        elif key=='ref_dp':
+            key = 'ro'
+        elif key=='alt_dp':
+            key = 'ao'
         new_df['#attributes'] = new_df['#attributes'].astype(str) + key + '=' + df[column].astype(str) + ';'
     
     #add strain name
@@ -75,7 +82,7 @@ def convertfile(var_data):
     #fill in other GVF columns
     new_df['#seqid'] = df['CHROM']
     new_df['#source'] = '.'
-    new_df['#type'] = df['TYPE']
+    new_df['#type'] = '.' #df['TYPE']
     new_df['#start'] = df['POS']
     new_df['#end'] = (df['POS'] + df['ALT'].str.len() - 1).astype(str)  #this needs fixing
     new_df['#score'] = '.'
@@ -84,16 +91,20 @@ def convertfile(var_data):
     
     return new_df
 
+#process all annotated VCF files in the data folder
+def convertfolder(folderpath):
+    print("Converted files saved as:")
+    new_folder = folderpath + "/gvf_files" #gvf files from this script will be stored in here
+    if not os.path.exists(new_folder):
+        os.makedirs(new_folder)
+    os.chdir(folderpath)
 
-#process all VCF files in the data folder
-folderpath = "reference_data_/31_05_2021" #folder containing annotated VCFs
-new_folder = folderpath + "/gvf_files" #gvf files from this script will be stored in here
-if not os.path.exists(new_folder):
-    os.makedirs(new_folder)
-os.chdir(folderpath)
+    for file in glob.glob('./*.tsv'): #get all .tsv files
+        result = convertfile(file)
+        filepath = "./gvf_files" + file[1:-4] + ".gvf"
+        print(filepath)
+        result.to_csv(filepath, sep='\t', index=False, columns=gvf_columns)
+        
 
-for file in glob.glob('./*_ids_GISAID_reformatted.sorted.annotated.tsv'):
-    result = convertfile(file)
-    filepath = "./gvf_files" + file[1:-4] + ".gvf"
-    print(filepath)
-    result.to_csv(filepath, sep='\t', index=False, columns=gvf_columns)
+folder = "reference_data_/08_07_2021" #folder containing annotated VCFs
+convertfolder(folder)
