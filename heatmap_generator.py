@@ -83,14 +83,16 @@ def get_heatmap_row(data):
                             dcc.Graph(
                                 id="heatmap-y-axis-fig",
                                 figure=get_heatmap_y_axis_fig(data),
-                                config={"displayModeBar": False}
+                                config={"displayModeBar": False},
+                                style={"width": "160%"}
                             )
                         ),
                         no_gutters=True
                     )
                 ],
-                width=1,
-                style={"overflowX": "hidden"}
+                className="pr-5",
+                width=2,
+                style={"overflowX": "visible"}
             ),
             dbc.Col(
                 [
@@ -118,7 +120,8 @@ def get_heatmap_row(data):
                     )
                 ],
                 id="heatmap-center-div",
-                width=10,
+                className="pl-4",
+                width=8,
                 style={"overflowX": "scroll"}
             ),
             dbc.Col(
@@ -137,14 +140,14 @@ def get_heatmap_row(data):
                             dcc.Graph(
                                 id="heatmap-colorbar-fig",
                                 figure=get_heatmap_colorbar_fig(data),
-                                config={"displayModeBar": False}
+                                config={"displayModeBar": False},
                             ),
-                            className="ml-3"
+                            className="ml-5"
                         ),
                         no_gutters=True
                     )
                 ],
-                width=1,
+                width=2,
                 style={"overflowX": "hidden"}
             ),
             get_mutation_details_modal()
@@ -516,7 +519,6 @@ def get_heatmap_colorbar_fig(data):
             "t": 0,
             "b": 0
         },
-        height=get_main_heatmap_fig_height(data),
         autosize=False
     )
     ret.update_xaxes(visible=False)
