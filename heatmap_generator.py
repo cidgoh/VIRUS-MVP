@@ -142,7 +142,7 @@ def get_heatmap_row(data):
                                 figure=get_heatmap_colorbar_fig(data),
                                 config={"displayModeBar": False},
                             ),
-                            className="ml-3"
+                            className="ml-5"
                         ),
                         no_gutters=True
                     )

@@ -20,14 +20,15 @@ def get_toolbar_row(data):
     ret = dbc.Row(
         [
             dbc.Col(
-                dbc.ButtonGroup([
-                    get_select_lineages_toolbar_btn(),
-                    get_file_upload_component()
-                ]),
-                className="my-auto",
-                width={"offset": 1}
+                dbc.ButtonGroup(
+                    [
+                        get_select_lineages_toolbar_btn(),
+                        get_file_upload_component()
+                    ],
+                    className="pl-3"
+                ),
+                width=3
             ),
-            get_select_lineages_modal(),
             dbc.Col(
                 # Empty on launch
                 className="my-auto",
@@ -37,16 +38,16 @@ def get_toolbar_row(data):
                 get_mutation_freq_slider(data),
                 className="my-auto",
                 id="mutation-freq-slider-col",
-                width={"size": 2}
+                width=2
             ),
             dbc.Col(
                 get_clade_defining_mutations_switch_form_group(),
-                className="my-auto",
-                width={"size": 2}
+                className="my-auto pl-4",
+                width=2
             ),
             get_select_lineages_modal()
         ],
-        className="mt-3"
+        className="mt-3 ml-xl-3"
     )
     return ret
 
