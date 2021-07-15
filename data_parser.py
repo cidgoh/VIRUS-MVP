@@ -251,6 +251,8 @@ def get_data(dirs, clade_defining=False, hidden_strains=None,
         get_heatmap_mutation_fns(visible_parsed_gvf_dirs, ret["heatmap_x"])
     ret["heatmap_x_genes"] = \
         get_heatmap_x_genes(ret["heatmap_x"])
+    ret["heatmap_x_amino_acids"] = \
+        get_heatmap_x_amino_acids(parsed_gvf_dirs, ret["heatmap_x"])
 
     return ret
 
@@ -314,6 +316,17 @@ def get_heatmap_x_genes(heatmap_x):
     ret = []
     for pos in heatmap_x:
         ret.append(map_pos_to_gene(int(pos)))
+    return ret
+
+
+def get_heatmap_x_amino_acids(parsed_gvf_dirs, heatmap_x):
+    """TODO"""
+    ret = []
+    for pos in heatmap_x:
+        for strain in parsed_gvf_dirs:
+            if pos in parsed_gvf_dirs[strain]:
+                ret.append(parsed_gvf_dirs[strain][pos]["mutation_name"])
+                break
     return ret
 
 
