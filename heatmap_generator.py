@@ -73,7 +73,7 @@ def get_heatmap_row(data):
                     dbc.Row(
                         dbc.Col(
                             None,
-                            style={"height": 40}
+                            style={"height": "2rem"}
                         ),
                         no_gutters=True
                     ),
@@ -102,7 +102,10 @@ def get_heatmap_row(data):
                             dcc.Graph(
                                 id="heatmap-gene-bar-fig",
                                 figure=get_heatmap_gene_bar_fig(data),
-                                config={"displayModeBar": False}
+                                config={"displayModeBar": False},
+                                style={"height": "2rem",
+                                       # Same as heatmap width
+                                       "width": len(data["heatmap_x"]) * 36}
                             )
                         ),
                         no_gutters=True
@@ -130,7 +133,7 @@ def get_heatmap_row(data):
                     dbc.Row(
                         dbc.Col(
                             None,
-                            style={"height": 40},
+                            style={"height": "2rem"},
                         ),
                         no_gutters=True
                     ),
@@ -231,13 +234,12 @@ def get_heatmap_gene_bar_fig(data):
     heatmap_gene_bar_obj = get_heatmap_gene_bar_graph_obj(data)
     ret = go.Figure(heatmap_gene_bar_obj)
     ret.update_xaxes(type="linear",
+                     fixedrange=True,
                      visible=False)
     ret.update_yaxes(type="linear",
+                     fixedrange=True,
                      visible=False)
     ret.update_layout(
-        width=len(data["heatmap_x"]) * 36,
-        height=40,
-        autosize=False,
         plot_bgcolor="white",
         margin={
             "l": 0,
@@ -248,34 +250,21 @@ def get_heatmap_gene_bar_fig(data):
         }
     )
     # This bit of hackey code is needed to display the labels on the
-    # gene bar where we want them. The labels are in the middle, and
-    # appear differently if the bars are too small.
+    # gene bar where we want them. The labels are in the middle.
     midpoints = []
     endpoints = heatmap_gene_bar_obj["x"]
     for i, val in enumerate(endpoints[:-1]):
         midpoint = ((endpoints[i+1] - endpoints[i]) / 2) + endpoints[i]
         midpoints.append(midpoint)
     for i, gene_label in enumerate(heatmap_gene_bar_obj["text"][0]):
-        x_start = heatmap_gene_bar_obj["x"][i]
-        x_end = heatmap_gene_bar_obj["x"][i+1]
-        # TODO: fix this hackey solution by using a monospace font, and
-        #  calculating the length of the label versus the length of the
-        #  gene bar cell.
-        if (x_end - x_start) < 3 and len(gene_label) > (x_end - x_start):
-            font_size = 10
-            text_angle = 90
-        else:
-            font_size = 18
-            text_angle = 0
         ret.add_annotation(
             xref="x1",
             yref="y1",
             x=midpoints[i],
             y=heatmap_gene_bar_obj["y"][0],
             text=gene_label,
-            textangle=text_angle,
             showarrow=False,
-            font={"color": "white", "size": font_size}
+            font={"color": "white", "size": 18}
         )
     return ret
 
