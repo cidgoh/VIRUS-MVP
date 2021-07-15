@@ -82,7 +82,7 @@ def parse_gvf_dir(dir_, file_order=None):
                         ret[strain][pos]["alt_freq"] = str(ao / dp)
 
                         ret[strain][pos]["clade_defining"] = \
-                            attrs["clade_defining"]
+                            attrs["clade_defining"] == "True"
 
                         ret[strain][pos]["hidden_cell"] = False
 
