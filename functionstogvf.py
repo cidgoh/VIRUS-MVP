@@ -27,7 +27,7 @@ def convertfile(gvf_file, annotation_file, clade_file):
 
     #load files into Pandas dataframes
     df = pd.read_csv(annotation_file, sep='\t', header=0) #load functional annotations spreadsheet
-    gvf = pd.read_csv(gvf_file, sep='\t', header=3) #load entire GVF file for modification
+    gvf = pd.read_csv(gvf_file, sep='\t', header=0) #load entire GVF file for modification
     clades = pd.read_csv(clade_file, sep='\t', header=0, usecols=['strain', 'mutation']) #load entire GVF file for modification
     clades = clades.loc[clades.strain == strain]
     attributes = gvf["#attributes"].str.split(pat=';').apply(pd.Series)
@@ -138,7 +138,7 @@ def convertfolder(folderpath):
         print("")
         print("tsv: " + file)
         result, leftover_names, mutations, leftover_clade_names = convertfile(file, annotation_file, clade_defining_file)
-        result_filepath = "./merged_gvf_files/" + file.rsplit('/', 1)[-1][:-3] + "merged.gvf.tsv"
+        result_filepath = "./merged_gvf_files/" + file.rsplit('/', 1)[-1][:-3] + "merged.gvf"
         
         #add pragmas to df, then save to .tsv
         result = result[gvf_columns]
@@ -172,5 +172,5 @@ def convertfolder(folderpath):
 
 
 
-folder = "reference_data_/08_07_2021" #folder containing annotated VCFs
+folder = "reference_data_/31_05_2021" #folder containing annotated VCFs
 convertfolder(folder)
