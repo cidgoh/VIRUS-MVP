@@ -98,12 +98,18 @@ def convertfolder(folderpath):
     if not os.path.exists(new_folder):
         os.makedirs(new_folder)
     os.chdir(folderpath)
+    
+    pragmas = pd.DataFrame([['##gff-version 3'], ['##gvf-version 1.10'], ['##species NCBI_Taxonomy_URI=http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=2697049']]) #pragmas are in column 0
 
     for file in glob.glob('./*.tsv'): #get all .tsv files
         result = convertfile(file)
+        #add pragmas to df, then save to .tsv
+        result = result[gvf_columns]
+        result = pd.DataFrame(np.vstack([result.columns, result])) #columns are now 0, 1, ...
+        fin = pragmas.append(result)
         filepath = "./gvf_files" + file[1:-4] + ".gvf"
         print(filepath)
-        result.to_csv(filepath, sep='\t', index=False, columns=gvf_columns)
+        fin.to_csv(filepath, sep='\t', index=False, header=False)
         
 
 folder = "reference_data_/08_07_2021" #folder containing annotated VCFs

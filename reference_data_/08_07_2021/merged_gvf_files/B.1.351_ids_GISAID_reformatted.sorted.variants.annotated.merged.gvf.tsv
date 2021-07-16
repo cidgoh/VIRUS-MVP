@@ -1,3 +1,6 @@
+##gff-version 3								
+##gvf-version 1.10								
+##species NCBI_Taxonomy_URI=http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=2697049								
 #seqid	#source	#type	#start	#end	#score	#strand	#phase	#attributes
 MN908947.3	.	.	174	174	.	+	.	"ID=ID_0;Name=;nt_name=c.G-92T;gene=orf1ab;mutation_type=;Reference_seq=G;Variant_seq=T;ao=6544;dp=6777;ro=223;viral_lineage=B.1.351;who_label=Beta;status=VOC;function_category="""";source=;citation="""";comb_mutation=;function_description="""";clade_defining=False;"
 MN908947.3	.	.	241	241	.	+	.	"ID=ID_0;Name=;nt_name=c.C-25T;gene=orf1ab;mutation_type=;Reference_seq=C;Variant_seq=T;ao=6829;dp=6849;ro=17;viral_lineage=B.1.351;who_label=Beta;status=VOC;function_category="""";source=;citation="""";comb_mutation=;function_description="""";clade_defining=False;"
