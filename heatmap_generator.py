@@ -73,7 +73,7 @@ def get_heatmap_row(data):
                     dbc.Row(
                         dbc.Col(
                             None,
-                            style={"height": "2rem"}
+                            style={"height": "9rem"}
                         ),
                         no_gutters=True
                     ),
@@ -110,6 +110,20 @@ def get_heatmap_row(data):
                         ),
                         no_gutters=True
                     ),
+                    # Amino acid axis
+                    dbc.Row(
+                        dbc.Col(
+                            dcc.Graph(
+                                id="heatmap-aa-axis-fig",
+                                figure=get_heatmap_aa_axis_fig(data),
+                                config={"displayModeBar": False},
+                                style={"height": "7rem",
+                                       # Same as heatmap width
+                                       "width": len(data["heatmap_x"]) * 36}
+                            )
+                        ),
+                        no_gutters=True
+                    ),
                     # Main heatmap fig with cells and x-axis
                     dbc.Row(
                         dbc.Col(
@@ -133,7 +147,7 @@ def get_heatmap_row(data):
                     dbc.Row(
                         dbc.Col(
                             None,
-                            style={"height": "2rem"},
+                            style={"height": "9rem"},
                         ),
                         no_gutters=True
                     ),
@@ -330,6 +344,42 @@ def get_heatmap_gene_bar_graph_obj(data):
         colorscale=heatmap_center_genes_obj_colorscale
     )
 
+    return ret
+
+
+def get_heatmap_aa_axis_fig(data):
+    """Get Plotly figure used as amino acid axis.
+
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
+    :return: Plotly figure containing amino acid axis
+    :rtype: go.Figure
+    """
+    ret = go.Figure({})
+    ret.update_layout(
+        xaxis_type="linear",
+        yaxis_type="linear",
+        plot_bgcolor="white",
+        font={
+            "size": 18
+        },
+        margin={
+            "l": 0,
+            "r": 0,
+            "t": 0,
+            "b": 0
+        }
+    )
+    ret.update_xaxes(range=[-0.5, len(data["heatmap_x"])-0.5],
+                     fixedrange=True,
+                     tickmode="array",
+                     tickvals=list(range(len(data["heatmap_x"]))),
+                     ticktext=data["heatmap_x_amino_acids"],
+                     ticklabelposition="inside",
+                     )
+    ret.update_yaxes(fixedrange=True,
+                     visible=False,
+                     zeroline=True)
     return ret
 
 

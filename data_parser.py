@@ -320,12 +320,28 @@ def get_heatmap_x_genes(heatmap_x):
 
 
 def get_heatmap_x_amino_acids(parsed_gvf_dirs, heatmap_x):
-    """TODO"""
+    """Get amino acids corresponding to x axis values in heatmap.
+
+    :param parsed_gvf_dirs: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return values.
+    :type parsed_gvf_dirs: dict
+    :param heatmap_x: ``get_heatmap_x`` return value
+    :type heatmap_x: list[str]
+    :return: List of amino acids for each x in ``heatmap_x``
+    :rtype: list[str]
+    """
     ret = []
     for pos in heatmap_x:
         for strain in parsed_gvf_dirs:
             if pos in parsed_gvf_dirs[strain]:
-                ret.append(parsed_gvf_dirs[strain][pos]["mutation_name"])
+                mutation_name = parsed_gvf_dirs[strain][pos]["mutation_name"]
+                amino_acid = ""
+                # TODO This is really hackey. I need a more reliable
+                #  way to get amino acid information.
+                if mutation_name != "" and mutation_name[2] != "X":
+                    amino_acid = mutation_name.split(".")[1]
+                    amino_acid = amino_acid.split("_")[0]
+                ret.append(amino_acid)
                 break
     return ret
 

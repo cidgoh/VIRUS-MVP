@@ -484,6 +484,30 @@ def update_heatmap_gene_bar_fig(_, data):
 
 
 @app.callback(
+    Output("heatmap-aa-axis-fig", "figure"),
+    Input("heatmap-main-fig", "figure"),
+    State("data", "data"),
+    prevent_initial_call=True
+)
+def update_heatmap_aa_axis_fig(_, data):
+    """Update heatmap amino acid axis fig.
+
+    We do this after the main heatmap fig with cells and x axis is
+    updated. The application seems to run more smoothly when we do not
+    attempt to update absolutely everything in parallel.
+
+    :param _: Main heatmap fig updated
+    :param data: Current value for ``data`` variable; see ``get_data``
+        return value.
+    :type data: dict
+    :return: New heatmap amino acid x-axis fig
+    :rtype: plotly.graph_objects.Figure
+    """
+    aa_x_axis_fig = heatmap_generator.get_heatmap_aa_axis_fig(data)
+    return aa_x_axis_fig
+
+
+@app.callback(
     Output("heatmap-main-fig", "figure"),
     Output("heatmap-main-fig", "style"),
     Input("data", "data"),
