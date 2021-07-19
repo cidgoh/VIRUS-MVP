@@ -94,7 +94,8 @@ def get_heatmap_row(data):
                             dcc.Graph(
                                 id="heatmap-y-axis-fig",
                                 figure=get_heatmap_y_axis_fig(data),
-                                config={"displayModeBar": False}
+                                config={"displayModeBar": False},
+                                style={"height": heatmap_cells_fig_height}
                             )
                         ),
                         no_gutters=True
@@ -213,7 +214,6 @@ def get_heatmap_y_axis_fig(data):
         xaxis_type="linear",
         yaxis_type="linear",
         plot_bgcolor="white",
-        height=get_heatmap_cells_fig_height(data),
         font={
             "size": 18
         },
