@@ -437,18 +437,18 @@ def update_mutation_freq_slider(data, old_slider_marks):
 
 @app.callback(
     Output("heatmap-y-axis-fig", "figure"),
-    Input("heatmap-main-fig", "figure"),
+    Input("heatmap-cells-fig", "figure"),
     State("data", "data"),
     prevent_initial_call=True
 )
 def update_heatmap_y_axis_fig(_, data):
     """Update heatmap y axis fig.
 
-    We do this after the main heatmap fig with cells and x axis is
-    updated. The application seems to run more smoothly when we do not
-    attempt to update absolutely everything in parallel.
+    We do this after the heatmap cells fig is updated. The application
+    seems to run more smoothly when we do not attempt to update
+    absolutely everything in parallel.
 
-    :param _: Main heatmap fig updated
+    :param _: Heatmap cells fig updated
     :param data: Current value for ``data`` variable; see ``get_data``
         return value.
     :type data: dict
@@ -461,18 +461,18 @@ def update_heatmap_y_axis_fig(_, data):
 
 @app.callback(
     Output("heatmap-gene-bar-fig", "figure"),
-    Input("heatmap-main-fig", "figure"),
+    Input("heatmap-cells-fig", "figure"),
     State("data", "data"),
     prevent_initial_call=True
 )
 def update_heatmap_gene_bar_fig(_, data):
     """Update heatmap gene bar fig.
 
-    We do this after the main heatmap fig with cells and x axis is
-    updated. The application seems to run more smoothly when we do not
-    attempt to update absolutely everything in parallel.
+    We do this after the heatmap cells fig is updated. The application
+    seems to run more smoothly when we do not attempt to update
+    absolutely everything in parallel.
 
-    :param _: Main heatmap fig updated
+    :param _: Heatmap cells fig updated
     :param data: Current value for ``data`` variable; see ``get_data``
         return value.
     :type data: dict
@@ -485,18 +485,18 @@ def update_heatmap_gene_bar_fig(_, data):
 
 @app.callback(
     Output("heatmap-aa-axis-fig", "figure"),
-    Input("heatmap-main-fig", "figure"),
+    Input("heatmap-cells-fig", "figure"),
     State("data", "data"),
     prevent_initial_call=True
 )
 def update_heatmap_aa_axis_fig(_, data):
     """Update heatmap amino acid axis fig.
 
-    We do this after the main heatmap fig with cells and x axis is
-    updated. The application seems to run more smoothly when we do not
-    attempt to update absolutely everything in parallel.
+    We do this after the heatmap cells fig is updated. The application
+    seems to run more smoothly when we do not attempt to update
+    absolutely everything in parallel.
 
-    :param _: Main heatmap fig updated
+    :param _: Heatmap cells fig updated
     :param data: Current value for ``data`` variable; see ``get_data``
         return value.
     :type data: dict
@@ -508,27 +508,29 @@ def update_heatmap_aa_axis_fig(_, data):
 
 
 @app.callback(
-    Output("heatmap-main-fig", "figure"),
-    Output("heatmap-main-fig", "style"),
+    Output("heatmap-cells-fig", "figure"),
+    Output("heatmap-cells-fig", "style"),
     Input("data", "data"),
     prevent_initial_call=True
 )
-def update_heatmap_main_fig(data):
-    """Update main heatmap fig and style.
+def update_heatmap_cells_fig(data):
+    """Update heatmap cells fig and style.
 
     This is the fig with the heatmap cells and x axis. We return style
-    because width may need to be bigger due to changes in data
-    ``heatmap_x`` value.
+    because width and height may need to change due to changes in data.
 
     :param data: Current value for ``data`` variable; see ``get_data``
         return value.
     :type data: dict
-    :return: New heatmap main fig
+    :return: New heatmap cells fig
     :rtype: plotly.graph_objects.Figure
     """
-    main_fig = heatmap_generator.get_heatmap_main_fig(data)
-    main_style = {"width": len(data["heatmap_x"]) * 25}
-    return main_fig, main_style
+    cells_fig = heatmap_generator.get_heatmap_cells_fig(data)
+    cells_fig_style = {
+        "height": heatmap_generator.get_heatmap_cells_fig_height(data),
+        "width": heatmap_generator.get_heatmap_cells_fig_width(data)
+    }
+    return cells_fig, cells_fig_style
 
 
 @app.callback(
@@ -552,12 +554,12 @@ def update_histogram(data):
 
 
 @app.callback(
-    Output("heatmap-main-fig", "clickData"),
+    Output("heatmap-cells-fig", "clickData"),
     Output("last-heatmap-cell-clicked", "data"),
-    Input("heatmap-main-fig", "clickData"),
+    Input("heatmap-cells-fig", "clickData"),
     prevent_initial_call=True
 )
-def route_heatmap_main_fig_click(click_data):
+def route_heatmap_cells_fig_click(click_data):
     """Store click data from heatmap in "last-heatmap-cell-clicked".
 
     The built-in ``clickData`` variable does not allow repeated
@@ -577,7 +579,7 @@ def route_heatmap_main_fig_click(click_data):
     reset ``last-heatmap-cell-clicked`` to None in any callbacks,
     because we do not need to.
 
-    :param click_data: ``heatmap-main-fig.clickData`` value
+    :param click_data: ``heatmap-cells-fig.clickData`` value
     :type click_data: dict
     :return: ``None`` to reset heatmap ``clickData`` attribute, and a
         copy of  this attribute before resetting
@@ -703,7 +705,7 @@ app.clientside_callback(
     ),
     Output("make-histogram-rel-pos-bar-dynamic", "data"),
     Input("histogram", "id"),
-    Input("heatmap-main-fig", "figure"),
+    Input("heatmap-cells-fig", "figure"),
     Input("data", "data"),
 )
 
