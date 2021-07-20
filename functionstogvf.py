@@ -131,14 +131,21 @@ def convertfolder(folderpath):
     all_strains_mutations = []
     leftover_df = pd.DataFrame() #empty dataframe to hold unmatched names
     unmatched_clade_names = pd.DataFrame() #empty dataframe to hold unmatched clade-defining mutation names
+    pragmas = pd.DataFrame([['##gff-version 3'], ['##gvf-version 1.10'], ['##species NCBI_Taxonomy_URI=http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=2697049']]) #pragmas are in column 0
 
     print("Processing:")
     for file in glob.glob('./gvf_files/*.gvf'): #process all .gvf files
         print("")
         print("tsv: " + file)
         result, leftover_names, mutations, leftover_clade_names = convertfile(file, annotation_file, clade_defining_file)
-        result_filepath = "./merged_gvf_files/" + file.rsplit('/', 1)[-1][:-3] + "merged.gvf.tsv"
-        result.to_csv(result_filepath, sep='\t', index=False, columns=gvf_columns)
+        result_filepath = "./merged_gvf_files/" + file.rsplit('/', 1)[-1][:-3] + "merged.gvf"
+        
+        #add pragmas to df, then save to .tsv
+        result = result[gvf_columns]
+        result = pd.DataFrame(np.vstack([result.columns, result])) #columns are now 0, 1, ...
+        fin = pragmas.append(result)
+        fin.to_csv(result_filepath, sep='\t', index=False, header=False)
+        
         print("saved as: " + result_filepath)
 
         all_strains_mutations.append(mutations)
