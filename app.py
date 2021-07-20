@@ -115,6 +115,9 @@ def launch_app(_):
         dcc.Store(id="hidden-strains"),
         dcc.Store(id="strain-order"),
         dcc.Store(id="last-heatmap-cell-clicked"),
+        # Used to update certain figures only when necessary
+        dcc.Store(id="heatmap-x-len", data=len(data_["heatmap_x"])),
+        dcc.Store(id="heatmap-y-len", data=len(data_["heatmap_y"])),
         # Used to integrate some JS callbacks. The data values are
         # meaningless, we just need outputs to perform all clientside
         # functions.
@@ -160,9 +163,9 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
     :type gff3_annotations: dict
     :return: ``get_data`` return value
     :rtype: dict
+    :raise PreventUpdate: New upload triggered this function, and that
+        new upload failed.
     """
-    # Do not update if a new upload triggered this function, and that
-    # new upload failed.
     triggers = [x["prop_id"] for x in dash.callback_context.triggered]
     if "new-upload.data" in triggers:
         if new_upload["status"] == "error":
@@ -341,6 +344,8 @@ def update_hidden_strains(_, values, data):
     :return: List of strains that should not be displayed by the
         heatmap or table.
     :rtype: list[str]
+    :raise PreventUpdate: Hidden strains did not change, or the user
+        chose to hide all strains.
     """
     # Merge list of lists into single list. I got it from:
     # https://stackoverflow.com/a/716761/11472358.
@@ -352,8 +357,6 @@ def update_hidden_strains(_, values, data):
         if strain not in checked_strains:
             hidden_strains.append(strain)
 
-    # Do not update if the hidden strains did not change, or if the
-    # user chose to hide all strains.
     old_hidden_strains = data["hidden_strains"]
     no_change = hidden_strains == old_hidden_strains
     all_hidden = hidden_strains == all_strains
@@ -423,11 +426,12 @@ def update_mutation_freq_slider(data, old_slider_marks):
     :type old_slider_marks: dict
     :return: New mutation frequency slider div, if one is needed
     :rtype: dcc.RangeSlider
+    :raise PreventUpdate: Number of mutation frequencies in ``data`` is
+        different than the number of mutation frequencies in the
+        current slider.
     """
-    # This is very hackey, but also very fast. We simply check if the
-    # number of mutation frequencies in the updated ``data`` is
-    # different than the number of mutation frequencies in the current
-    # slider. I do not think this will currently break anything.
+    # This is very hackey, but also very fast. I do not think this will
+    # currently break anything.
     new_slider_marks = data["mutation_freq_slider_vals"]
     if len(new_slider_marks) == len(old_slider_marks):
         raise PreventUpdate
@@ -436,18 +440,70 @@ def update_mutation_freq_slider(data, old_slider_marks):
 
 
 @app.callback(
+    Output("heatmap-x-len", "data"),
+    Input("data", "data"),
+    State("heatmap-x-len", "data"),
+    prevent_initial_call=True
+)
+def route_data_heatmap_x_update(data, old_heatmap_x_len):
+    """Update ``heatmap-x-len`` dcc variable when needed.
+
+    This serves as a useful trigger for figs that only need to be
+    updated when heatmap x changes. We use the length of
+    data["heatmap_x"] because it is faster than comparing the entire
+    list, and appropriately alerts us when data["heatmap_x"] changed.
+
+    :param data: ``get_data`` return value, transported here by
+        ``update_data``.
+    :type data: dict
+    :param old_heatmap_x_len: ``heatmap-x-len.data`` value
+    :type old_heatmap_x_len: dict
+    :return: New len of data["heatmap_x"]
+    :rtype: int
+    :raise PreventUpdate: If data["heatmap_x"] len did not change
+    """
+    if old_heatmap_x_len == len(data["heatmap_x"]):
+        raise PreventUpdate
+    return len(data["heatmap_x"])
+
+
+@app.callback(
+    Output("heatmap-y-len", "data"),
+    Input("data", "data"),
+    State("heatmap-y-len", "data"),
+    prevent_initial_call=True
+)
+def route_data_heatmap_y_update(data, old_heatmap_y_len):
+    """Update ``heatmap-y-len`` dcc variable when needed.
+
+    This serves as a useful trigger for figs that only need to be
+    updated when heatmap y changes. We use the length of
+    data["heatmap_y"] because it is faster than comparing the entire
+    list, and appropriately alerts us when data["heatmap_y"] changed.
+
+    :param data: ``get_data`` return value, transported here by
+        ``update_data``.
+    :type data: dict
+    :param old_heatmap_y_len: ``heatmap-y-len.data`` value
+    :type old_heatmap_y_len: dict
+    :return: New len of data["heatmap_y"]
+    :rtype: int
+    :raise PreventUpdate: If data["heatmap_y"] len did not change
+    """
+    if old_heatmap_y_len == len(data["heatmap_y"]):
+        raise PreventUpdate
+    return len(data["heatmap_y"])
+
+
+@app.callback(
     Output("heatmap-y-axis-fig", "figure"),
     Output("heatmap-y-axis-fig", "style"),
-    Input("heatmap-cells-fig", "figure"),
+    Input("heatmap-y-len", "data"),
     State("data", "data"),
     prevent_initial_call=True
 )
 def update_heatmap_y_axis_fig(_, data):
     """Update heatmap y axis fig.
-
-    We do this after the heatmap cells fig is updated. The application
-    seems to run more smoothly when we do not attempt to update
-    absolutely everything in parallel.
 
     We need to update style because y-axis fig height may change due to
     uploaded strains.
@@ -468,16 +524,12 @@ def update_heatmap_y_axis_fig(_, data):
 @app.callback(
     Output("heatmap-gene-bar-fig", "figure"),
     Output("heatmap-gene-bar-fig", "style"),
-    Input("heatmap-cells-fig", "figure"),
+    Input("heatmap-x-len", "data"),
     State("data", "data"),
     prevent_initial_call=True
 )
 def update_heatmap_gene_bar_fig(_, data):
     """Update heatmap gene bar fig.
-
-    We do this after the heatmap cells fig is updated. The application
-    seems to run more smoothly when we do not attempt to update
-    absolutely everything in parallel.
 
     We need to update style because width might have changed due to
     added nt positions in data.
@@ -498,16 +550,12 @@ def update_heatmap_gene_bar_fig(_, data):
 @app.callback(
     Output("heatmap-nt-pos-axis-fig", "figure"),
     Output("heatmap-nt-pos-axis-fig", "style"),
-    Input("heatmap-cells-fig", "figure"),
+    Input("heatmap-x-len", "data"),
     State("data", "data"),
     prevent_initial_call=True
 )
 def update_heatmap_nt_pos_axis_fig(_, data):
     """Update heatmap nt pos axis fig.
-
-    We do this after the heatmap cells fig is updated. The application
-    seems to run more smoothly when we do not attempt to update
-    absolutely everything in parallel.
 
     We need to update style because width might have changed due to
     added nt positions in data.
@@ -528,16 +576,12 @@ def update_heatmap_nt_pos_axis_fig(_, data):
 @app.callback(
     Output("heatmap-aa-axis-fig", "figure"),
     Output("heatmap-aa-axis-fig", "style"),
-    Input("heatmap-cells-fig", "figure"),
+    Input("heatmap-x-len", "data"),
     State("data", "data"),
     prevent_initial_call=True
 )
 def update_heatmap_aa_axis_fig(_, data):
     """Update heatmap amino acid axis fig.
-
-    We do this after the heatmap cells fig is updated. The application
-    seems to run more smoothly when we do not attempt to update
-    absolutely everything in parallel.
 
     We need to update style because width might have changed due to
     added nt positions in data.
@@ -554,6 +598,25 @@ def update_heatmap_aa_axis_fig(_, data):
         {"width": heatmap_generator.get_heatmap_cells_fig_width(data)}
     return aa_x_axis_fig, aa_x_axis_style
 
+
+@app.callback(
+    Output("histogram-top-row-div", "children"),
+    Input("data", "data"),
+    prevent_initial_call=True
+)
+def update_histogram(data):
+    """Update histogram top row div.
+
+    When the ``data`` variable in the dcc.Store is updated, the top row
+    in the histogram view is updated to reflect the new data. This
+    includes the actual histogram bars, and the y axis.
+
+    :param data: ``get_data`` return value, transported here by
+    :type data: dict
+    :return: New histogram figure corresponding to new data
+    :rtype: plotly.graph_objects.Figure
+    """
+    return histogram_generator.get_histogram_top_row(data)
 
 @app.callback(
     Output("heatmap-cells-fig", "figure"),
@@ -579,26 +642,6 @@ def update_heatmap_cells_fig(data):
         "width": heatmap_generator.get_heatmap_cells_fig_width(data)
     }
     return cells_fig, cells_fig_style
-
-
-@app.callback(
-    Output("histogram-top-row-div", "children"),
-    Input("data", "data"),
-    prevent_initial_call=True
-)
-def update_histogram(data):
-    """Update histogram top row div.
-
-    When the ``data`` variable in the dcc.Store is updated, the top row
-    in the histogram view is updated to reflect the new data. This
-    includes the actual histogram bars, and the y axis.
-
-    :param data: ``get_data`` return value, transported here by
-    :type data: dict
-    :return: New histogram figure corresponding to new data
-    :rtype: plotly.graph_objects.Figure
-    """
-    return histogram_generator.get_histogram_top_row(data)
 
 
 @app.callback(
