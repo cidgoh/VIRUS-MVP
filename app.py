@@ -437,6 +437,7 @@ def update_mutation_freq_slider(data, old_slider_marks):
 
 @app.callback(
     Output("heatmap-y-axis-fig", "figure"),
+    Output("heatmap-y-axis-fig", "style"),
     Input("heatmap-cells-fig", "figure"),
     State("data", "data"),
     prevent_initial_call=True
@@ -448,19 +449,25 @@ def update_heatmap_y_axis_fig(_, data):
     seems to run more smoothly when we do not attempt to update
     absolutely everything in parallel.
 
+    We need to update style because y-axis fig height may change due to
+    uploaded strains.
+
     :param _: Heatmap cells fig updated
     :param data: Current value for ``data`` variable; see ``get_data``
         return value.
     :type data: dict
-    :return: New heatmap y axis fig
-    :rtype: plotly.graph_objects.Figure
+    :return: New heatmap y axis fig and style
+    :rtype: (plotly.graph_objects.Figure, dict)
     """
     y_axis_fig = heatmap_generator.get_heatmap_y_axis_fig(data)
-    return y_axis_fig
+    y_axis_style = \
+        {"height": heatmap_generator.get_heatmap_cells_fig_height(data)}
+    return y_axis_fig, y_axis_style
 
 
 @app.callback(
     Output("heatmap-gene-bar-fig", "figure"),
+    Output("heatmap-gene-bar-fig", "style"),
     Input("heatmap-cells-fig", "figure"),
     State("data", "data"),
     prevent_initial_call=True
@@ -472,19 +479,55 @@ def update_heatmap_gene_bar_fig(_, data):
     seems to run more smoothly when we do not attempt to update
     absolutely everything in parallel.
 
+    We need to update style because width might have changed due to
+    added nt positions in data.
+
     :param _: Heatmap cells fig updated
     :param data: Current value for ``data`` variable; see ``get_data``
         return value.
     :type data: dict
-    :return: New heatmap gene bar fig
-    :rtype: plotly.graph_objects.Figure
+    :return: New heatmap gene bar fig and style
+    :rtype: (plotly.graph_objects.Figure, dict)
     """
     gene_bar_fig = heatmap_generator.get_heatmap_gene_bar_fig(data)
-    return gene_bar_fig
+    gene_bar_style = \
+        {"width": heatmap_generator.get_heatmap_cells_fig_width(data)}
+    return gene_bar_fig, gene_bar_style
+
+
+@app.callback(
+    Output("heatmap-nt-pos-axis-fig", "figure"),
+    Output("heatmap-nt-pos-axis-fig", "style"),
+    Input("heatmap-cells-fig", "figure"),
+    State("data", "data"),
+    prevent_initial_call=True
+)
+def update_heatmap_nt_pos_axis_fig(_, data):
+    """Update heatmap nt pos axis fig.
+
+    We do this after the heatmap cells fig is updated. The application
+    seems to run more smoothly when we do not attempt to update
+    absolutely everything in parallel.
+
+    We need to update style because width might have changed due to
+    added nt positions in data.
+
+    :param _: Heatmap cells fig updated
+    :param data: Current value for ``data`` variable; see ``get_data``
+        return value.
+    :type data: dict
+    :return: New heatmap nt pos x-axis fig and style
+    :rtype: (plotly.graph_objects.Figure, dict)
+    """
+    nt_pos_x_axis_fig = heatmap_generator.get_heatmap_nt_pos_axis_fig(data)
+    nt_pos_x_axis_style = \
+        {"width": heatmap_generator.get_heatmap_cells_fig_width(data)}
+    return nt_pos_x_axis_fig, nt_pos_x_axis_style
 
 
 @app.callback(
     Output("heatmap-aa-axis-fig", "figure"),
+    Output("heatmap-aa-axis-fig", "style"),
     Input("heatmap-cells-fig", "figure"),
     State("data", "data"),
     prevent_initial_call=True
@@ -496,15 +539,20 @@ def update_heatmap_aa_axis_fig(_, data):
     seems to run more smoothly when we do not attempt to update
     absolutely everything in parallel.
 
+    We need to update style because width might have changed due to
+    added nt positions in data.
+
     :param _: Heatmap cells fig updated
     :param data: Current value for ``data`` variable; see ``get_data``
         return value.
     :type data: dict
-    :return: New heatmap amino acid x-axis fig
-    :rtype: plotly.graph_objects.Figure
+    :return: New heatmap amino acid x-axis fig and style
+    :rtype: (plotly.graph_objects.Figure, dict)
     """
     aa_x_axis_fig = heatmap_generator.get_heatmap_aa_axis_fig(data)
-    return aa_x_axis_fig
+    aa_x_axis_style = \
+        {"width": heatmap_generator.get_heatmap_cells_fig_width(data)}
+    return aa_x_axis_fig, aa_x_axis_style
 
 
 @app.callback(
