@@ -41,7 +41,7 @@ def get_heatmap_cells_fig_width(data):
     :return: Heatmap cells fig height in pixels
     :rtype: int
     """
-    ret = len(data["heatmap_x"]) * 36
+    ret = len(data["heatmap_x_nt_pos"]) * 36
     return ret
 
 
@@ -370,11 +370,11 @@ def get_heatmap_aa_axis_fig(data):
             "b": 100
         }
     )
-    ret.update_xaxes(range=[-0.5, len(data["heatmap_x"])-0.5],
+    ret.update_xaxes(range=[-0.5, len(data["heatmap_x_nt_pos"])-0.5],
                      fixedrange=True,
                      tickmode="array",
-                     tickvals=list(range(len(data["heatmap_x"]))),
-                     ticktext=data["heatmap_x_amino_acids"],
+                     tickvals=list(range(len(data["heatmap_x_nt_pos"]))),
+                     ticktext=data["heatmap_x_aa"],
                      ticklabelposition="outside",
                      )
     ret.update_yaxes(fixedrange=True,
@@ -406,11 +406,11 @@ def get_heatmap_nt_pos_axis_fig(data):
             "b": 0
         }
     )
-    ret.update_xaxes(range=[-0.5, len(data["heatmap_x"])-0.5],
+    ret.update_xaxes(range=[-0.5, len(data["heatmap_x_nt_pos"])-0.5],
                      fixedrange=True,
                      tickmode="array",
-                     tickvals=list(range(len(data["heatmap_x"]))),
-                     ticktext=data["heatmap_x"],
+                     tickvals=list(range(len(data["heatmap_x_nt_pos"]))),
+                     ticktext=data["heatmap_x_nt_pos"],
                      ticklabelposition="inside")
     ret.update_yaxes(fixedrange=True,
                      visible=False,
@@ -446,7 +446,7 @@ def get_heatmap_cells_fig(data):
             "pad": 0
         }
     )
-    ret.update_xaxes(range=[-0.5, len(data["heatmap_x"])-0.5],
+    ret.update_xaxes(range=[-0.5, len(data["heatmap_x_nt_pos"])-0.5],
                      tickmode="linear",
                      tick0=0,
                      dtick=1,
@@ -488,7 +488,7 @@ def get_heatmap_cells_graph_obj(data):
     scatter_x = []
     scatter_marker_color = []
     scatter_text = []
-    for i, pos in enumerate(data["heatmap_x"]):
+    for i, pos in enumerate(data["heatmap_x_nt_pos"]):
         for j, strain in enumerate(data["heatmap_y"]):
             freq = data["heatmap_z"][j][i]
             if freq is not None:

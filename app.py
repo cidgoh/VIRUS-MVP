@@ -116,7 +116,7 @@ def launch_app(_):
         dcc.Store(id="strain-order"),
         dcc.Store(id="last-heatmap-cell-clicked"),
         # Used to update certain figures only when necessary
-        dcc.Store(id="heatmap-x-len", data=len(data_["heatmap_x"])),
+        dcc.Store(id="heatmap-x-len", data=len(data_["heatmap_x_nt_pos"])),
         dcc.Store(id="heatmap-y-len", data=len(data_["heatmap_y"])),
         # Used to integrate some JS callbacks. The data values are
         # meaningless, we just need outputs to perform all clientside
@@ -449,22 +449,24 @@ def route_data_heatmap_x_update(data, old_heatmap_x_len):
     """Update ``heatmap-x-len`` dcc variable when needed.
 
     This serves as a useful trigger for figs that only need to be
-    updated when heatmap x changes. We use the length of
-    data["heatmap_x"] because it is faster than comparing the entire
-    list, and appropriately alerts us when data["heatmap_x"] changed.
+    updated when heatmap x coords change. We use the length of
+    data["heatmap_x_nt_pos"] because it is faster than comparing the
+    entire list, and appropriately alerts us when
+    data["heatmap_x_nt_pos"] changed.
 
     :param data: ``get_data`` return value, transported here by
         ``update_data``.
     :type data: dict
     :param old_heatmap_x_len: ``heatmap-x-len.data`` value
     :type old_heatmap_x_len: dict
-    :return: New len of data["heatmap_x"]
+    :return: New len of data["heatmap_x_nt_pos"]
     :rtype: int
-    :raise PreventUpdate: If data["heatmap_x"] len did not change
+    :raise PreventUpdate: If data["heatmap_x_nt_pos"] len did not
+        change.
     """
-    if old_heatmap_x_len == len(data["heatmap_x"]):
+    if old_heatmap_x_len == len(data["heatmap_x_nt_pos"]):
         raise PreventUpdate
-    return len(data["heatmap_x"])
+    return len(data["heatmap_x_nt_pos"])
 
 
 @app.callback(
