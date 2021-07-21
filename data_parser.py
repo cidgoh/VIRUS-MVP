@@ -5,6 +5,7 @@ Entry point is ``get_data``.
 
 from copy import deepcopy
 import csv
+from itertools import islice
 import json
 import os
 
@@ -62,7 +63,9 @@ def parse_gvf_dir(dir_, file_order=None):
                 continue
             ret[strain] = {}
             with open(entry.path) as fp:
-                reader = csv.DictReader(fp, delimiter="\t")
+                # Skip gvf header rows
+                reader = csv.DictReader(islice(fp, 3, None), delimiter="\t")
+
                 for row in reader:
                     attrs_first_split = row["#attributes"].split(";")[:-1]
                     attrs_second_split = \

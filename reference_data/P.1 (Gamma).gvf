@@ -1,3 +1,6 @@
+##gff-version 3								
+##gvf-version 1.10								
+##species NCBI_Taxonomy_URI=http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=2697049								
 #seqid	#source	#type	#start	#end	#score	#strand	#phase	#attributes
 MN908947.3	.	snp	241	241	.	+	.	"ID=ID_0;Name=;nt_name=c.C-25T;gene=orf1ab;mutation_type=;Reference_seq=C;Variant_seq=T;ao=9776;dp=9786;ro=9;viral_lineage=P.1;who_label=Gamma;status=VOC;function_category="""";source=;citation="""";comb_mutation=;function_description="""";clade_defining=False;"
 MN908947.3	.	snp	733	733	.	+	.	"ID=ID_1;Name=p.D156D;nt_name=c.T468C;gene=orf1ab;mutation_type=SILENT;Reference_seq=T;Variant_seq=C;ao=9790;dp=9793;ro=3;viral_lineage=P.1;who_label=Gamma;status=VOC;function_category="""";source=;citation="""";comb_mutation=;function_description="""";clade_defining=False;"
