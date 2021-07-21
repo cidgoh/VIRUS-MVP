@@ -115,6 +115,9 @@ def launch_app(_):
         dcc.Store(id="hidden-strains"),
         dcc.Store(id="strain-order"),
         dcc.Store(id="last-heatmap-cell-clicked"),
+        # Used to update certain figures only when necessary
+        dcc.Store(id="heatmap-x-len", data=len(data_["heatmap_x_nt_pos"])),
+        dcc.Store(id="heatmap-y-len", data=len(data_["heatmap_y"])),
         # Used to integrate some JS callbacks. The data values are
         # meaningless, we just need outputs to perform all clientside
         # functions.
@@ -160,9 +163,9 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
     :type gff3_annotations: dict
     :return: ``get_data`` return value
     :rtype: dict
+    :raise PreventUpdate: New upload triggered this function, and that
+        new upload failed.
     """
-    # Do not update if a new upload triggered this function, and that
-    # new upload failed.
     triggers = [x["prop_id"] for x in dash.callback_context.triggered]
     if "new-upload.data" in triggers:
         if new_upload["status"] == "error":
@@ -341,6 +344,8 @@ def update_hidden_strains(_, values, data):
     :return: List of strains that should not be displayed by the
         heatmap or table.
     :rtype: list[str]
+    :raise PreventUpdate: Hidden strains did not change, or the user
+        chose to hide all strains.
     """
     # Merge list of lists into single list. I got it from:
     # https://stackoverflow.com/a/716761/11472358.
@@ -352,8 +357,6 @@ def update_hidden_strains(_, values, data):
         if strain not in checked_strains:
             hidden_strains.append(strain)
 
-    # Do not update if the hidden strains did not change, or if the
-    # user chose to hide all strains.
     old_hidden_strains = data["hidden_strains"]
     no_change = hidden_strains == old_hidden_strains
     all_hidden = hidden_strains == all_strains
@@ -423,11 +426,12 @@ def update_mutation_freq_slider(data, old_slider_marks):
     :type old_slider_marks: dict
     :return: New mutation frequency slider div, if one is needed
     :rtype: dcc.RangeSlider
+    :raise PreventUpdate: Number of mutation frequencies in ``data`` is
+        different than the number of mutation frequencies in the
+        current slider.
     """
-    # This is very hackey, but also very fast. We simply check if the
-    # number of mutation frequencies in the updated ``data`` is
-    # different than the number of mutation frequencies in the current
-    # slider. I do not think this will currently break anything.
+    # This is very hackey, but also very fast. I do not think this will
+    # currently break anything.
     new_slider_marks = data["mutation_freq_slider_vals"]
     if len(new_slider_marks) == len(old_slider_marks):
         raise PreventUpdate
@@ -436,75 +440,165 @@ def update_mutation_freq_slider(data, old_slider_marks):
 
 
 @app.callback(
+    Output("heatmap-x-len", "data"),
+    Input("data", "data"),
+    State("heatmap-x-len", "data"),
+    prevent_initial_call=True
+)
+def route_data_heatmap_x_update(data, old_heatmap_x_len):
+    """Update ``heatmap-x-len`` dcc variable when needed.
+
+    This serves as a useful trigger for figs that only need to be
+    updated when heatmap x coords change. We use the length of
+    data["heatmap_x_nt_pos"] because it is faster than comparing the
+    entire list, and appropriately alerts us when
+    data["heatmap_x_nt_pos"] changed.
+
+    :param data: ``get_data`` return value, transported here by
+        ``update_data``.
+    :type data: dict
+    :param old_heatmap_x_len: ``heatmap-x-len.data`` value
+    :type old_heatmap_x_len: dict
+    :return: New len of data["heatmap_x_nt_pos"]
+    :rtype: int
+    :raise PreventUpdate: If data["heatmap_x_nt_pos"] len did not
+        change.
+    """
+    if old_heatmap_x_len == len(data["heatmap_x_nt_pos"]):
+        raise PreventUpdate
+    return len(data["heatmap_x_nt_pos"])
+
+
+@app.callback(
+    Output("heatmap-y-len", "data"),
+    Input("data", "data"),
+    State("heatmap-y-len", "data"),
+    prevent_initial_call=True
+)
+def route_data_heatmap_y_update(data, old_heatmap_y_len):
+    """Update ``heatmap-y-len`` dcc variable when needed.
+
+    This serves as a useful trigger for figs that only need to be
+    updated when heatmap y changes. We use the length of
+    data["heatmap_y"] because it is faster than comparing the entire
+    list, and appropriately alerts us when data["heatmap_y"] changed.
+
+    :param data: ``get_data`` return value, transported here by
+        ``update_data``.
+    :type data: dict
+    :param old_heatmap_y_len: ``heatmap-y-len.data`` value
+    :type old_heatmap_y_len: dict
+    :return: New len of data["heatmap_y"]
+    :rtype: int
+    :raise PreventUpdate: If data["heatmap_y"] len did not change
+    """
+    if old_heatmap_y_len == len(data["heatmap_y"]):
+        raise PreventUpdate
+    return len(data["heatmap_y"])
+
+
+@app.callback(
     Output("heatmap-y-axis-fig", "figure"),
-    Input("heatmap-main-fig", "figure"),
+    Output("heatmap-y-axis-fig", "style"),
+    Input("heatmap-y-len", "data"),
     State("data", "data"),
     prevent_initial_call=True
 )
 def update_heatmap_y_axis_fig(_, data):
     """Update heatmap y axis fig.
 
-    We do this after the main heatmap fig with cells and x axis is
-    updated. The application seems to run more smoothly when we do not
-    attempt to update absolutely everything in parallel.
+    We need to update style because y-axis fig height may change due to
+    uploaded strains.
 
-    :param _: Main heatmap fig updated
+    :param _: Heatmap cells fig updated
     :param data: Current value for ``data`` variable; see ``get_data``
         return value.
     :type data: dict
-    :return: New heatmap y axis fig
-    :rtype: plotly.graph_objects.Figure
+    :return: New heatmap y axis fig and style
+    :rtype: (plotly.graph_objects.Figure, dict)
     """
     y_axis_fig = heatmap_generator.get_heatmap_y_axis_fig(data)
-    return y_axis_fig
+    y_axis_style = \
+        {"height": heatmap_generator.get_heatmap_cells_fig_height(data)}
+    return y_axis_fig, y_axis_style
 
 
 @app.callback(
     Output("heatmap-gene-bar-fig", "figure"),
-    Input("heatmap-main-fig", "figure"),
+    Output("heatmap-gene-bar-fig", "style"),
+    Input("heatmap-x-len", "data"),
     State("data", "data"),
     prevent_initial_call=True
 )
 def update_heatmap_gene_bar_fig(_, data):
     """Update heatmap gene bar fig.
 
-    We do this after the main heatmap fig with cells and x axis is
-    updated. The application seems to run more smoothly when we do not
-    attempt to update absolutely everything in parallel.
+    We need to update style because width might have changed due to
+    added nt positions in data.
 
-    :param _: Main heatmap fig updated
+    :param _: Heatmap cells fig updated
     :param data: Current value for ``data`` variable; see ``get_data``
         return value.
     :type data: dict
-    :return: New heatmap gene bar fig
-    :rtype: plotly.graph_objects.Figure
+    :return: New heatmap gene bar fig and style
+    :rtype: (plotly.graph_objects.Figure, dict)
     """
     gene_bar_fig = heatmap_generator.get_heatmap_gene_bar_fig(data)
-    return gene_bar_fig
+    gene_bar_style = \
+        {"width": heatmap_generator.get_heatmap_cells_fig_width(data)}
+    return gene_bar_fig, gene_bar_style
 
 
 @app.callback(
-    Output("heatmap-main-fig", "figure"),
-    Output("heatmap-main-fig", "style"),
-    Input("data", "data"),
+    Output("heatmap-nt-pos-axis-fig", "figure"),
+    Output("heatmap-nt-pos-axis-fig", "style"),
+    Input("heatmap-x-len", "data"),
+    State("data", "data"),
     prevent_initial_call=True
 )
-def update_heatmap_main_fig(data):
-    """Update main heatmap fig and style.
+def update_heatmap_nt_pos_axis_fig(_, data):
+    """Update heatmap nt pos axis fig.
 
-    This is the fig with the heatmap cells and x axis. We return style
-    because width may need to be bigger due to changes in data
-    ``heatmap_x`` value.
+    We need to update style because width might have changed due to
+    added nt positions in data.
 
+    :param _: Heatmap cells fig updated
     :param data: Current value for ``data`` variable; see ``get_data``
         return value.
     :type data: dict
-    :return: New heatmap main fig
-    :rtype: plotly.graph_objects.Figure
+    :return: New heatmap nt pos x-axis fig and style
+    :rtype: (plotly.graph_objects.Figure, dict)
     """
-    main_fig = heatmap_generator.get_heatmap_main_fig(data)
-    main_style = {"width": len(data["heatmap_x"]) * 25}
-    return main_fig, main_style
+    nt_pos_x_axis_fig = heatmap_generator.get_heatmap_nt_pos_axis_fig(data)
+    nt_pos_x_axis_style = \
+        {"width": heatmap_generator.get_heatmap_cells_fig_width(data)}
+    return nt_pos_x_axis_fig, nt_pos_x_axis_style
+
+
+@app.callback(
+    Output("heatmap-aa-axis-fig", "figure"),
+    Output("heatmap-aa-axis-fig", "style"),
+    Input("heatmap-x-len", "data"),
+    State("data", "data"),
+    prevent_initial_call=True
+)
+def update_heatmap_aa_axis_fig(_, data):
+    """Update heatmap amino acid axis fig.
+
+    We need to update style because width might have changed due to
+    added nt positions in data.
+
+    :param _: Heatmap cells fig updated
+    :param data: Current value for ``data`` variable; see ``get_data``
+        return value.
+    :type data: dict
+    :return: New heatmap amino acid x-axis fig and style
+    :rtype: (plotly.graph_objects.Figure, dict)
+    """
+    aa_x_axis_fig = heatmap_generator.get_heatmap_aa_axis_fig(data)
+    aa_x_axis_style = \
+        {"width": heatmap_generator.get_heatmap_cells_fig_width(data)}
+    return aa_x_axis_fig, aa_x_axis_style
 
 
 @app.callback(
@@ -526,14 +620,39 @@ def update_histogram(data):
     """
     return histogram_generator.get_histogram_top_row(data)
 
-
 @app.callback(
-    Output("heatmap-main-fig", "clickData"),
-    Output("last-heatmap-cell-clicked", "data"),
-    Input("heatmap-main-fig", "clickData"),
+    Output("heatmap-cells-fig", "figure"),
+    Output("heatmap-cells-fig", "style"),
+    Input("data", "data"),
     prevent_initial_call=True
 )
-def route_heatmap_main_fig_click(click_data):
+def update_heatmap_cells_fig(data):
+    """Update heatmap cells fig and style.
+
+    This is the fig with the heatmap cells and x axis. We return style
+    because width and height may need to change due to changes in data.
+
+    :param data: Current value for ``data`` variable; see ``get_data``
+        return value.
+    :type data: dict
+    :return: New heatmap cells fig
+    :rtype: plotly.graph_objects.Figure
+    """
+    cells_fig = heatmap_generator.get_heatmap_cells_fig(data)
+    cells_fig_style = {
+        "height": heatmap_generator.get_heatmap_cells_fig_height(data),
+        "width": heatmap_generator.get_heatmap_cells_fig_width(data)
+    }
+    return cells_fig, cells_fig_style
+
+
+@app.callback(
+    Output("heatmap-cells-fig", "clickData"),
+    Output("last-heatmap-cell-clicked", "data"),
+    Input("heatmap-cells-fig", "clickData"),
+    prevent_initial_call=True
+)
+def route_heatmap_cells_fig_click(click_data):
     """Store click data from heatmap in "last-heatmap-cell-clicked".
 
     The built-in ``clickData`` variable does not allow repeated
@@ -553,7 +672,7 @@ def route_heatmap_main_fig_click(click_data):
     reset ``last-heatmap-cell-clicked`` to None in any callbacks,
     because we do not need to.
 
-    :param click_data: ``heatmap-main-fig.clickData`` value
+    :param click_data: ``heatmap-cells-fig.clickData`` value
     :type click_data: dict
     :return: ``None`` to reset heatmap ``clickData`` attribute, and a
         copy of  this attribute before resetting
@@ -679,7 +798,7 @@ app.clientside_callback(
     ),
     Output("make-histogram-rel-pos-bar-dynamic", "data"),
     Input("histogram", "id"),
-    Input("heatmap-main-fig", "figure"),
+    Input("heatmap-cells-fig", "figure"),
     Input("data", "data"),
 )
 

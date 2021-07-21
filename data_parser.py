@@ -5,6 +5,7 @@ Entry point is ``get_data``.
 
 from copy import deepcopy
 import csv
+from itertools import islice
 import json
 import os
 
@@ -62,7 +63,9 @@ def parse_gvf_dir(dir_, file_order=None):
                 continue
             ret[strain] = {}
             with open(entry.path) as fp:
-                reader = csv.DictReader(fp, delimiter="\t")
+                # Skip gvf header rows
+                reader = csv.DictReader(islice(fp, 3, None), delimiter="\t")
+
                 for row in reader:
                     attrs_first_split = row["#attributes"].split(";")[:-1]
                     attrs_second_split = \
@@ -220,7 +223,7 @@ def get_data(dirs, clade_defining=False, hidden_strains=None,
                                            max_mutation_freq)
 
     ret = {
-        "heatmap_x": get_heatmap_x(parsed_gvf_dirs),
+        "heatmap_x_nt_pos": get_heatmap_x_nt_pos(parsed_gvf_dirs),
         "heatmap_y": get_heatmap_y(visible_parsed_gvf_dirs),
         "tables": get_tables(visible_parsed_gvf_dirs),
         "histogram_x": get_histogram_x(visible_parsed_gvf_dirs),
@@ -229,28 +232,31 @@ def get_data(dirs, clade_defining=False, hidden_strains=None,
         "all_strains": get_heatmap_y(parsed_gvf_dirs),
         "mutation_freq_slider_vals": mutation_freq_slider_vals
     }
+    heatmap_y, heatmap_x_nt_pos = ret["heatmap_y"], ret["heatmap_x_nt_pos"]
     ret["insertions_x"] = get_insertions_x(visible_parsed_gvf_dirs,
-                                           ret["heatmap_x"],
-                                           ret["heatmap_y"])
+                                           heatmap_x_nt_pos,
+                                           heatmap_y)
     ret["insertions_y"] = get_insertions_y(visible_parsed_gvf_dirs,
-                                           ret["heatmap_x"],
-                                           ret["heatmap_y"])
+                                           heatmap_x_nt_pos,
+                                           heatmap_y)
     ret["deletions_x"] = get_deletions_x(visible_parsed_gvf_dirs,
-                                         ret["heatmap_x"],
-                                         ret["heatmap_y"])
+                                         heatmap_x_nt_pos,
+                                         heatmap_y)
     ret["deletions_y"] = get_deletions_y(visible_parsed_gvf_dirs,
-                                         ret["heatmap_x"],
-                                         ret["heatmap_y"])
+                                         heatmap_x_nt_pos,
+                                         heatmap_y)
     ret["heatmap_z"] = \
-        get_heatmap_z(visible_parsed_gvf_dirs, ret["heatmap_x"])
+        get_heatmap_z(visible_parsed_gvf_dirs, heatmap_x_nt_pos)
     ret["heatmap_hover_text"] = \
-        get_heatmap_hover_text(visible_parsed_gvf_dirs, ret["heatmap_x"])
+        get_heatmap_hover_text(visible_parsed_gvf_dirs, heatmap_x_nt_pos)
     ret["heatmap_mutation_names"] = \
-        get_heatmap_mutation_names(visible_parsed_gvf_dirs, ret["heatmap_x"])
+        get_heatmap_mutation_names(visible_parsed_gvf_dirs, heatmap_x_nt_pos)
     ret["heatmap_mutation_fns"] = \
-        get_heatmap_mutation_fns(visible_parsed_gvf_dirs, ret["heatmap_x"])
+        get_heatmap_mutation_fns(visible_parsed_gvf_dirs, heatmap_x_nt_pos)
     ret["heatmap_x_genes"] = \
-        get_heatmap_x_genes(ret["heatmap_x"])
+        get_heatmap_x_genes(heatmap_x_nt_pos)
+    ret["heatmap_x_aa"] = \
+        get_heatmap_x_aa(parsed_gvf_dirs, heatmap_x_nt_pos)
 
     return ret
 
@@ -278,7 +284,7 @@ def get_mutation_freq_slider_vals(parsed_gvf_dirs):
     return ret
 
 
-def get_heatmap_x(parsed_gvf_dirs):
+def get_heatmap_x_nt_pos(parsed_gvf_dirs):
     """Get x axis values of heatmap cells.
 
     These are the nucleotide position of mutations.
@@ -300,20 +306,44 @@ def get_heatmap_x(parsed_gvf_dirs):
     return ret
 
 
-def get_heatmap_x_genes(heatmap_x):
+def get_heatmap_x_genes(heatmap_x_nt_pos):
     """Get gene values corresponding to x axis values in heatmap.
 
-    :param parsed_gvf_dirs: A dictionary containing multiple merged
-        ``get_parsed_gvf_dir`` return values.
-    :type parsed_gvf_dirs: dict
-    :param heatmap_x: ``get_heatmap_x`` return value
-    :type heatmap_x: list[str]
+    :param heatmap_x_nt_pos: ``get_heatmap_x_nt_pos`` return value
+    :type heatmap_x_nt_pos: list[str]
     :return: List of genes for each x in ``heatmap_x``
     :rtype: list[str]
     """
     ret = []
-    for pos in heatmap_x:
+    for pos in heatmap_x_nt_pos:
         ret.append(map_pos_to_gene(int(pos)))
+    return ret
+
+
+def get_heatmap_x_aa(parsed_gvf_dirs, heatmap_x_nt_pos):
+    """Get amino acids corresponding to x axis values in heatmap.
+
+    :param parsed_gvf_dirs: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return values.
+    :type parsed_gvf_dirs: dict
+    :param heatmap_x_nt_pos: ``get_heatmap_x_nt_pos`` return value
+    :type heatmap_x_nt_pos: list[str]
+    :return: List of amino acids for each x in ``heatmap_x``
+    :rtype: list[str]
+    """
+    ret = []
+    for pos in heatmap_x_nt_pos:
+        for strain in parsed_gvf_dirs:
+            if pos in parsed_gvf_dirs[strain]:
+                mutation_name = parsed_gvf_dirs[strain][pos]["mutation_name"]
+                amino_acid = ""
+                # TODO This is really hackey. I need a more reliable
+                #  way to get amino acid information.
+                if mutation_name != "" and mutation_name[2] != "X":
+                    amino_acid = mutation_name.split(".")[1]
+                    amino_acid = amino_acid.split("_")[0]
+                ret.append(amino_acid)
+                break
     return ret
 
 
@@ -334,7 +364,7 @@ def get_heatmap_y(parsed_gvf_dirs):
     return ret
 
 
-def get_heatmap_z(parsed_gvf_dirs, heatmap_x):
+def get_heatmap_z(parsed_gvf_dirs, heatmap_x_nt_pos):
     """Get z values of heatmap cells.
 
     These are the mutation frequencies, and the z values dictate the
@@ -343,15 +373,15 @@ def get_heatmap_z(parsed_gvf_dirs, heatmap_x):
     :param parsed_gvf_dirs: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return values.
     :type parsed_gvf_dirs: dict
-    :param heatmap_x: ``get_heatmap_x`` return value
-    :type heatmap_x: list[int]
+    :param heatmap_x_nt_pos: ``get_heatmap_x_nt_pos`` return value
+    :type heatmap_x_nt_pos: list[int]
     :return: List of z values
     :rtype: list[str]
     """
     ret = []
     for strain in parsed_gvf_dirs:
         row = []
-        for pos in heatmap_x:
+        for pos in heatmap_x_nt_pos:
             cond = pos in parsed_gvf_dirs[strain] \
                    and not parsed_gvf_dirs[strain][pos]["hidden_cell"]
             if cond:
@@ -362,22 +392,22 @@ def get_heatmap_z(parsed_gvf_dirs, heatmap_x):
     return ret
 
 
-def get_heatmap_hover_text(parsed_gvf_dirs, heatmap_x):
+def get_heatmap_hover_text(parsed_gvf_dirs, heatmap_x_nt_pos):
     """Get hover text of heatmap cells.
 
     :param parsed_gvf_dirs: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return values.
     :type parsed_gvf_dirs: dict
-    :param heatmap_x: ``get_heatmap_x`` return value
-    :type heatmap_x: list[int]
+    :param heatmap_x_nt_pos: ``get_heatmap_x_nt_pos`` return value
+    :type heatmap_x_nt_pos: list[int]
     :return: List of D3 formatted text values for each x y coordinate
-        in ``heatmap_x``.
+        in ``heatmap_x_nt_pos``.
     :rtype: list[str]
     """
     ret = []
     for strain in parsed_gvf_dirs:
         row = []
-        for pos in heatmap_x:
+        for pos in heatmap_x_nt_pos:
             if pos in parsed_gvf_dirs[strain]:
                 cell_data = parsed_gvf_dirs[strain][pos]
 
@@ -418,7 +448,7 @@ def get_heatmap_hover_text(parsed_gvf_dirs, heatmap_x):
     return ret
 
 
-def get_heatmap_mutation_names(parsed_gvf_dirs, heatmap_x):
+def get_heatmap_mutation_names(parsed_gvf_dirs, heatmap_x_nt_pos):
     """Get mutation names associated with heatmap cells.
 
     This is useful when allowing users to click on heatmap cells for
@@ -427,15 +457,15 @@ def get_heatmap_mutation_names(parsed_gvf_dirs, heatmap_x):
     :param parsed_gvf_dirs: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return values.
     :type parsed_gvf_dirs: dict
-    :param heatmap_x: ``get_heatmap_x`` return value
-    :type heatmap_x: list[int]
+    :param heatmap_x_nt_pos: ``get_heatmap_x_nt_pos`` return value
+    :type heatmap_x_nt_pos: list[int]
     :return: Mutation names for each x y coordinate in heatmap.
     :rtype: list[list[str]]
     """
     ret = []
     for strain in parsed_gvf_dirs:
         row = []
-        for pos in heatmap_x:
+        for pos in heatmap_x_nt_pos:
             if pos in parsed_gvf_dirs[strain]:
                 cell_data = parsed_gvf_dirs[strain][pos]
                 mutation_name = cell_data["mutation_name"]
@@ -449,7 +479,7 @@ def get_heatmap_mutation_names(parsed_gvf_dirs, heatmap_x):
     return ret
 
 
-def get_heatmap_mutation_fns(parsed_gvf_dirs, heatmap_x):
+def get_heatmap_mutation_fns(parsed_gvf_dirs, heatmap_x_nt_pos):
     """Get mutation fns associated with heatmap cells.
 
     This is useful when allowing users to click on heatmap cells for
@@ -458,8 +488,8 @@ def get_heatmap_mutation_fns(parsed_gvf_dirs, heatmap_x):
     :param parsed_gvf_dirs: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return values.
     :type parsed_gvf_dirs: dict
-    :param heatmap_x: ``get_heatmap_x`` return value
-    :type heatmap_x: list[int]
+    :param heatmap_x_nt_pos: ``get_heatmap_x_nt_pos`` return value
+    :type heatmap_x_nt_pos: list[int]
     :return: Mutation functions for each x y coordinate in heatmap, as
         structured in dict format used by ``parsed_gvf_dirs``.
     :rtype: list[list[dict]]
@@ -467,7 +497,7 @@ def get_heatmap_mutation_fns(parsed_gvf_dirs, heatmap_x):
     ret = []
     for strain in parsed_gvf_dirs:
         row = []
-        for pos in heatmap_x:
+        for pos in heatmap_x_nt_pos:
             if pos in parsed_gvf_dirs[strain]:
                 cell_data = parsed_gvf_dirs[strain][pos]
                 functions = cell_data["functions"]
@@ -481,22 +511,24 @@ def get_heatmap_mutation_fns(parsed_gvf_dirs, heatmap_x):
     return ret
 
 
-def get_insertions_x(parsed_gvf_dirs, heatmap_x, heatmap_y):
-    """Get x coordinates of insertion markers to overlay in heatmap.
+def get_insertions_x(parsed_gvf_dirs, heatmap_x_nt_pos, heatmap_y):
+    """Get x coordinates of deletion markers to overlay in heatmap.
 
-    Since the underlying structure of the heatmap does not usual
-    categorical values for the x-axis, for performance reasons, and
-    instead uses the indices of ``heatmap_x``, we must specify the
-    indices here--not actual nucleotide positions.
+    These are the linear x coordinates used in the Plotly graph object.
+    i.e., the indices of data["heatmap_x_nt_pos"]
 
     :param parsed_gvf_dirs: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return values.
     :type parsed_gvf_dirs: dict
+    :param heatmap_x_nt_pos: ``get_heatmap_x_nt_pos`` return value
+    :type heatmap_x_nt_pos: list[int]
+    :param heatmap_y: ``get_heatmap_y`` return value
+    :type heatmap_y: list[str]
     :return: List of x coordinate values to display insertion markers
     :rtype: list[int]
     """
     ret = []
-    for i, pos in enumerate(heatmap_x):
+    for i, pos in enumerate(heatmap_x_nt_pos):
         for j, strain in enumerate(heatmap_y):
             if pos not in parsed_gvf_dirs[strain]:
                 continue
@@ -507,22 +539,24 @@ def get_insertions_x(parsed_gvf_dirs, heatmap_x, heatmap_y):
     return ret
 
 
-def get_insertions_y(parsed_gvf_dirs, heatmap_x, heatmap_y):
-    """Get y coordinates of insertion markers to overlay in heatmap.
+def get_insertions_y(parsed_gvf_dirs, heatmap_x_nt_pos, heatmap_y):
+    """Get y coordinates of deletion markers to overlay in heatmap.
 
-    Since the underlying structure of the heatmap does not usual
-    categorical values for the y-axis, for performance reasons, and
-    instead uses the indices of ``heatmap_y``, we must specify the
-    indices here--not actual nucleotide positions.
+    These are the linear y coordinates used in the Plotly graph object.
+    i.e., the indices of data["heatmap_y"]
 
     :param parsed_gvf_dirs: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return values.
     :type parsed_gvf_dirs: dict
+    :param heatmap_x_nt_pos: ``get_heatmap_x_nt_pos`` return value
+    :type heatmap_x_nt_pos: list[int]
+    :param heatmap_y: ``get_heatmap_y`` return value
+    :type heatmap_y: list[str]
     :return: List of y coordinate values to display insertion markers
     :rtype: list[str]
     """
     ret = []
-    for i, pos in enumerate(heatmap_x):
+    for i, pos in enumerate(heatmap_x_nt_pos):
         for j, strain in enumerate(heatmap_y):
             if pos not in parsed_gvf_dirs[strain]:
                 continue
@@ -533,22 +567,24 @@ def get_insertions_y(parsed_gvf_dirs, heatmap_x, heatmap_y):
     return ret
 
 
-def get_deletions_x(parsed_gvf_dirs, heatmap_x, heatmap_y):
+def get_deletions_x(parsed_gvf_dirs, heatmap_x_nt_pos, heatmap_y):
     """Get x coordinates of deletion markers to overlay in heatmap.
 
-    Since the underlying structure of the heatmap does not usual
-    categorical values for the x-axis, for performance reasons, and
-    instead uses the indices of ``heatmap_x``, we must specify the
-    indices here--not actual nucleotide positions.
+    These are the linear x coordinates used in the Plotly graph object.
+    i.e., the indices of data["heatmap_x_nt_pos"]
 
     :param parsed_gvf_dirs: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return values.
     :type parsed_gvf_dirs: dict
+    :param heatmap_x_nt_pos: ``get_heatmap_x_nt_pos`` return value
+    :type heatmap_x_nt_pos: list[int]
+    :param heatmap_y: ``get_heatmap_y`` return value
+    :type heatmap_y: list[str]
     :return: List of x coordinate values to display insertion markers
     :rtype: list[int]
     """
     ret = []
-    for i, pos in enumerate(heatmap_x):
+    for i, pos in enumerate(heatmap_x_nt_pos):
         for j, strain in enumerate(heatmap_y):
             if pos not in parsed_gvf_dirs[strain]:
                 continue
@@ -559,22 +595,24 @@ def get_deletions_x(parsed_gvf_dirs, heatmap_x, heatmap_y):
     return ret
 
 
-def get_deletions_y(parsed_gvf_dirs, heatmap_x, heatmap_y):
+def get_deletions_y(parsed_gvf_dirs, heatmap_x_nt_pos, heatmap_y):
     """Get y coordinates of deletion markers to overlay in heatmap.
 
-    Since the underlying structure of the heatmap does not usual
-    categorical values for the y-axis, for performance reasons, and
-    instead uses the indices of ``heatmap_y``, we must specify the
-    indices here--not actual nucleotide positions.
+    These are the linear y coordinates used in the Plotly graph object.
+    i.e., the indices of data["heatmap_y"]
 
     :param parsed_gvf_dirs: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return values.
     :type parsed_gvf_dirs: dict
+    :param heatmap_x_nt_pos: ``get_heatmap_x_nt_pos`` return value
+    :type heatmap_x_nt_pos: list[int]
+    :param heatmap_y: ``get_heatmap_y`` return value
+    :type heatmap_y: list[str]
     :return: List of y coordinate values to display deletion markers
     :rtype: list[str]
     """
     ret = []
-    for i, pos in enumerate(heatmap_x):
+    for i, pos in enumerate(heatmap_x_nt_pos):
         for j, strain in enumerate(heatmap_y):
             if pos not in parsed_gvf_dirs[strain]:
                 continue
