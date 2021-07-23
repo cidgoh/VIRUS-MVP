@@ -55,9 +55,9 @@ def get_color_scale():
     :rtype: list[list]
     """
     ret = [
-        [0, "#fc8d59"],
+        [0, "#91bfdb"],
         [1/2, "#ffffbf"],
-        [1, "#91bfdb"]
+        [1, "#fc8d59"],
     ]
     return ret
 
