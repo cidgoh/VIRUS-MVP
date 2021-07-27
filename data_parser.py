@@ -345,7 +345,7 @@ def get_heatmap_x_aa_pos(heatmap_x_nt_pos, heatmap_x_genes):
             ret.append("n/a")
             continue
         gene_start_pos = gene_start_positions[gene]
-        ret.append(gene + "." + str(int((int(e) - gene_start_pos) / 3)))
+        ret.append(gene + "." + str(int((int(e) - gene_start_pos) / 3) + 1))
     return ret
 
 
