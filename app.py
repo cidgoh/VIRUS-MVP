@@ -582,8 +582,8 @@ def update_heatmap_nt_pos_axis_fig(_, data):
     State("data", "data"),
     prevent_initial_call=True
 )
-def update_heatmap_aa_axis_fig(_, data):
-    """Update heatmap amino acid axis fig.
+def update_heatmap_aa_pos_axis_fig(_, data):
+    """Update heatmap amino acid position axis fig.
 
     We need to update style because width might have changed due to
     added nt positions in data.
@@ -592,13 +592,13 @@ def update_heatmap_aa_axis_fig(_, data):
     :param data: Current value for ``data`` variable; see ``get_data``
         return value.
     :type data: dict
-    :return: New heatmap amino acid x-axis fig and style
+    :return: New heatmap amino acid position x-axis fig and style
     :rtype: (plotly.graph_objects.Figure, dict)
     """
-    aa_x_axis_fig = heatmap_generator.get_heatmap_aa_axis_fig(data)
-    aa_x_axis_style = \
+    aa_pos_x_axis_fig = heatmap_generator.get_heatmap_aa_pos_axis_fig(data)
+    aa_pos_x_axis_style = \
         {"width": heatmap_generator.get_heatmap_cells_fig_width(data)}
-    return aa_x_axis_fig, aa_x_axis_style
+    return aa_pos_x_axis_fig, aa_pos_x_axis_style
 
 
 @app.callback(

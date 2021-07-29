@@ -148,10 +148,10 @@ def get_heatmap_row(data):
                     dbc.Row(
                         dbc.Col(
                             dcc.Graph(
-                                id="heatmap-aa-axis-fig",
-                                figure=get_heatmap_aa_axis_fig(data),
+                                id="heatmap-aa-pos-axis-fig",
+                                figure=get_heatmap_aa_pos_axis_fig(data),
                                 config={"displayModeBar": False},
-                                style={"height": "6rem",
+                                style={"height": "8rem",
                                        "width": heatmap_cells_fig_width}
                             )
                         ),
@@ -347,8 +347,8 @@ def get_heatmap_gene_bar_graph_obj(data):
     return ret
 
 
-def get_heatmap_aa_axis_fig(data):
-    """Get Plotly figure used as amino acid axis.
+def get_heatmap_aa_pos_axis_fig(data):
+    """Get Plotly figure used as amino acid position axis.
 
     :param data: ``data_parser.get_data`` return value
     :type data: dict
@@ -367,14 +367,14 @@ def get_heatmap_aa_axis_fig(data):
             "l": 0,
             "r": 0,
             "t": 0,
-            "b": 100
+            "b": 500
         }
     )
     ret.update_xaxes(range=[-0.5, len(data["heatmap_x_nt_pos"])-0.5],
                      fixedrange=True,
                      tickmode="array",
                      tickvals=list(range(len(data["heatmap_x_nt_pos"]))),
-                     ticktext=data["heatmap_x_aa"],
+                     ticktext=data["heatmap_x_aa_pos"],
                      ticklabelposition="outside",
                      )
     ret.update_yaxes(fixedrange=True,

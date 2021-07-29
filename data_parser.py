@@ -255,8 +255,8 @@ def get_data(dirs, clade_defining=False, hidden_strains=None,
         get_heatmap_mutation_fns(visible_parsed_gvf_dirs, heatmap_x_nt_pos)
     ret["heatmap_x_genes"] = \
         get_heatmap_x_genes(heatmap_x_nt_pos)
-    ret["heatmap_x_aa"] = \
-        get_heatmap_x_aa(parsed_gvf_dirs, heatmap_x_nt_pos)
+    ret["heatmap_x_aa_pos"] = \
+        get_heatmap_x_aa_pos(heatmap_x_nt_pos, ret["heatmap_x_genes"])
 
     return ret
 
@@ -320,30 +320,32 @@ def get_heatmap_x_genes(heatmap_x_nt_pos):
     return ret
 
 
-def get_heatmap_x_aa(parsed_gvf_dirs, heatmap_x_nt_pos):
-    """Get amino acids corresponding to x axis values in heatmap.
+def get_heatmap_x_aa_pos(heatmap_x_nt_pos, heatmap_x_genes):
+    """Get aa positions corresponding to x axis values in heatmap.
 
-    :param parsed_gvf_dirs: A dictionary containing multiple merged
-        ``get_parsed_gvf_dir`` return values.
-    :type parsed_gvf_dirs: dict
+    These are in the form of {gene}.{aa position in gene}.
+
     :param heatmap_x_nt_pos: ``get_heatmap_x_nt_pos`` return value
     :type heatmap_x_nt_pos: list[str]
-    :return: List of amino acids for each x in ``heatmap_x``
+    :param heatmap_x_genes: ``get_heatmap_x_genes`` return value
+    :type heatmap_x_genes: list[str]
+    :return: List of amino acid positions relative to their gene for
+        each x in ``heatmap_x``, of the form
+        {gene}.{aa position in gene}.
     :rtype: list[str]
     """
+    with open("gene_positions.json") as fp:
+        gene_positions_dict = json.load(fp)
+    gene_start_positions = \
+        {k: gene_positions_dict[k]["start"] for k in gene_positions_dict}
     ret = []
-    for pos in heatmap_x_nt_pos:
-        for strain in parsed_gvf_dirs:
-            if pos in parsed_gvf_dirs[strain]:
-                mutation_name = parsed_gvf_dirs[strain][pos]["mutation_name"]
-                amino_acid = ""
-                # TODO This is really hackey. I need a more reliable
-                #  way to get amino acid information.
-                if mutation_name != "" and mutation_name[2] != "X":
-                    amino_acid = mutation_name.split(".")[1]
-                    amino_acid = amino_acid.split("_")[0]
-                ret.append(amino_acid)
-                break
+    for i, e in enumerate(heatmap_x_nt_pos):
+        gene = heatmap_x_genes[i]
+        if gene in {"5' UTR", "3' UTR", "n/a"}:
+            ret.append("n/a")
+            continue
+        gene_start_pos = gene_start_positions[gene]
+        ret.append(gene + "." + str(int((int(e) - gene_start_pos) / 3) + 1))
     return ret
 
 
