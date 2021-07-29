@@ -29,7 +29,7 @@ def get_aa_code(nucleotide_position):
             seq_dict_key = "[gene=" + str(gene) + "]"
             coding_dna = record_dict.get(seq_dict_key).seq
             messenger_rna = coding_dna.transcribe()
-            aa = messenger_rna.translate()
+            aa = messenger_rna.translate() #uses default translation table
             amino_acid_code = aa[aa_position - 1]
             print("aa: ", amino_acid_code)
             
