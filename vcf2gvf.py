@@ -9,6 +9,11 @@ Created on Fri Jul 23 11:06:22 2021
 '''
 This script converts VCF files that have been annotated by snpEFF into GVF files, including the functional annotation.
 Note that the strain is obtained by parsing the file name, expected to contain the substring "/strainnamehere_ids".
+
+Eg:
+    python vcf2gvf.py --vcfdir ./22_07_2021/
+To also output tsvs of the unmatched mutation names:
+    python vcf2gvf.py --vcfdir ./22_07_2021/ --names
 '''
 
 import argparse
@@ -22,8 +27,6 @@ import numpy as np
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Converts snpEFF-annotated VCF files to GVF files with functional annotation')
-    parser.add_argument('--vcf', type=str, default=None,
-                        help='Path to a single snpEFF-annotated VCF file')
     parser.add_argument('--vcfdir', type=str, default=None,
                         help='Path to folder containing snpEFF-annotated VCF files')
     #filepath can be absolute (~/Desktop/test/22_07_2021/) or relative (./22_07_2021/)
