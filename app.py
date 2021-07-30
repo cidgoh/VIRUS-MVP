@@ -25,7 +25,7 @@ import dash_core_components as dcc
 from dash.dependencies import ALL, ClientsideFunction, Input, Output, State
 from dash.exceptions import PreventUpdate
 
-from data_parser import get_data
+from data_parser import get_data, vcf_str_to_gvf_str
 import toolbar_generator
 import heatmap_generator
 import histogram_generator
@@ -240,9 +240,9 @@ def update_new_upload(file_contents, filename, old_data):
     # TODO more thorough validation, maybe once we finalize data
     #  standards.
     new_strain, ext = filename.rsplit(".", 1)
-    if ext != "gvf":
+    if ext != "vcf":
         status = "error"
-        msg = "Filename must end in \".gvf\"."
+        msg = "Filename must end in \".vcf\"."
     elif new_strain in old_data["heatmap_y"]:
         status = "error"
         msg = "Filename must not conflict with existing variant."
@@ -251,10 +251,11 @@ def update_new_upload(file_contents, filename, old_data):
         _, base64_str = file_contents.split(",")
         # File gets written to ``user_data`` folder
         # TODO: eventually replace with database
-        with open("user_data/" + filename, "w") as fp:
-            gvf_str_bytes = b64decode(base64_str)
-            gvf_str_utf8 = gvf_str_bytes.decode("utf-8")
-            fp.write(gvf_str_utf8)
+        vcf_str_bytes = b64decode(base64_str)
+        vcf_str_utf8 = vcf_str_bytes.decode("utf-8")
+        gvf_str = vcf_str_to_gvf_str(vcf_str_utf8, new_strain)
+        with open("user_data/" + new_strain + ".gvf", "w") as fp:
+            fp.write("\n\n\n" + gvf_str)
         status = "ok"
         msg = ""
     return {"filename": filename, "msg": msg, "status": status}
