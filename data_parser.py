@@ -126,7 +126,7 @@ def map_pos_to_gene(pos):
         if start <= pos <= end:
             return gene
     # Intergenic region
-    return "n/a"
+    return "IGR"
 
 
 def parse_gvf_dir(dir_, file_order=None):
@@ -439,8 +439,8 @@ def get_heatmap_x_aa_pos(heatmap_x_nt_pos, heatmap_x_genes):
     ret = []
     for i, e in enumerate(heatmap_x_nt_pos):
         gene = heatmap_x_genes[i]
-        if gene in {"5' UTR", "3' UTR", "n/a"}:
-            ret.append("n/a")
+        if gene in {"5' UTR", "3' UTR", "IGR"}:
+            ret.append(gene)
             continue
         gene_start_pos = gene_start_positions[gene]
         ret.append(gene + "." + str(int((int(e) - gene_start_pos) / 3) + 1))
