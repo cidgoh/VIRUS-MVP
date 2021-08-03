@@ -34,20 +34,24 @@ import table_generator
 # This is the only global variable Dash plays nice with, and it
 # contains the visualization that is deployed by this file, when
 # ``app`` is served.
-app = dash.Dash(__name__,
-                # We bring in jQuery for some of the JavaScript
-                # callbacks.
-                external_scripts=[
-                    "https://code.jquery.com/jquery-2.2.4.min.js",
-                    "https://code.jquery.com/ui/1.12.1/jquery-ui.min.js",
-                ],
-                # We can use bootstrap CSS.
-                # https://bit.ly/3tMqY0W for details.
-                external_stylesheets=[dbc.themes.COSMO],
-                # Callbacks break without this, because they reference
-                # divs that are not present on initial page load, or
-                # until ``launch_app`` has finished executing.
-                suppress_callback_exceptions=True)
+app = dash.Dash(
+    # Fixes bug with debugger in PyCharm. See
+    # https://bit.ly/3j86GL1.
+    name="foo",
+    # We bring in jQuery for some of the JavaScript
+    # callbacks.
+    external_scripts=[
+        "https://code.jquery.com/jquery-2.2.4.min.js",
+        "https://code.jquery.com/ui/1.12.1/jquery-ui.min.js",
+    ],
+    # We can use bootstrap CSS.
+    # https://bit.ly/3tMqY0W for details.
+    external_stylesheets=[dbc.themes.COSMO],
+    # Callbacks break without this, because they reference
+    # divs that are not present on initial page load, or
+    # until ``launch_app`` has finished executing.
+    suppress_callback_exceptions=True
+)
 
 # The ``layout`` attribute determines what HTML ``app`` renders when it
 # is served. We start with an empty bootstrap container, but it will be
