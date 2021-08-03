@@ -517,7 +517,7 @@ def get_heatmap_hover_text(parsed_gvf_dirs, heatmap_x_nt_pos):
 
                 functions_str = ""
                 for i, fn_category in enumerate(cell_data["functions"]):
-                    if i == 8:
+                    if i == 7:
                         functions_str += "...click for more<br>"
                         break
                     functions_str += fn_category + "<br>"
