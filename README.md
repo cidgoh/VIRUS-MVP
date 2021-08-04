@@ -83,14 +83,6 @@ frequency.
 The clade defining switch allows you to filter in and out heatmap cells
 corresponding to non-clade defining mutations.
 
-## Support
-
-...
-
-## Roadmap
-
-...
-
 ## Authors and acknowledgement
 
 ...
