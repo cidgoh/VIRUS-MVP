@@ -2,7 +2,9 @@
 
 ...description
 
-...visuals
+![2]
+
+[2]: screenshots/app_interface.png
 
 ## Installation
 
@@ -28,10 +30,6 @@ Run the application.
 `(COVID-MVP) $ python app.py`
 
 Go to http://127.0.0.1:8050/.
-
-![2]
-
-[2]: screenshots/app_interface.png
 
 ## Usage
 
