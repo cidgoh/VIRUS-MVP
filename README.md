@@ -85,8 +85,21 @@ corresponding to non-clade defining mutations.
 
 ## Authors and acknowledgement
 
-...
+[@ivansg44][4]: Visualization development
+
+[@Anoosha-Sehar][5]: Functional annotation
+
+[@anwarMZ][6]: Genomic analysis
+
+[@miseminger][7]: Functional annotation and data standardization
+
+[4]: https://github.com/ivansg44
+[5]: https://github.com/Anoosha-Sehar
+[6]: https://github.com/anwarMZ
+[7]: https://github.com/miseminger
+
+William Hsiao, Gary Van Domselaar, and Paul Gordon
 
 ## License
 
-...
+TODO: wait until ready for deployment
