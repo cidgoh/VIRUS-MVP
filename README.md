@@ -1,7 +1,29 @@
-Create and activate your virtual environment (e.g., `$ conda create --name=voc_protoype python=3.9`)
+# COVID-MVP
 
-`$ pip install -r requirements.txt`
+...description
 
-`$ python app.py`
+...visuals
 
-Open http://127.0.0.1:8050/
+## Installation
+
+...
+
+## Usage
+
+...
+
+## Support
+
+...
+
+## Roadmap
+
+...
+
+## Authors and acknowledgement
+
+...
+
+## License
+
+...
