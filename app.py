@@ -121,7 +121,7 @@ def launch_app(_):
         dcc.Store(id="last-heatmap-cell-clicked"),
         # Used to update certain figures only when necessary
         dcc.Store(id="heatmap-x-len", data=len(data_["heatmap_x_nt_pos"])),
-        dcc.Store(id="heatmap-y-len", data=len(data_["heatmap_y"])),
+        dcc.Store(id="heatmap-y", data=len(data_["heatmap_y"])),
         # Used to integrate some JS callbacks. The data values are
         # meaningless, we just need outputs to perform all clientside
         # functions.
@@ -475,37 +475,35 @@ def route_data_heatmap_x_update(data, old_heatmap_x_len):
 
 
 @app.callback(
-    Output("heatmap-y-len", "data"),
+    Output("heatmap-y", "data"),
     Input("data", "data"),
-    State("heatmap-y-len", "data"),
+    State("heatmap-y", "data"),
     prevent_initial_call=True
 )
-def route_data_heatmap_y_update(data, old_heatmap_y_len):
-    """Update ``heatmap-y-len`` dcc variable when needed.
+def route_data_heatmap_y_update(data, old_heatmap_y):
+    """Update ``heatmap-y`` dcc variable when needed.
 
     This serves as a useful trigger for figs that only need to be
-    updated when heatmap y changes. We use the length of
-    data["heatmap_y"] because it is faster than comparing the entire
-    list, and appropriately alerts us when data["heatmap_y"] changed.
+    updated when heatmap y changes.
 
     :param data: ``get_data`` return value, transported here by
         ``update_data``.
     :type data: dict
-    :param old_heatmap_y_len: ``heatmap-y-len.data`` value
-    :type old_heatmap_y_len: dict
+    :param old_heatmap_y: ``heatmap-y.data`` value
+    :type old_heatmap_y: dict
     :return: New len of data["heatmap_y"]
     :rtype: int
     :raise PreventUpdate: If data["heatmap_y"] len did not change
     """
-    if old_heatmap_y_len == len(data["heatmap_y"]):
+    if old_heatmap_y == data["heatmap_y"]:
         raise PreventUpdate
-    return len(data["heatmap_y"])
+    return data["heatmap_y"]
 
 
 @app.callback(
     Output("heatmap-y-axis-fig", "figure"),
     Output("heatmap-y-axis-fig", "style"),
-    Input("heatmap-y-len", "data"),
+    Input("heatmap-y", "data"),
     State("data", "data"),
     prevent_initial_call=True
 )
