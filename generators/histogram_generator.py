@@ -1,6 +1,5 @@
 """Functions for generating histogram view."""
 
-import json
 import math
 
 import dash_bootstrap_components as dbc
@@ -10,6 +9,7 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+from definitions import GENE_COLORS_DICT, GENE_POSITIONS_DICT
 
 def get_histogram_row(data):
     """Get Dash Bootstrap Components row containing histogram view.
@@ -213,18 +213,13 @@ def get_histogram_gene_bar_obj_list():
         histogram view.
     :rtype: list[go.Bar]
     """
-    with open("gene_positions.json") as fp:
-        gene_positions_dict = json.load(fp)
-    with open("gene_colors.json") as fp:
-        gene_colors_dict = json.load(fp)
-
     ret = []
     total_bar_len_so_far = 0
     last_gene_end = 1
-    for gene in gene_positions_dict:
-        gene_start = gene_positions_dict[gene]["start"]
-        gene_end = gene_positions_dict[gene]["end"]
-        igr_color = gene_colors_dict["IGR"]
+    for gene in GENE_POSITIONS_DICT:
+        gene_start = GENE_POSITIONS_DICT[gene]["start"]
+        gene_end = GENE_POSITIONS_DICT[gene]["end"]
+        igr_color = GENE_COLORS_DICT["IGR"]
         # Intergenic region before this gene--add it
         if gene_start > last_gene_end:
             intergenic_bar_len = gene_start - total_bar_len_so_far
@@ -253,7 +248,7 @@ def get_histogram_gene_bar_obj_list():
                                     insidetextanchor="middle",
                                     insidetextfont={"color": "white"},
                                     marker={
-                                        "color": gene_colors_dict[gene],
+                                        "color": GENE_COLORS_DICT[gene],
                                         "line": {"width": 0}
                                     },
                                     showlegend=False,

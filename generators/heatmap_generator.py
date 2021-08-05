@@ -7,13 +7,12 @@ We are not using the Plotly heatmap object. It is too slow. We are
 using the Plotly scattergl object, and making it look like a heatmap.
 """
 
-import json
-
 import dash_bootstrap_components as dbc
 import dash_html_components as html
 import dash_core_components as dcc
 import plotly.graph_objects as go
 
+from definitions import GENE_COLORS_DICT
 
 def get_heatmap_cells_fig_height(data):
     """Get the height in pixels for the heatmap cells fig.
@@ -324,15 +323,13 @@ def get_heatmap_gene_bar_graph_obj(data):
 
     heatmap_center_genes_obj_z = [[]]
     heatmap_center_genes_obj_colorscale = []
-    with open("gene_colors.json") as fp:
-        gene_colors = json.load(fp)
     for i, label in enumerate(heatmap_center_genes_obj_labels):
         mock_z_val = (i + 1) / len(heatmap_center_genes_obj_labels)
         heatmap_center_genes_obj_z[0].append(mock_z_val)
         # We add the same color to the colorscale twice, to prevent
         # things from breaking when the gene bar has only one z val.
-        heatmap_center_genes_obj_colorscale.append(gene_colors[label])
-        heatmap_center_genes_obj_colorscale.append(gene_colors[label])
+        heatmap_center_genes_obj_colorscale.append(GENE_COLORS_DICT[label])
+        heatmap_center_genes_obj_colorscale.append(GENE_COLORS_DICT[label])
 
     ret = go.Heatmap(
         x=heatmap_center_genes_obj_x,

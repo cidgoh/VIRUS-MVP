@@ -13,6 +13,8 @@ import os
 import numpy as np
 import pandas as pd
 
+from definitions import GENE_POSITIONS_DICT
+
 
 def vcf_str_to_gvf_str(vcf_str, strain):
     """Convert VCF str to gvf str.
@@ -118,11 +120,9 @@ def map_pos_to_gene(pos):
     :return: SARS-CoV-2 gene at nucleotide position ``pos``
     :rtype: str
     """
-    with open("gene_positions.json") as fp:
-        gene_positions_dict = json.load(fp)
-    for gene in gene_positions_dict:
-        start = gene_positions_dict[gene]["start"]
-        end = gene_positions_dict[gene]["end"]
+    for gene in GENE_POSITIONS_DICT:
+        start = GENE_POSITIONS_DICT[gene]["start"]
+        end = GENE_POSITIONS_DICT[gene]["end"]
         if start <= pos <= end:
             return gene
     # Intergenic region
@@ -432,10 +432,8 @@ def get_heatmap_x_aa_pos(heatmap_x_nt_pos, heatmap_x_genes):
         {gene}.{aa position in gene}.
     :rtype: list[str]
     """
-    with open("gene_positions.json") as fp:
-        gene_positions_dict = json.load(fp)
     gene_start_positions = \
-        {k: gene_positions_dict[k]["start"] for k in gene_positions_dict}
+        {k: GENE_POSITIONS_DICT[k]["start"] for k in GENE_POSITIONS_DICT}
     ret = []
     for i, e in enumerate(heatmap_x_nt_pos):
         gene = heatmap_x_genes[i]
