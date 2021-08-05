@@ -1,6 +1,12 @@
 # COVID-MVP
 
-...description
+SARS-CoV-2 Variants of Concern (VOC) & Interest (VOI) pose high risks to global
+public health. COVID-MVP tracks mutations from VOCs and VOIs to enable
+interactive visualization in near-real time. COVID-MVP has 3 modules: A
+Nextflow-wrapped workflow for identifying mutations in genomic data; a Python
+module for functional annotation, based on literature curation; and an
+interactive visualization for prevalence of mutations in variants and their
+functional impact, based on Dash & Plotly frameworks.
 
 ![2]
 
