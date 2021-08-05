@@ -26,10 +26,10 @@ from dash.dependencies import ALL, ClientsideFunction, Input, Output, State
 from dash.exceptions import PreventUpdate
 
 from data_parser import get_data, vcf_str_to_gvf_str
-import toolbar_generator
-import heatmap_generator
-import histogram_generator
-import table_generator
+from definitions import REFERENCE_DATA_DIR, USER_DATA_DIR
+from generators import (heatmap_generator, histogram_generator,
+                        table_generator, toolbar_generator)
+
 
 # This is the only global variable Dash plays nice with, and it
 # contains the visualization that is deployed by this file, when
@@ -95,7 +95,7 @@ def launch_app(_):
     if you do the following in the global scope--which you may be
     tempted to do because we are only doing it once!
     """
-    data_ = get_data(["reference_data", "user_data"])
+    data_ = get_data([REFERENCE_DATA_DIR, USER_DATA_DIR])
     return [
         # Bootstrap row containing tools at the top of the application
         toolbar_generator.get_toolbar_row(data_),
@@ -186,7 +186,7 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
     else:
         min_mutation_freq, max_mutation_freq = None, None
 
-    return get_data(["reference_data", "user_data"],
+    return get_data([REFERENCE_DATA_DIR, USER_DATA_DIR],
                     clade_defining=show_clade_defining,
                     hidden_strains=hidden_strains,
                     strain_order=strain_order,
