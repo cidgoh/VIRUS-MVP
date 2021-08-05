@@ -31,7 +31,8 @@ Install requirements.
 
 `(COVID-MVP) $ pip install -r requirements.txt`
 
-Run the application.
+Run the application. If you do not run the application from the root directory,
+some of the JavaScript assets will not be compiled.
 
 `(COVID-MVP) $ python app.py`
 
