@@ -186,7 +186,7 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
     else:
         min_mutation_freq, max_mutation_freq = None, None
 
-    return get_data(["reference_data", "user_data"],
+    return get_data([REFERENCE_DATA_DIR, USER_DATA_DIR],
                     clade_defining=show_clade_defining,
                     hidden_strains=hidden_strains,
                     strain_order=strain_order,
