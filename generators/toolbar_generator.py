@@ -1,5 +1,7 @@
 """Functions for generating toolbar view."""
 
+import os
+
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 
@@ -102,7 +104,7 @@ def get_select_lineages_modal_body(data):
             if strain not in data["hidden_strains"]:
                 selected_values.append(strain)
         form_group = dbc.FormGroup([
-            dbc.Label(dir_),
+            dbc.Label(os.path.basename(dir_)),
             dbc.Checklist(
                 id={"type": "select-lineages-modal-checklist", "index": dir_},
                 options=checklist_options,
