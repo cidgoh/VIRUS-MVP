@@ -83,7 +83,7 @@ def get_heatmap_row(data):
                     dbc.Row(
                         dbc.Col(
                             None,
-                            style={"height": "6.5rem"}
+                            style={"height": 100}
                         ),
                         no_gutters=True
                     ),
@@ -112,7 +112,7 @@ def get_heatmap_row(data):
                                 id="heatmap-gene-bar-fig",
                                 figure=get_heatmap_gene_bar_fig(data),
                                 config={"displayModeBar": False},
-                                style={"height": "2rem",
+                                style={"height": 25,
                                        "width": heatmap_cells_fig_width}
                             )
                         ),
@@ -125,7 +125,7 @@ def get_heatmap_row(data):
                                 id="heatmap-nt-pos-axis-fig",
                                 figure=get_heatmap_nt_pos_axis_fig(data),
                                 config={"displayModeBar": False},
-                                style={"height": "4.5rem",
+                                style={"height": 75,
                                        "width": heatmap_cells_fig_width}
                             )
                         )
@@ -150,7 +150,7 @@ def get_heatmap_row(data):
                                 id="heatmap-aa-pos-axis-fig",
                                 figure=get_heatmap_aa_pos_axis_fig(data),
                                 config={"displayModeBar": False},
-                                style={"height": "8rem",
+                                style={"height": 140,
                                        "width": heatmap_cells_fig_width}
                             )
                         ),
@@ -168,7 +168,7 @@ def get_heatmap_row(data):
                     dbc.Row(
                         dbc.Col(
                             None,
-                            style={"height": "6.5rem"},
+                            style={"height": 100},
                         ),
                         no_gutters=True
                     ),
