@@ -219,7 +219,7 @@ def get_histogram_gene_bar_obj_list():
     for gene in GENE_POSITIONS_DICT:
         gene_start = GENE_POSITIONS_DICT[gene]["start"]
         gene_end = GENE_POSITIONS_DICT[gene]["end"]
-        igr_color = GENE_COLORS_DICT["IGR"]
+        igr_color = GENE_COLORS_DICT["INTERGENIC"]
         # Intergenic region before this gene--add it
         if gene_start > last_gene_end:
             intergenic_bar_len = gene_start - total_bar_len_so_far
@@ -233,7 +233,7 @@ def get_histogram_gene_bar_obj_list():
                                             "line": {"width": 0}
                                         },
                                         showlegend=False,
-                                        hovertemplate="IGR")
+                                        hovertemplate="INTERGENIC")
             ret.append(intergenic_bar_obj)
         # Now add intragenic bar
         intragenic_bar_len = gene_end - total_bar_len_so_far

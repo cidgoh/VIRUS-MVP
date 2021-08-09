@@ -270,6 +270,11 @@ def get_heatmap_gene_bar_fig(data):
         midpoint = ((endpoints[i+1] - endpoints[i]) / 2) + endpoints[i]
         midpoints.append(midpoint)
     for i, gene_label in enumerate(heatmap_gene_bar_obj["text"][0]):
+        x_start = heatmap_gene_bar_obj["x"][i]
+        x_end = heatmap_gene_bar_obj["x"][i + 1]
+        # Too small for label
+        if (x_end - x_start) < 3:
+            continue
         ret.add_annotation(
             xref="x1",
             yref="y1",
