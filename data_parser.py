@@ -421,7 +421,9 @@ def get_heatmap_x_genes(heatmap_x_nt_pos):
 def get_heatmap_x_aa_pos(heatmap_x_nt_pos, heatmap_x_genes):
     """Get aa positions corresponding to x axis values in heatmap.
 
-    These are in the form of {gene}.{aa position in gene}.
+    These are in the form of {gene}.{aa position in gene}, or if they
+    are intergenic, in the form of
+    {downstream gene}.1-{number of nt upstream}.
 
     :param heatmap_x_nt_pos: ``get_heatmap_x_nt_pos`` return value
     :type heatmap_x_nt_pos: list[str]
@@ -429,19 +431,30 @@ def get_heatmap_x_aa_pos(heatmap_x_nt_pos, heatmap_x_genes):
     :type heatmap_x_genes: list[str]
     :return: List of amino acid positions relative to their gene for
         each x in ``heatmap_x``, of the form
-        {gene}.{aa position in gene}.
+        {gene}.{aa position in gene} or
+        {downstream gene}.1-{number of nt upstream}.
     :rtype: list[str]
     """
     gene_start_positions = \
         {k: GENE_POSITIONS_DICT[k]["start"] for k in GENE_POSITIONS_DICT}
-    ret = []
-    for i, e in enumerate(heatmap_x_nt_pos):
-        gene = heatmap_x_genes[i]
-        if gene in {"5' UTR", "3' UTR", "IGR"}:
-            ret.append(gene)
+    last_gene_seen = "3' UTR"
+    ret = ["" for _ in heatmap_x_nt_pos]
+    # Iterate through nt pos in reverse
+    for i, pos in enumerate(reversed(heatmap_x_nt_pos)):
+        # Negative index
+        _i = -1 - i
+        gene = heatmap_x_genes[_i]
+        if gene in {"5' UTR", "3' UTR"}:
+            ret[_i] = gene
             continue
+        if gene == "IGR":
+            last_gene_start_pos = gene_start_positions[last_gene_seen]
+            downstream_diff = last_gene_start_pos - int(pos)
+            ret[_i] = "<b>%s.1 - %s</b>" % (last_gene_seen, downstream_diff)
+            continue
+        last_gene_seen = gene
         gene_start_pos = gene_start_positions[gene]
-        ret.append(gene + "." + str(int((int(e) - gene_start_pos) / 3) + 1))
+        ret[_i] = gene + "." + str(int((int(pos) - gene_start_pos) / 3) + 1)
     return ret
 
 
