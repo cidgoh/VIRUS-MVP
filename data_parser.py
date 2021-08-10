@@ -536,17 +536,12 @@ def get_heatmap_hover_text(parsed_gvf_dirs, heatmap_x_nt_pos):
 
                 cell_text_str = "<b>Mutation name: %s</b><br>" \
                                 "<br>" \
-                                "<b>Position:</b> %s<br>" \
-                                "<b>Gene:</b> %s<br>" \
-                                "<br>" \
-                                "<b>Reference:</b> %s<br>" \
-                                "<b>Alternate:</b> %s<br>" \
-                                "<b>Alternate frequency:</b> %s<br>" \
+                                "Reference: %s<br>" \
+                                "Alternate: %s<br>" \
+                                "Alternate frequency: %s<br>" \
                                 "<br>" \
                                 "<b>Functions:</b> <br>%s"
                 cell_text_params = (mutation_name,
-                                    pos,
-                                    cell_data["gene"],
                                     cell_data["ref"],
                                     cell_data["alt"],
                                     cell_data["alt_freq"],
