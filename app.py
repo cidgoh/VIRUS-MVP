@@ -521,8 +521,7 @@ def update_heatmap_y_axis_fig(_, data):
     :rtype: (plotly.graph_objects.Figure, dict)
     """
     y_axis_fig = heatmap_generator.get_heatmap_y_axis_fig(data)
-    y_axis_style = \
-        {"height": heatmap_generator.get_heatmap_cells_fig_height(data)}
+    y_axis_style = {"height": data["heatmap_cells_fig_height"]}
     return y_axis_fig, y_axis_style
 
 
@@ -547,8 +546,7 @@ def update_heatmap_gene_bar_fig(_, data):
     :rtype: (plotly.graph_objects.Figure, dict)
     """
     gene_bar_fig = heatmap_generator.get_heatmap_gene_bar_fig(data)
-    gene_bar_style = \
-        {"width": heatmap_generator.get_heatmap_cells_fig_width(data)}
+    gene_bar_style = {"width": data["heatmap_cells_fig_width"]}
     return gene_bar_fig, gene_bar_style
 
 
@@ -573,8 +571,7 @@ def update_heatmap_nt_pos_axis_fig(_, data):
     :rtype: (plotly.graph_objects.Figure, dict)
     """
     nt_pos_x_axis_fig = heatmap_generator.get_heatmap_nt_pos_axis_fig(data)
-    nt_pos_x_axis_style = \
-        {"width": heatmap_generator.get_heatmap_cells_fig_width(data)}
+    nt_pos_x_axis_style = {"width": data["heatmap_cells_fig_width"]}
     return nt_pos_x_axis_fig, nt_pos_x_axis_style
 
 
@@ -599,8 +596,7 @@ def update_heatmap_aa_pos_axis_fig(_, data):
     :rtype: (plotly.graph_objects.Figure, dict)
     """
     aa_pos_x_axis_fig = heatmap_generator.get_heatmap_aa_pos_axis_fig(data)
-    aa_pos_x_axis_style = \
-        {"width": heatmap_generator.get_heatmap_cells_fig_width(data)}
+    aa_pos_x_axis_style = {"width": data["heatmap_cells_fig_width"]}
     return aa_pos_x_axis_fig, aa_pos_x_axis_style
 
 
@@ -643,8 +639,8 @@ def update_heatmap_cells_fig(data):
     """
     cells_fig = heatmap_generator.get_heatmap_cells_fig(data)
     cells_fig_style = {
-        "height": heatmap_generator.get_heatmap_cells_fig_height(data),
-        "width": heatmap_generator.get_heatmap_cells_fig_width(data)
+        "height": data["heatmap_cells_fig_height"],
+        "width": data["heatmap_cells_fig_width"]
     }
     return cells_fig, cells_fig_style
 
@@ -800,9 +796,8 @@ app.clientside_callback(
         function_name="makeHistogramRelPosBarDynamic"
     ),
     Output("make-histogram-rel-pos-bar-dynamic", "data"),
-    Input("histogram", "id"),
-    Input("heatmap-cells-fig", "figure"),
-    Input("data", "data"),
+    Input("heatmap-nt-pos-axis-fig", "figure"),
+    State("data", "data")
 )
 
 if __name__ == "__main__":
