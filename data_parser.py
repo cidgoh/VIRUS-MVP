@@ -354,6 +354,8 @@ def get_data(dirs, clade_defining=False, hidden_strains=None,
         get_heatmap_x_genes(heatmap_x_nt_pos)
     ret["heatmap_x_aa_pos"] = \
         get_heatmap_x_aa_pos(heatmap_x_nt_pos, ret["heatmap_x_genes"])
+    ret["heatmap_cells_fig_height"] = len(heatmap_y) * 40
+    ret["heatmap_cells_fig_width"] = len(heatmap_x_nt_pos) * 36
 
     return ret
 

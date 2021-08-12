@@ -14,35 +14,6 @@ import plotly.graph_objects as go
 
 from definitions import GENE_COLORS_DICT
 
-def get_heatmap_cells_fig_height(data):
-    """Get the height in pixels for the heatmap cells fig.
-
-    Good to put this in a function because several other figs have to
-    be the same height.
-
-    :param data: ``data_parser.get_data`` return value
-    :type data: dict
-    :return: Heatmap cells fig height in pixels
-    :rtype: int
-    """
-    ret = len(data["heatmap_y"]) * 40
-    return ret
-
-
-def get_heatmap_cells_fig_width(data):
-    """Get the width in pixels for the heatmap cells fig.
-
-    Good to put this in a function because several other figs have to
-    be the same width.
-
-    :param data: ``data_parser.get_data`` return value
-    :type data: dict
-    :return: Heatmap cells fig height in pixels
-    :rtype: int
-    """
-    ret = len(data["heatmap_x_nt_pos"]) * 36
-    return ret
-
 
 def get_color_scale():
     """Get custom Plotly color scale.
@@ -73,8 +44,8 @@ def get_heatmap_row(data):
         and cols for heatmap view.
     :rtype: dbc.Row
     """
-    heatmap_cells_fig_height = get_heatmap_cells_fig_height(data)
-    heatmap_cells_fig_width = get_heatmap_cells_fig_width(data)
+    heatmap_cells_fig_height = data["heatmap_cells_fig_height"]
+    heatmap_cells_fig_width = data["heatmap_cells_fig_width"]
     ret = dbc.Row(
         [
             dbc.Col(
