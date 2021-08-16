@@ -421,13 +421,13 @@ def get_heatmap_cells_fig(data):
     )
     ret.update_xaxes(range=[-0.5, len(data["heatmap_x_nt_pos"])-0.5],
                      tickmode="linear",
-                     tick0=0,
+                     tick0=0.5,
                      dtick=1,
                      fixedrange=True,
                      visible=True,
                      showticklabels=False,
                      zeroline=False,
-                     gridcolor="lightgrey",
+                     gridcolor="grey",
                      showspikes=True,
                      spikecolor="black",
                      side="top")
