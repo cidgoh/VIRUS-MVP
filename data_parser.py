@@ -171,43 +171,45 @@ def parse_gvf_dir(dir_, file_order=None):
 
                     pos = row["#start"]
                     if pos not in ret[strain]:
-                        ret[strain][pos] = {}
-                        ret[strain][pos]["ref"] = attrs["Reference_seq"]
-                        ret[strain][pos]["alt"] = \
-                            attrs["Variant_seq"].split(",")[0]
-                        ret[strain][pos]["gene"] = attrs["gene"]
-
-                        ao = float(attrs["ao"].split(",")[0])
-                        dp = float(attrs["dp"])
-                        ret[strain][pos]["alt_freq"] = str(ao / dp)
-
-                        ret[strain][pos]["clade_defining"] = \
-                            attrs["clade_defining"] == "True"
-
-                        ret[strain][pos]["hidden_cell"] = False
-
-                        ret[strain][pos]["mutation_name"] = attrs["Name"]
-
-                        ref_len = len(ret[strain][pos]["ref"])
-                        alt_len = len(ret[strain][pos]["alt"])
-                        if ref_len < alt_len:
-                            ret[strain][pos]["mutation_type"] = "insertion"
-                        elif ref_len > alt_len:
-                            ret[strain][pos]["mutation_type"] = "deletion"
-                        else:
-                            ret[strain][pos]["mutation_type"] = "snp"
-
-                        ret[strain][pos]["functions"] = {}
+                        ret[strain][pos] = []
+                        mutation_types = row["#type"].split(",")
+                        num_of_mutations = len(mutation_types)
+                        for i in range(num_of_mutations):
+                            mutation_dict = {
+                                "ref": attrs["Reference_seq"],
+                                "alt": attrs["Variant_seq"].split(",")[i],
+                                "gene": attrs["gene"],
+                                "ao": float(attrs["ao"].split(",")[i]),
+                                "dp": float(attrs["dp"]),
+                                "clade_defining":
+                                    attrs["clade_defining"] == "True",
+                                "hidden_cell": False,
+                                "mutation_name": attrs["Name"],
+                                "functions": {}
+                            }
+                            mutation_dict["alt_freq"] = \
+                                str(mutation_dict["ao"] / mutation_dict["dp"])
+                            type = mutation_types[i]
+                            if type == "ins":
+                                mutation_dict["mutation_type"] = "insertion"
+                            elif type == "del":
+                                mutation_dict["mutation_type"] = "deletion"
+                            else:
+                                mutation_dict["mutation_type"] = "snp"
+                            ret[strain][pos].append(mutation_dict)
 
                     fn_category = attrs["function_category"].strip('"')
                     fn_desc = attrs["function_description"].strip('"')
                     fn_source = attrs["source"].strip('"')
                     fn_citation = attrs["citation"].strip('"')
+                    fn_dict = {}
                     if fn_category:
-                        if fn_category not in ret[strain][pos]["functions"]:
-                            ret[strain][pos]["functions"][fn_category] = {}
-                        ret[strain][pos]["functions"][fn_category][fn_desc] = \
+                        if fn_category not in fn_dict:
+                            fn_dict[fn_category] = {}
+                        fn_dict[fn_category][fn_desc] = \
                             {"source": fn_source, "citation": fn_citation}
+                    for i in range(len(ret[strain][pos])):
+                        ret[strain][pos][i]["functions"].update(fn_dict)
     return ret
 
 
