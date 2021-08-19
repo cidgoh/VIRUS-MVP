@@ -206,9 +206,10 @@ def parse_gvf_dir(dir_, file_order=None):
                         ret[strain][pos]["mat_pep_id"] = "n/a"
                         ret[strain][pos]["mat_pep_desc"] = "n/a"
                         ret[strain][pos]["mat_pep_acc"] = "n/a"
-                        if "ps_exc" in attrs and attrs["ps_exc"]:
-                            ret[strain][pos]["ps_exc"] = \
-                                attrs["ps_exc"]
+                        # TODO sort this out
+                        # if "ps_exc" in attrs and attrs["ps_exc"]:
+                        #     ret[strain][pos]["ps_exc"] = \
+                        #         attrs["ps_exc"]
                         if "mat_pep_id" in attrs and attrs["mat_pep_id"]:
                             ret[strain][pos]["mat_pep_id"] = \
                                 attrs["mat_pep_id"]
