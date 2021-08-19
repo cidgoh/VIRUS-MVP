@@ -182,6 +182,7 @@ def parse_gvf_dir(dir_, file_order=None):
 
                         ao = float(attrs["ao"].split(",")[0])
                         dp = float(attrs["dp"])
+                        ret[strain][pos]["dp"] = dp
                         ret[strain][pos]["alt_freq"] = str(ao / dp)
 
                         ret[strain][pos]["clade_defining"] = \
@@ -199,6 +200,21 @@ def parse_gvf_dir(dir_, file_order=None):
                             ret[strain][pos]["mutation_type"] = "deletion"
                         else:
                             ret[strain][pos]["mutation_type"] = "snp"
+
+                        # TODO simplify all files have these fields
+                        ret[strain][pos]["ps_exc"] = ""
+                        ret[strain][pos]["mat_pep_id"] = "n/a"
+                        ret[strain][pos]["mat_pep_desc"] = "n/a"
+                        ret[strain][pos]["mat_pep_acc"] = "n/a"
+                        if "ps_exc" in attrs and attrs["ps_exc"]:
+                            ret[strain][pos]["ps_exc"] = \
+                                attrs["ps_exc"]
+                        if "mat_pep_id" in attrs and attrs["mat_pep_id"]:
+                            ret[strain][pos]["mat_pep_id"] = \
+                                attrs["mat_pep_id"]
+                        if "mat_pep_acc" in attrs and attrs["mat_pep_acc"]:
+                            ret[strain][pos]["mat_pep_acc"] = \
+                                attrs["mat_pep_acc"]
 
                         ret[strain][pos]["functions"] = {}
 
@@ -530,27 +546,39 @@ def get_heatmap_hover_text(parsed_gvf_dirs, heatmap_x_nt_pos):
                 if not mutation_name:
                     mutation_name = "n/a"
 
-                functions_str = ""
-                for i, fn_category in enumerate(cell_data["functions"]):
-                    if i == 7:
-                        functions_str += "...click for more<br>"
-                        break
-                    functions_str += fn_category + "<br>"
-                if not functions_str:
-                    functions_str = "n/a"
-
                 cell_text_str = "<b>Mutation name: %s</b><br>" \
                                 "<br>" \
                                 "Reference: %s<br>" \
                                 "Alternate: %s<br>" \
                                 "Alternate frequency: %s<br>" \
+                                "Depth pressure: %s<br>" \
                                 "<br>" \
-                                "<b>Functions:</b> <br>%s"
+                                "<b>Mature peptide</b><br>" \
+                                "ID: %s<br>" \
+                                "Accession: %s<br>" \
+                                "<br>"
+
+                if cell_data["ps_exc"]:
+                    cell_text_str += "<b>Problematic site:</b> <br>"
+                    cell_text_str += cell_data["ps_exc"]
+                else:
+                    functions_str = ""
+                    for i, fn_category in enumerate(cell_data["functions"]):
+                        if i == 7:
+                            functions_str += "...click for more<br>"
+                            break
+                        functions_str += fn_category + "<br>"
+                    if not functions_str:
+                        functions_str = "n/a"
+                    cell_text_str += "<b>Functions:</b> <br>" + functions_str
+
                 cell_text_params = (mutation_name,
                                     cell_data["ref"],
                                     cell_data["alt"],
                                     cell_data["alt_freq"],
-                                    functions_str)
+                                    int(cell_data["dp"]),
+                                    cell_data["mat_pep_id"],
+                                    cell_data["mat_pep_acc"])
                 row.append(cell_text_str % cell_text_params)
             else:
                 row.append(None)
