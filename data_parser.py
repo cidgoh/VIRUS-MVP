@@ -175,7 +175,10 @@ def parse_gvf_dir(dir_, file_order=None):
                         ret[strain][pos]["ref"] = attrs["Reference_seq"]
                         ret[strain][pos]["alt"] = \
                             attrs["Variant_seq"].split(",")[0]
-                        ret[strain][pos]["gene"] = attrs["gene"]
+                        if "gene" in attrs:
+                            ret[strain][pos]["gene"] = attrs["gene"]
+                        else:
+                            ret[strain][pos]["gene"] = attrs["vcf_gene"]
 
                         ao = float(attrs["ao"].split(",")[0])
                         dp = float(attrs["dp"])
