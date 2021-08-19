@@ -228,7 +228,7 @@ def update_new_upload(file_contents, filename, old_data):
     If a valid file is uploaded, it will be written to ``user_data``.
     But regardless of whether a valid file is uploaded, this function
     will return a dict describing the name of the file the user
-    attempted to upload, and status of upload.
+    attempted to upload, and status of upload. TODO change back to vcf
 
     :param file_contents: Contents of uploaded file, formatted by Dash
         into a base64 string.
@@ -244,9 +244,9 @@ def update_new_upload(file_contents, filename, old_data):
     # TODO more thorough validation, maybe once we finalize data
     #  standards.
     new_strain, ext = filename.rsplit(".", 1)
-    if ext != "vcf":
+    if ext != "gvf":
         status = "error"
-        msg = "Filename must end in \".vcf\"."
+        msg = "Filename must end in \".gvf\"."
     elif new_strain in old_data["heatmap_y"]:
         status = "error"
         msg = "Filename must not conflict with existing variant."
@@ -257,9 +257,10 @@ def update_new_upload(file_contents, filename, old_data):
         # TODO: eventually replace with database
         vcf_str_bytes = b64decode(base64_str)
         vcf_str_utf8 = vcf_str_bytes.decode("utf-8")
-        gvf_str = vcf_str_to_gvf_str(vcf_str_utf8, new_strain)
+        # gvf_str = vcf_str_to_gvf_str(vcf_str_utf8, new_strain)
         with open("user_data/" + new_strain + ".gvf", "w") as fp:
-            fp.write("\n\n\n" + gvf_str)
+            # fp.write("\n\n\n" + gvf_str)
+            fp.write(vcf_str_utf8)
         status = "ok"
         msg = ""
     return {"filename": filename, "msg": msg, "status": status}
