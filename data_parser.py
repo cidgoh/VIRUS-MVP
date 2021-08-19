@@ -551,7 +551,7 @@ def get_heatmap_hover_text(parsed_gvf_dirs, heatmap_x_nt_pos):
                                 "Reference: %s<br>" \
                                 "Alternate: %s<br>" \
                                 "Alternate frequency: %s<br>" \
-                                "Depth pressure: %s<br>" \
+                                "Overall read depth: %s<br>" \
                                 "<br>" \
                                 "<b>Mature peptide</b><br>" \
                                 "ID: %s<br>" \
