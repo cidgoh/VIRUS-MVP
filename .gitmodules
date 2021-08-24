@@ -1,0 +1,3 @@
+[submodule "nf-ncov-voc"]
+	path = nf-ncov-voc
+	url = git@github.com:anwarMZ/nf-ncov-voc.git
