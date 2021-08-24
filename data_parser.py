@@ -225,8 +225,9 @@ def filter_parsed_gvf_dirs_by_clade_defining(parsed_gvf_dirs):
     ret = deepcopy(parsed_gvf_dirs)
     for strain in parsed_gvf_dirs:
         for pos in parsed_gvf_dirs[strain]:
-            if not parsed_gvf_dirs[strain][pos]["clade_defining"]:
-                ret[strain][pos]["hidden_cell"] = True
+            for i, mutation in enumerate(parsed_gvf_dirs[strain][pos]):
+                if not mutation["clade_defining"]:
+                    ret[strain][pos][i]["hidden_cell"] = True
     return ret
 
 
@@ -249,9 +250,12 @@ def filter_parsed_gvf_dirs_by_freq(parsed_gvf_dirs, min_mutation_freq,
     ret = deepcopy(parsed_gvf_dirs)
     for strain in parsed_gvf_dirs:
         for pos in parsed_gvf_dirs[strain]:
-            alt_freq = float(ret[strain][pos]["alt_freq"])
-            if alt_freq < min_mutation_freq or alt_freq > max_mutation_freq:
-                ret[strain][pos]["hidden_cell"] = True
+            for i, mutation in enumerate(parsed_gvf_dirs[strain][pos]):
+                alt_freq = float(mutation["alt_freq"])
+                cond1 = alt_freq < min_mutation_freq
+                cond2 = alt_freq > max_mutation_freq
+                if cond1 or cond2:
+                    ret[strain][pos][i]["hidden_cell"] = True
     return ret
 
 
@@ -321,8 +325,9 @@ def get_data(dirs, clade_defining=False, hidden_strains=None,
                                            min_mutation_freq,
                                            max_mutation_freq)
 
+    max_mutations_per_pos_dict = get_max_mutations_per_pos(parsed_gvf_dirs)
     ret = {
-        "heatmap_x_nt_pos": get_heatmap_x_nt_pos(parsed_gvf_dirs),
+        "heatmap_x_nt_pos": get_heatmap_x_nt_pos(max_mutations_per_pos_dict),
         "heatmap_y": get_heatmap_y(visible_parsed_gvf_dirs),
         "tables": get_tables(visible_parsed_gvf_dirs),
         "histogram_x": get_histogram_x(visible_parsed_gvf_dirs),
@@ -333,27 +338,24 @@ def get_data(dirs, clade_defining=False, hidden_strains=None,
     }
     heatmap_y, heatmap_x_nt_pos = ret["heatmap_y"], ret["heatmap_x_nt_pos"]
     ret["insertions_x"] = get_insertions_x(visible_parsed_gvf_dirs,
-                                           heatmap_x_nt_pos,
-                                           heatmap_y)
-    ret["insertions_y"] = get_insertions_y(visible_parsed_gvf_dirs,
-                                           heatmap_x_nt_pos,
-                                           heatmap_y)
+                                           max_mutations_per_pos_dict)
+    ret["insertions_y"] = get_insertions_y(visible_parsed_gvf_dirs)
     ret["deletions_x"] = get_deletions_x(visible_parsed_gvf_dirs,
-                                         heatmap_x_nt_pos,
-                                         heatmap_y)
-    ret["deletions_y"] = get_deletions_y(visible_parsed_gvf_dirs,
-                                         heatmap_x_nt_pos,
-                                         heatmap_y)
-    ret["heatmap_z"] = \
-        get_heatmap_z(visible_parsed_gvf_dirs, heatmap_x_nt_pos)
+                                         max_mutations_per_pos_dict)
+    ret["deletions_y"] = get_deletions_y(visible_parsed_gvf_dirs)
+    ret["heatmap_z"] = get_heatmap_z(visible_parsed_gvf_dirs,
+                                     max_mutations_per_pos_dict)
     ret["heatmap_hover_text"] = \
-        get_heatmap_hover_text(visible_parsed_gvf_dirs, heatmap_x_nt_pos)
+        get_heatmap_hover_text(visible_parsed_gvf_dirs,
+                               max_mutations_per_pos_dict)
     ret["heatmap_mutation_names"] = \
-        get_heatmap_mutation_names(visible_parsed_gvf_dirs, heatmap_x_nt_pos)
+        get_heatmap_mutation_names(visible_parsed_gvf_dirs,
+                                   max_mutations_per_pos_dict)
     ret["heatmap_mutation_fns"] = \
-        get_heatmap_mutation_fns(visible_parsed_gvf_dirs, heatmap_x_nt_pos)
+        get_heatmap_mutation_fns(visible_parsed_gvf_dirs,
+                                 max_mutations_per_pos_dict)
     ret["heatmap_x_genes"] = \
-        get_heatmap_x_genes(heatmap_x_nt_pos)
+        get_heatmap_x_genes(max_mutations_per_pos_dict)
     ret["heatmap_x_aa_pos"] = \
         get_heatmap_x_aa_pos(heatmap_x_nt_pos, ret["heatmap_x_genes"])
     ret["heatmap_cells_fig_height"] = len(heatmap_y) * 40
@@ -379,45 +381,70 @@ def get_mutation_freq_slider_vals(parsed_gvf_dirs):
     alt_freq_set = set()
     for strain in parsed_gvf_dirs:
         for pos in parsed_gvf_dirs[strain]:
-            if not parsed_gvf_dirs[strain][pos]["hidden_cell"]:
-                alt_freq_set.add(parsed_gvf_dirs[strain][pos]["alt_freq"])
+            for mutation in parsed_gvf_dirs[strain][pos]:
+                if not mutation["hidden_cell"]:
+                    alt_freq_set.add(mutation["alt_freq"])
     ret = sorted(list(alt_freq_set), key=float)
     return ret
 
 
-def get_heatmap_x_nt_pos(parsed_gvf_dirs):
-    """Get x axis values of heatmap cells.
+def get_max_mutations_per_pos(parsed_gvf_dirs):
+    """Get max number of mutations at each nt pos in parsed_gvf_dirs.
 
-    These are the nucleotide position of mutations.
+    The returned value is sorted by nt pos to make things easier in
+    other functions.
 
     :param parsed_gvf_dirs: A dictionary containing multiple merged
-        ``get_parsed_gvf_dir`` return values.
+        ``parsed_gvf_dir`` return values.
     :type parsed_gvf_dirs: dict
-    :return: List of x axis values
-    :rtype: list[str]
+    :return: Dict with nt pos as key, and  max num of mutations across
+        all strains in parsed_gvf_dirs as val.
+    :rtype: dict
     """
-    seen = set()
-    ret = []
+    pos_dict = {}
     for strain in parsed_gvf_dirs:
         for pos in parsed_gvf_dirs[strain]:
-            if pos not in seen:
-                seen.add(pos)
-                ret.append(pos)
-    ret.sort(key=int)
+            num_of_mutations = len(parsed_gvf_dirs[strain][pos])
+            if pos not in pos_dict:
+                pos_dict[pos] = num_of_mutations
+            else:
+                pos_dict[pos] = max(num_of_mutations, pos_dict[pos])
+
+    def sort_by_key(items): return int(items[0])
+    sorted_dict = dict(sorted(pos_dict.items(), key=sort_by_key))
+    return sorted_dict
+
+
+def get_heatmap_x_nt_pos(max_mutations_per_pos_dict):
+    """Get heatmap nt pos x-axis vals.
+
+    :param max_mutations_per_pos_dict: See
+        ``get_max_mutations_per_pos`` return value.
+    :type max_mutations_per_pos_dict: dict
+    :return: List of nt pos x-axis vals
+    :rtype: list[str]
+    """
+    ret = []
+    for pos in max_mutations_per_pos_dict:
+        for _ in range(max_mutations_per_pos_dict[pos]):
+            ret.append(pos)
     return ret
 
 
-def get_heatmap_x_genes(heatmap_x_nt_pos):
-    """Get gene values corresponding to x axis values in heatmap.
+def get_heatmap_x_genes(max_mutations_per_pos_dict):
+    """Get gene values corresponding to x-axis values in heatmap.
 
-    :param heatmap_x_nt_pos: ``get_heatmap_x_nt_pos`` return value
-    :type heatmap_x_nt_pos: list[str]
+    :param max_mutations_per_pos_dict: See
+        ``get_max_mutations_per_pos`` return value.
+    :type max_mutations_per_pos_dict: dict
     :return: List of genes for each x in ``heatmap_x``
     :rtype: list[str]
     """
     ret = []
-    for pos in heatmap_x_nt_pos:
-        ret.append(map_pos_to_gene(int(pos)))
+    for pos in max_mutations_per_pos_dict:
+        gene = map_pos_to_gene(int(pos))
+        for _ in range(max_mutations_per_pos_dict[pos]):
+            ret.append(gene)
     return ret
 
 
@@ -478,7 +505,7 @@ def get_heatmap_y(parsed_gvf_dirs):
     return ret
 
 
-def get_heatmap_z(parsed_gvf_dirs, heatmap_x_nt_pos):
+def get_heatmap_z(parsed_gvf_dirs, max_mutations_per_pos_dict):
     """Get z values of heatmap cells.
 
     These are the mutation frequencies, and the z values dictate the
@@ -487,77 +514,78 @@ def get_heatmap_z(parsed_gvf_dirs, heatmap_x_nt_pos):
     :param parsed_gvf_dirs: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return values.
     :type parsed_gvf_dirs: dict
-    :param heatmap_x_nt_pos: ``get_heatmap_x_nt_pos`` return value
-    :type heatmap_x_nt_pos: list[int]
+    :param max_mutations_per_pos_dict: See
+        ``get_max_mutations_per_pos`` return value.
+    :type max_mutations_per_pos_dict: dict
     :return: List of z values
-    :rtype: list[str]
+    :rtype: list[list[str]]
     """
     ret = []
     for strain in parsed_gvf_dirs:
         row = []
-        for pos in heatmap_x_nt_pos:
-            cond = pos in parsed_gvf_dirs[strain] \
-                   and not parsed_gvf_dirs[strain][pos]["hidden_cell"]
-            if cond:
-                row.append(parsed_gvf_dirs[strain][pos]["alt_freq"])
-            else:
-                row.append(None)
+        for pos, num_of_mutations in max_mutations_per_pos_dict.items():
+            cols = [None for _ in range(num_of_mutations)]
+            if pos in parsed_gvf_dirs[strain]:
+                for i, mutation in enumerate(parsed_gvf_dirs[strain][pos]):
+                    if not mutation["hidden_cell"]:
+                        cols[i] = mutation["alt_freq"]
+            row.extend(cols)
         ret.append(row)
     return ret
 
 
-def get_heatmap_hover_text(parsed_gvf_dirs, heatmap_x_nt_pos):
+def get_heatmap_hover_text(parsed_gvf_dirs, max_mutations_per_pos_dict):
     """Get hover text of heatmap cells.
 
     :param parsed_gvf_dirs: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return values.
     :type parsed_gvf_dirs: dict
-    :param heatmap_x_nt_pos: ``get_heatmap_x_nt_pos`` return value
-    :type heatmap_x_nt_pos: list[int]
+    :param max_mutations_per_pos_dict: See
+        ``get_max_mutations_per_pos`` return value.
+    :type max_mutations_per_pos_dict: dict
     :return: List of D3 formatted text values for each x y coordinate
         in ``heatmap_x_nt_pos``.
-    :rtype: list[str]
+    :rtype: list[list[str]]
     """
     ret = []
     for strain in parsed_gvf_dirs:
         row = []
-        for pos in heatmap_x_nt_pos:
+        for pos, num_of_mutations in max_mutations_per_pos_dict.items():
+            cols = [None for _ in range(num_of_mutations)]
             if pos in parsed_gvf_dirs[strain]:
-                cell_data = parsed_gvf_dirs[strain][pos]
+                for i, mutation in enumerate(parsed_gvf_dirs[strain][pos]):
+                    mutation_name = mutation["mutation_name"]
+                    if not mutation_name:
+                        mutation_name = "n/a"
 
-                mutation_name = cell_data["mutation_name"]
-                if not mutation_name:
-                    mutation_name = "n/a"
+                    functions_str = ""
+                    for j, fn_category in enumerate(mutation["functions"]):
+                        if j == 7:
+                            functions_str += "...click for more<br>"
+                            break
+                        functions_str += fn_category + "<br>"
+                    if not functions_str:
+                        functions_str = "n/a"
 
-                functions_str = ""
-                for i, fn_category in enumerate(cell_data["functions"]):
-                    if i == 7:
-                        functions_str += "...click for more<br>"
-                        break
-                    functions_str += fn_category + "<br>"
-                if not functions_str:
-                    functions_str = "n/a"
-
-                cell_text_str = "<b>Mutation name: %s</b><br>" \
-                                "<br>" \
-                                "Reference: %s<br>" \
-                                "Alternate: %s<br>" \
-                                "Alternate frequency: %s<br>" \
-                                "<br>" \
-                                "<b>Functions:</b> <br>%s"
-                cell_text_params = (mutation_name,
-                                    cell_data["ref"],
-                                    cell_data["alt"],
-                                    cell_data["alt_freq"],
-                                    functions_str)
-                row.append(cell_text_str % cell_text_params)
-            else:
-                row.append(None)
+                    cell_text_str = "<b>Mutation name: %s</b><br>" \
+                                    "<br>" \
+                                    "Reference: %s<br>" \
+                                    "Alternate: %s<br>" \
+                                    "Alternate frequency: %s<br>" \
+                                    "<br>" \
+                                    "<b>Functions:</b> <br>%s"
+                    cell_text_params = (mutation_name,
+                                        mutation["ref"],
+                                        mutation["alt"],
+                                        mutation["alt_freq"],
+                                        functions_str)
+                    cols[i] = cell_text_str % cell_text_params
+            row.extend(cols)
         ret.append(row)
     return ret
 
 
-def get_heatmap_mutation_names(parsed_gvf_dirs, heatmap_x_nt_pos):
+def get_heatmap_mutation_names(parsed_gvf_dirs, max_mutations_per_pos_dict):
     """Get mutation names associated with heatmap cells.
 
     This is useful when allowing users to click on heatmap cells for
@@ -566,29 +594,27 @@ def get_heatmap_mutation_names(parsed_gvf_dirs, heatmap_x_nt_pos):
     :param parsed_gvf_dirs: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return values.
     :type parsed_gvf_dirs: dict
-    :param heatmap_x_nt_pos: ``get_heatmap_x_nt_pos`` return value
-    :type heatmap_x_nt_pos: list[int]
+    :param max_mutations_per_pos_dict: See
+        ``get_max_mutations_per_pos`` return value.
+    :type max_mutations_per_pos_dict: dict
     :return: Mutation names for each x y coordinate in heatmap.
     :rtype: list[list[str]]
     """
     ret = []
     for strain in parsed_gvf_dirs:
         row = []
-        for pos in heatmap_x_nt_pos:
+        for pos, num_of_mutations in max_mutations_per_pos_dict.items():
+            cols = [None for _ in range(num_of_mutations)]
             if pos in parsed_gvf_dirs[strain]:
-                cell_data = parsed_gvf_dirs[strain][pos]
-                mutation_name = cell_data["mutation_name"]
-                if mutation_name:
-                    row.append(mutation_name)
-                else:
-                    row.append(None)
-            else:
-                row.append(None)
+                for i, mutation in enumerate(parsed_gvf_dirs[strain][pos]):
+                    if mutation["mutation_name"]:
+                        cols[i] = mutation["mutation_name"]
+            row.extend(cols)
         ret.append(row)
     return ret
 
 
-def get_heatmap_mutation_fns(parsed_gvf_dirs, heatmap_x_nt_pos):
+def get_heatmap_mutation_fns(parsed_gvf_dirs, max_mutations_per_pos_dict):
     """Get mutation fns associated with heatmap cells.
 
     This is useful when allowing users to click on heatmap cells for
@@ -597,8 +623,9 @@ def get_heatmap_mutation_fns(parsed_gvf_dirs, heatmap_x_nt_pos):
     :param parsed_gvf_dirs: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return values.
     :type parsed_gvf_dirs: dict
-    :param heatmap_x_nt_pos: ``get_heatmap_x_nt_pos`` return value
-    :type heatmap_x_nt_pos: list[int]
+    :param max_mutations_per_pos_dict: See
+        ``get_max_mutations_per_pos`` return value.
+    :type max_mutations_per_pos_dict: dict
     :return: Mutation functions for each x y coordinate in heatmap, as
         structured in dict format used by ``parsed_gvf_dirs``.
     :rtype: list[list[dict]]
@@ -606,22 +633,19 @@ def get_heatmap_mutation_fns(parsed_gvf_dirs, heatmap_x_nt_pos):
     ret = []
     for strain in parsed_gvf_dirs:
         row = []
-        for pos in heatmap_x_nt_pos:
+        for pos, num_of_mutations in max_mutations_per_pos_dict.items():
+            cols = [None for _ in range(num_of_mutations)]
             if pos in parsed_gvf_dirs[strain]:
-                cell_data = parsed_gvf_dirs[strain][pos]
-                functions = cell_data["functions"]
-                if functions:
-                    row.append(functions)
-                else:
-                    row.append(None)
-            else:
-                row.append(None)
+                for i, mutation in enumerate(parsed_gvf_dirs[strain][pos]):
+                    if mutation["functions"]:
+                        cols[i] = mutation["functions"]
+            row.extend(cols)
         ret.append(row)
     return ret
 
 
-def get_insertions_x(parsed_gvf_dirs, heatmap_x_nt_pos, heatmap_y):
-    """Get x coordinates of deletion markers to overlay in heatmap.
+def get_insertions_x(parsed_gvf_dirs, max_mutations_per_pos_dict):
+    """Get x coordinates of insertion markers to overlay in heatmap.
 
     These are the linear x coordinates used in the Plotly graph object.
     i.e., the indices of data["heatmap_x_nt_pos"]
@@ -629,27 +653,33 @@ def get_insertions_x(parsed_gvf_dirs, heatmap_x_nt_pos, heatmap_y):
     :param parsed_gvf_dirs: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return values.
     :type parsed_gvf_dirs: dict
-    :param heatmap_x_nt_pos: ``get_heatmap_x_nt_pos`` return value
-    :type heatmap_x_nt_pos: list[int]
-    :param heatmap_y: ``get_heatmap_y`` return value
-    :type heatmap_y: list[str]
+    :param max_mutations_per_pos_dict: See
+        ``get_max_mutations_per_pos`` return value.
+    :type max_mutations_per_pos_dict: dict
     :return: List of x coordinate values to display insertion markers
     :rtype: list[int]
     """
     ret = []
-    for i, pos in enumerate(heatmap_x_nt_pos):
-        for j, strain in enumerate(heatmap_y):
+    for strain in parsed_gvf_dirs:
+        # How far markers need to be pushed right due to earlier
+        # heterozygous mutations.
+        x_offset = 0
+
+        for i, pos in enumerate(max_mutations_per_pos_dict):
+            num_of_mutations = max_mutations_per_pos_dict[pos]
+            x_offset += num_of_mutations - 1
             if pos not in parsed_gvf_dirs[strain]:
                 continue
-            mutation_type = parsed_gvf_dirs[strain][pos]["mutation_type"]
-            hidden_cell = parsed_gvf_dirs[strain][pos]["hidden_cell"]
-            if mutation_type == "insertion" and not hidden_cell:
-                ret.append(i)
+            for j, mutation in enumerate(parsed_gvf_dirs[strain][pos]):
+                insertion = mutation["mutation_type"] == "insertion"
+                hidden = mutation["hidden_cell"]
+                if insertion and not hidden:
+                    ret.append(i + j + x_offset)
     return ret
 
 
-def get_insertions_y(parsed_gvf_dirs, heatmap_x_nt_pos, heatmap_y):
-    """Get y coordinates of deletion markers to overlay in heatmap.
+def get_insertions_y(parsed_gvf_dirs):
+    """Get y coordinates of insertion markers to overlay in heatmap.
 
     These are the linear y coordinates used in the Plotly graph object.
     i.e., the indices of data["heatmap_y"]
@@ -657,26 +687,21 @@ def get_insertions_y(parsed_gvf_dirs, heatmap_x_nt_pos, heatmap_y):
     :param parsed_gvf_dirs: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return values.
     :type parsed_gvf_dirs: dict
-    :param heatmap_x_nt_pos: ``get_heatmap_x_nt_pos`` return value
-    :type heatmap_x_nt_pos: list[int]
-    :param heatmap_y: ``get_heatmap_y`` return value
-    :type heatmap_y: list[str]
     :return: List of y coordinate values to display insertion markers
     :rtype: list[str]
     """
     ret = []
-    for i, pos in enumerate(heatmap_x_nt_pos):
-        for j, strain in enumerate(heatmap_y):
-            if pos not in parsed_gvf_dirs[strain]:
-                continue
-            mutation_type = parsed_gvf_dirs[strain][pos]["mutation_type"]
-            hidden_cell = parsed_gvf_dirs[strain][pos]["hidden_cell"]
-            if mutation_type == "insertion" and not hidden_cell:
-                ret.append(j)
+    for y, strain in enumerate(parsed_gvf_dirs):
+        for pos in parsed_gvf_dirs[strain]:
+            for mutation in parsed_gvf_dirs[strain][pos]:
+                insertion = mutation["mutation_type"] == "insertion"
+                hidden = mutation["hidden_cell"]
+                if insertion and not hidden:
+                    ret.append(y)
     return ret
 
 
-def get_deletions_x(parsed_gvf_dirs, heatmap_x_nt_pos, heatmap_y):
+def get_deletions_x(parsed_gvf_dirs, max_mutations_per_pos_dict):
     """Get x coordinates of deletion markers to overlay in heatmap.
 
     These are the linear x coordinates used in the Plotly graph object.
@@ -685,27 +710,33 @@ def get_deletions_x(parsed_gvf_dirs, heatmap_x_nt_pos, heatmap_y):
     :param parsed_gvf_dirs: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return values.
     :type parsed_gvf_dirs: dict
-    :param heatmap_x_nt_pos: ``get_heatmap_x_nt_pos`` return value
-    :type heatmap_x_nt_pos: list[int]
-    :param heatmap_y: ``get_heatmap_y`` return value
-    :type heatmap_y: list[str]
+    :param max_mutations_per_pos_dict: See
+        ``get_max_mutations_per_pos`` return value.
+    :type max_mutations_per_pos_dict: dict
     :return: List of x coordinate values to display insertion markers
     :rtype: list[int]
     """
     ret = []
-    for i, pos in enumerate(heatmap_x_nt_pos):
-        for j, strain in enumerate(heatmap_y):
+    for strain in parsed_gvf_dirs:
+        # How far markers need to be pushed right due to earlier
+        # heterozygous mutations.
+        x_offset = 0
+
+        for i, pos in enumerate(max_mutations_per_pos_dict):
+            num_of_mutations = max_mutations_per_pos_dict[pos]
+            x_offset += num_of_mutations - 1
             if pos not in parsed_gvf_dirs[strain]:
                 continue
-            mutation_type = parsed_gvf_dirs[strain][pos]["mutation_type"]
-            hidden_cell = parsed_gvf_dirs[strain][pos]["hidden_cell"]
-            if mutation_type == "deletion" and not hidden_cell:
-                ret.append(i)
+            for j, mutation in enumerate(parsed_gvf_dirs[strain][pos]):
+                deletion = mutation["mutation_type"] == "deletion"
+                hidden = mutation["hidden_cell"]
+                if deletion and not hidden:
+                    ret.append(i+j+x_offset)
     return ret
 
 
-def get_deletions_y(parsed_gvf_dirs, heatmap_x_nt_pos, heatmap_y):
-    """Get y coordinates of deletion markers to overlay in heatmap.
+def get_deletions_y(parsed_gvf_dirs):
+    """Get y coordinates of deletion markers to overlay in heatmap.TODO
 
     These are the linear y coordinates used in the Plotly graph object.
     i.e., the indices of data["heatmap_y"]
@@ -721,14 +752,13 @@ def get_deletions_y(parsed_gvf_dirs, heatmap_x_nt_pos, heatmap_y):
     :rtype: list[str]
     """
     ret = []
-    for i, pos in enumerate(heatmap_x_nt_pos):
-        for j, strain in enumerate(heatmap_y):
-            if pos not in parsed_gvf_dirs[strain]:
-                continue
-            mutation_type = parsed_gvf_dirs[strain][pos]["mutation_type"]
-            hidden_cell = parsed_gvf_dirs[strain][pos]["hidden_cell"]
-            if mutation_type == "deletion" and not hidden_cell:
-                ret.append(j)
+    for y, strain in enumerate(parsed_gvf_dirs):
+        for pos in parsed_gvf_dirs[strain]:
+            for mutation in parsed_gvf_dirs[strain][pos]:
+                deletion = mutation["mutation_type"] == "deletion"
+                hidden = mutation["hidden_cell"]
+                if deletion and not hidden:
+                    ret.append(y)
     return ret
 
 
@@ -753,13 +783,13 @@ def get_tables(parsed_gvf_dirs):
         alt_freq_col = []
         functions_col = []
         for pos in parsed_gvf_dirs[strain]:
-            pos_col.append(pos)
-            cell_data = parsed_gvf_dirs[strain][pos]
-            mutation_name_col.append(cell_data["mutation_name"])
-            ref_col.append(cell_data["ref"])
-            alt_col.append(cell_data["alt"])
-            alt_freq_col.append(cell_data["alt_freq"])
-            functions_col.append([fn for fn in cell_data["functions"]])
+            for mutation in parsed_gvf_dirs[strain][pos]:
+                pos_col.append(pos)
+                mutation_name_col.append(mutation["mutation_name"])
+                ref_col.append(mutation["ref"])
+                alt_col.append(mutation["alt"])
+                alt_freq_col.append(mutation["alt_freq"])
+                functions_col.append([fn for fn in mutation["functions"]])
         ret[strain] = [
             pos_col, mutation_name_col, ref_col, alt_col, alt_freq_col,
             functions_col
@@ -782,7 +812,8 @@ def get_histogram_x(parsed_gvf_dirs):
     ret = []
     for strain in parsed_gvf_dirs:
         for pos in parsed_gvf_dirs[strain]:
-            hidden_cell = parsed_gvf_dirs[strain][pos]["hidden_cell"]
-            if not hidden_cell:
-                ret.append(pos)
+            for mutation in parsed_gvf_dirs[strain][pos]:
+                hidden_cell = mutation["hidden_cell"]
+                if not hidden_cell:
+                    ret.append(pos)
     return ret
