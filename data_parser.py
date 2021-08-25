@@ -717,14 +717,13 @@ def get_insertions_x(parsed_gvf_dirs, max_mutations_per_pos_dict):
 
         for i, pos in enumerate(max_mutations_per_pos_dict):
             num_of_mutations = max_mutations_per_pos_dict[pos]
+            if pos in parsed_gvf_dirs[strain]:
+                for j, mutation in enumerate(parsed_gvf_dirs[strain][pos]):
+                    insertion = mutation["mutation_type"] == "insertion"
+                    hidden = mutation["hidden_cell"]
+                    if insertion and not hidden:
+                        ret.append(i + j + x_offset)
             x_offset += num_of_mutations - 1
-            if pos not in parsed_gvf_dirs[strain]:
-                continue
-            for j, mutation in enumerate(parsed_gvf_dirs[strain][pos]):
-                insertion = mutation["mutation_type"] == "insertion"
-                hidden = mutation["hidden_cell"]
-                if insertion and not hidden:
-                    ret.append(i + j + x_offset)
     return ret
 
 
@@ -774,14 +773,13 @@ def get_deletions_x(parsed_gvf_dirs, max_mutations_per_pos_dict):
 
         for i, pos in enumerate(max_mutations_per_pos_dict):
             num_of_mutations = max_mutations_per_pos_dict[pos]
+            if pos in parsed_gvf_dirs[strain]:
+                for j, mutation in enumerate(parsed_gvf_dirs[strain][pos]):
+                    deletion = mutation["mutation_type"] == "deletion"
+                    hidden = mutation["hidden_cell"]
+                    if deletion and not hidden:
+                        ret.append(i+j+x_offset)
             x_offset += num_of_mutations - 1
-            if pos not in parsed_gvf_dirs[strain]:
-                continue
-            for j, mutation in enumerate(parsed_gvf_dirs[strain][pos]):
-                deletion = mutation["mutation_type"] == "deletion"
-                hidden = mutation["hidden_cell"]
-                if deletion and not hidden:
-                    ret.append(i+j+x_offset)
     return ret
 
 
