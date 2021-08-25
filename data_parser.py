@@ -327,39 +327,55 @@ def get_data(dirs, clade_defining=False, hidden_strains=None,
 
     max_mutations_per_pos_dict = get_max_mutations_per_pos(parsed_gvf_dirs)
     ret = {
-        "heatmap_x_nt_pos": get_heatmap_x_nt_pos(max_mutations_per_pos_dict),
-        "heatmap_y": get_heatmap_y(visible_parsed_gvf_dirs),
-        "tables": get_tables(visible_parsed_gvf_dirs),
-        "histogram_x": get_histogram_x(visible_parsed_gvf_dirs),
-        "dir_strains": dir_strains,
-        "hidden_strains": hidden_strains,
-        "all_strains": get_heatmap_y(parsed_gvf_dirs),
-        "mutation_freq_slider_vals": mutation_freq_slider_vals
+        "heatmap_cells_tickvals":
+            get_heatmap_cells_tickvals(max_mutations_per_pos_dict),
+        "heatmap_x_nt_pos":
+            get_heatmap_x_nt_pos(max_mutations_per_pos_dict),
+        "heatmap_y":
+            get_heatmap_y(visible_parsed_gvf_dirs),
+        "tables":
+            get_tables(visible_parsed_gvf_dirs),
+        "histogram_x":
+            get_histogram_x(visible_parsed_gvf_dirs),
+        "dir_strains":
+            dir_strains,
+        "hidden_strains":
+            hidden_strains,
+        "all_strains":
+            get_heatmap_y(parsed_gvf_dirs),
+        "mutation_freq_slider_vals":
+            mutation_freq_slider_vals,
+        "insertions_x":
+            get_insertions_x(visible_parsed_gvf_dirs,
+                             max_mutations_per_pos_dict),
+        "insertions_y":
+            get_insertions_y(visible_parsed_gvf_dirs),
+        "deletions_x":
+            get_deletions_x(visible_parsed_gvf_dirs,
+                            max_mutations_per_pos_dict),
+        "deletions_y":
+            get_deletions_y(visible_parsed_gvf_dirs),
+        "heatmap_z":
+            get_heatmap_z(visible_parsed_gvf_dirs,
+                                   max_mutations_per_pos_dict),
+        "heatmap_hover_text":
+            get_heatmap_hover_text(visible_parsed_gvf_dirs,
+                                   max_mutations_per_pos_dict),
+        "heatmap_mutation_names":
+            get_heatmap_mutation_names(visible_parsed_gvf_dirs,
+                                       max_mutations_per_pos_dict),
+        "heatmap_mutation_fns":
+            get_heatmap_mutation_fns(visible_parsed_gvf_dirs,
+                                     max_mutations_per_pos_dict),
+        "heatmap_x_genes":
+            get_heatmap_x_genes(max_mutations_per_pos_dict)
     }
-    heatmap_y, heatmap_x_nt_pos = ret["heatmap_y"], ret["heatmap_x_nt_pos"]
-    ret["insertions_x"] = get_insertions_x(visible_parsed_gvf_dirs,
-                                           max_mutations_per_pos_dict)
-    ret["insertions_y"] = get_insertions_y(visible_parsed_gvf_dirs)
-    ret["deletions_x"] = get_deletions_x(visible_parsed_gvf_dirs,
-                                         max_mutations_per_pos_dict)
-    ret["deletions_y"] = get_deletions_y(visible_parsed_gvf_dirs)
-    ret["heatmap_z"] = get_heatmap_z(visible_parsed_gvf_dirs,
-                                     max_mutations_per_pos_dict)
-    ret["heatmap_hover_text"] = \
-        get_heatmap_hover_text(visible_parsed_gvf_dirs,
-                               max_mutations_per_pos_dict)
-    ret["heatmap_mutation_names"] = \
-        get_heatmap_mutation_names(visible_parsed_gvf_dirs,
-                                   max_mutations_per_pos_dict)
-    ret["heatmap_mutation_fns"] = \
-        get_heatmap_mutation_fns(visible_parsed_gvf_dirs,
-                                 max_mutations_per_pos_dict)
-    ret["heatmap_x_genes"] = \
-        get_heatmap_x_genes(max_mutations_per_pos_dict)
+    ret["heatmap_x_tickvals"] = \
+        get_heatmap_x_tickvals(ret["heatmap_cells_tickvals"])
     ret["heatmap_x_aa_pos"] = \
-        get_heatmap_x_aa_pos(heatmap_x_nt_pos, ret["heatmap_x_genes"])
-    ret["heatmap_cells_fig_height"] = len(heatmap_y) * 40
-    ret["heatmap_cells_fig_width"] = len(heatmap_x_nt_pos) * 36
+        get_heatmap_x_aa_pos(ret["heatmap_x_nt_pos"], ret["heatmap_x_genes"])
+    ret["heatmap_cells_fig_height"] = len(ret["heatmap_y"]) * 40
+    ret["heatmap_cells_fig_width"] = len(ret["heatmap_x_nt_pos"]) * 36
 
     return ret
 
@@ -413,6 +429,40 @@ def get_max_mutations_per_pos(parsed_gvf_dirs):
     def sort_by_key(items): return int(items[0])
     sorted_dict = dict(sorted(pos_dict.items(), key=sort_by_key))
     return sorted_dict
+
+
+def get_heatmap_cells_tickvals(max_mutations_per_pos_dict):
+    """Get tickvals for the heatmap cells fig.
+
+    :param max_mutations_per_pos_dict: See
+        ``get_max_mutations_per_pos`` return value.
+    :type max_mutations_per_pos_dict: dict
+    :return: List of numerically indexed tickvals for heatmap cells fig
+    :rtype: list[int]
+    """
+    ret = [-0.5]
+    for _, num_of_mutations in max_mutations_per_pos_dict.items():
+        # Need extra space for heterozygous mutations
+        ret.append(ret[-1] + num_of_mutations)
+    return ret
+
+
+def get_heatmap_x_tickvals(heatmap_cells_tickvals):
+    """Get tickvals for the heatmap x-axis figs.
+
+    :param heatmap_cells_tickvals: See ``get_heatmap_cells_tickvals``
+        return value.
+    :type heatmap_cells_tickvals: list
+    :return: List of numerically indexed tickvals for heatmap x-axis
+        figs.
+    :rtype: list[int]
+    """
+    ret = []
+    for i in range(0, len(heatmap_cells_tickvals)-1):
+        # Place it in the middle of the heatmap cell gridlines
+        avg = (heatmap_cells_tickvals[i] + heatmap_cells_tickvals[i+1]) / 2
+        ret.append(avg)
+    return ret
 
 
 def get_heatmap_x_nt_pos(max_mutations_per_pos_dict):

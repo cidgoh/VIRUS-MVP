@@ -346,8 +346,8 @@ def get_heatmap_aa_pos_axis_fig(data):
     ret.update_xaxes(range=[-0.5, len(data["heatmap_x_nt_pos"])-0.5],
                      fixedrange=True,
                      tickmode="array",
-                     tickvals=list(range(len(data["heatmap_x_nt_pos"]))),
-                     ticktext=data["heatmap_x_aa_pos"],
+                     tickvals=data["heatmap_x_tickvals"],
+                     ticktext=list(dict.fromkeys(data["heatmap_x_aa_pos"])),
                      ticklabelposition="outside",
                      )
     ret.update_yaxes(fixedrange=True,
@@ -382,8 +382,8 @@ def get_heatmap_nt_pos_axis_fig(data):
     ret.update_xaxes(range=[-0.5, len(data["heatmap_x_nt_pos"])-0.5],
                      fixedrange=True,
                      tickmode="array",
-                     tickvals=list(range(len(data["heatmap_x_nt_pos"]))),
-                     ticktext=data["heatmap_x_nt_pos"],
+                     tickvals=data["heatmap_x_tickvals"],
+                     ticktext=list(dict.fromkeys(data["heatmap_x_nt_pos"])),
                      ticklabelposition="inside")
     ret.update_yaxes(fixedrange=True,
                      visible=False,
@@ -420,9 +420,8 @@ def get_heatmap_cells_fig(data):
         }
     )
     ret.update_xaxes(range=[-0.5, len(data["heatmap_x_nt_pos"])-0.5],
-                     tickmode="linear",
-                     tick0=0.5,
-                     dtick=1,
+                     tickmode="array",
+                     tickvals=data["heatmap_cells_tickvals"],
                      fixedrange=True,
                      visible=True,
                      showticklabels=False,
