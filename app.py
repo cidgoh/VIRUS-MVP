@@ -576,8 +576,8 @@ def update_heatmap_nt_pos_axis_fig(_, data):
 
 
 @app.callback(
-    Output("heatmap-aa-axis-fig", "figure"),
-    Output("heatmap-aa-axis-fig", "style"),
+    Output("heatmap-aa-pos-axis-fig", "figure"),
+    Output("heatmap-aa-pos-axis-fig", "style"),
     Input("heatmap-x-len", "data"),
     State("data", "data"),
     prevent_initial_call=True
