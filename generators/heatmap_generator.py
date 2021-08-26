@@ -343,11 +343,18 @@ def get_heatmap_aa_pos_axis_fig(data):
             "b": 500
         }
     )
+
+    # Unlike nt pos axis, vals in aa pos axis can repeat. So to account
+    # for heterozygous mutations we zip with nt pos values, and then
+    # remove duplicates.
+    zipped_axes = zip(data["heatmap_x_nt_pos"], data["heatmap_x_aa_pos"])
+    tick_text = [aa for (_, aa) in dict.fromkeys(zipped_axes)]
+
     ret.update_xaxes(range=[-0.5, len(data["heatmap_x_nt_pos"])-0.5],
                      fixedrange=True,
                      tickmode="array",
-                     tickvals=list(range(len(data["heatmap_x_nt_pos"]))),
-                     ticktext=data["heatmap_x_aa_pos"],
+                     tickvals=data["heatmap_x_tickvals"],
+                     ticktext=tick_text,
                      ticklabelposition="outside",
                      )
     ret.update_yaxes(fixedrange=True,
@@ -382,8 +389,8 @@ def get_heatmap_nt_pos_axis_fig(data):
     ret.update_xaxes(range=[-0.5, len(data["heatmap_x_nt_pos"])-0.5],
                      fixedrange=True,
                      tickmode="array",
-                     tickvals=list(range(len(data["heatmap_x_nt_pos"]))),
-                     ticktext=data["heatmap_x_nt_pos"],
+                     tickvals=data["heatmap_x_tickvals"],
+                     ticktext=list(dict.fromkeys(data["heatmap_x_nt_pos"])),
                      ticklabelposition="inside")
     ret.update_yaxes(fixedrange=True,
                      visible=False,
@@ -420,14 +427,13 @@ def get_heatmap_cells_fig(data):
         }
     )
     ret.update_xaxes(range=[-0.5, len(data["heatmap_x_nt_pos"])-0.5],
-                     tickmode="linear",
-                     tick0=0,
-                     dtick=1,
+                     tickmode="array",
+                     tickvals=data["heatmap_cells_tickvals"],
                      fixedrange=True,
                      visible=True,
                      showticklabels=False,
                      zeroline=False,
-                     gridcolor="lightgrey",
+                     gridcolor="grey",
                      showspikes=True,
                      spikecolor="black",
                      side="top")
