@@ -784,7 +784,7 @@ def get_deletions_x(parsed_gvf_dirs, max_mutations_per_pos_dict):
 
 
 def get_deletions_y(parsed_gvf_dirs):
-    """Get y coordinates of deletion markers to overlay in heatmap.TODO
+    """Get y coordinates of deletion markers to overlay in heatmap.
 
     These are the linear y coordinates used in the Plotly graph object.
     i.e., the indices of data["heatmap_y"]
@@ -792,10 +792,6 @@ def get_deletions_y(parsed_gvf_dirs):
     :param parsed_gvf_dirs: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return values.
     :type parsed_gvf_dirs: dict
-    :param heatmap_x_nt_pos: ``get_heatmap_x_nt_pos`` return value
-    :type heatmap_x_nt_pos: list[int]
-    :param heatmap_y: ``get_heatmap_y`` return value
-    :type heatmap_y: list[str]
     :return: List of y coordinate values to display deletion markers
     :rtype: list[str]
     """
