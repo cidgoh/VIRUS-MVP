@@ -147,4 +147,7 @@ William Hsiao, Gary Van Domselaar, and Paul Gordon
 
 ## License
 
-TODO: wait until ready for deployment
+This project currently hosts data that cannot be publicly shared, so we are
+currently retaining default copyright laws. We retain all rights to our source
+code and no one may reproduce, distribute, or create derivative works from our
+work without explicit permission.
