@@ -100,14 +100,14 @@ frequency.
 The clade defining switch allows you to filter in and out heatmap cells
 corresponding to non-clade defining mutations.
 
-### Submodules
+## Submodules
 
-#### [nf-ncov-voc][nf-ncov-voc]
+### [nf-ncov-voc][nf-ncov-voc]
 
 This pipeline generates the input files for the visualization. You can run the
 pipeline commands from the root COVID-MVP directory.
 
-#### [pokay][pokay]
+### [pokay][pokay]
 
 Repository of functional annotations used in this application.
 
