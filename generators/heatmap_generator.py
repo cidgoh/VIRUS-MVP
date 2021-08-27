@@ -7,42 +7,12 @@ We are not using the Plotly heatmap object. It is too slow. We are
 using the Plotly scattergl object, and making it look like a heatmap.
 """
 
-import json
-
 import dash_bootstrap_components as dbc
 import dash_html_components as html
 import dash_core_components as dcc
 import plotly.graph_objects as go
 
-
-def get_heatmap_cells_fig_height(data):
-    """Get the height in pixels for the heatmap cells fig.
-
-    Good to put this in a function because several other figs have to
-    be the same height.
-
-    :param data: ``data_parser.get_data`` return value
-    :type data: dict
-    :return: Heatmap cells fig height in pixels
-    :rtype: int
-    """
-    ret = len(data["heatmap_y"]) * 40
-    return ret
-
-
-def get_heatmap_cells_fig_width(data):
-    """Get the width in pixels for the heatmap cells fig.
-
-    Good to put this in a function because several other figs have to
-    be the same width.
-
-    :param data: ``data_parser.get_data`` return value
-    :type data: dict
-    :return: Heatmap cells fig height in pixels
-    :rtype: int
-    """
-    ret = len(data["heatmap_x_nt_pos"]) * 36
-    return ret
+from definitions import GENE_COLORS_DICT
 
 
 def get_color_scale():
@@ -74,8 +44,8 @@ def get_heatmap_row(data):
         and cols for heatmap view.
     :rtype: dbc.Row
     """
-    heatmap_cells_fig_height = get_heatmap_cells_fig_height(data)
-    heatmap_cells_fig_width = get_heatmap_cells_fig_width(data)
+    heatmap_cells_fig_height = data["heatmap_cells_fig_height"]
+    heatmap_cells_fig_width = data["heatmap_cells_fig_width"]
     ret = dbc.Row(
         [
             dbc.Col(
@@ -84,7 +54,7 @@ def get_heatmap_row(data):
                     dbc.Row(
                         dbc.Col(
                             None,
-                            style={"height": "6.5rem"}
+                            style={"height": 100}
                         ),
                         no_gutters=True
                     ),
@@ -113,7 +83,7 @@ def get_heatmap_row(data):
                                 id="heatmap-gene-bar-fig",
                                 figure=get_heatmap_gene_bar_fig(data),
                                 config={"displayModeBar": False},
-                                style={"height": "2rem",
+                                style={"height": 25,
                                        "width": heatmap_cells_fig_width}
                             )
                         ),
@@ -126,7 +96,7 @@ def get_heatmap_row(data):
                                 id="heatmap-nt-pos-axis-fig",
                                 figure=get_heatmap_nt_pos_axis_fig(data),
                                 config={"displayModeBar": False},
-                                style={"height": "4.5rem",
+                                style={"height": 75,
                                        "width": heatmap_cells_fig_width}
                             )
                         )
@@ -151,7 +121,7 @@ def get_heatmap_row(data):
                                 id="heatmap-aa-pos-axis-fig",
                                 figure=get_heatmap_aa_pos_axis_fig(data),
                                 config={"displayModeBar": False},
-                                style={"height": "8rem",
+                                style={"height": 140,
                                        "width": heatmap_cells_fig_width}
                             )
                         ),
@@ -169,7 +139,7 @@ def get_heatmap_row(data):
                     dbc.Row(
                         dbc.Col(
                             None,
-                            style={"height": "6.5rem"},
+                            style={"height": 100},
                         ),
                         no_gutters=True
                     ),
@@ -271,6 +241,11 @@ def get_heatmap_gene_bar_fig(data):
         midpoint = ((endpoints[i+1] - endpoints[i]) / 2) + endpoints[i]
         midpoints.append(midpoint)
     for i, gene_label in enumerate(heatmap_gene_bar_obj["text"][0]):
+        x_start = heatmap_gene_bar_obj["x"][i]
+        x_end = heatmap_gene_bar_obj["x"][i + 1]
+        # Too small for label
+        if (x_end - x_start) < 3:
+            continue
         ret.add_annotation(
             xref="x1",
             yref="y1",
@@ -324,15 +299,13 @@ def get_heatmap_gene_bar_graph_obj(data):
 
     heatmap_center_genes_obj_z = [[]]
     heatmap_center_genes_obj_colorscale = []
-    with open("gene_colors.json") as fp:
-        gene_colors = json.load(fp)
     for i, label in enumerate(heatmap_center_genes_obj_labels):
         mock_z_val = (i + 1) / len(heatmap_center_genes_obj_labels)
         heatmap_center_genes_obj_z[0].append(mock_z_val)
         # We add the same color to the colorscale twice, to prevent
         # things from breaking when the gene bar has only one z val.
-        heatmap_center_genes_obj_colorscale.append(gene_colors[label])
-        heatmap_center_genes_obj_colorscale.append(gene_colors[label])
+        heatmap_center_genes_obj_colorscale.append(GENE_COLORS_DICT[label])
+        heatmap_center_genes_obj_colorscale.append(GENE_COLORS_DICT[label])
 
     ret = go.Heatmap(
         x=heatmap_center_genes_obj_x,
@@ -370,11 +343,18 @@ def get_heatmap_aa_pos_axis_fig(data):
             "b": 500
         }
     )
+
+    # Unlike nt pos axis, vals in aa pos axis can repeat. So to account
+    # for heterozygous mutations we zip with nt pos values, and then
+    # remove duplicates.
+    zipped_axes = zip(data["heatmap_x_nt_pos"], data["heatmap_x_aa_pos"])
+    tick_text = [aa for (_, aa) in dict.fromkeys(zipped_axes)]
+
     ret.update_xaxes(range=[-0.5, len(data["heatmap_x_nt_pos"])-0.5],
                      fixedrange=True,
                      tickmode="array",
-                     tickvals=list(range(len(data["heatmap_x_nt_pos"]))),
-                     ticktext=data["heatmap_x_aa_pos"],
+                     tickvals=data["heatmap_x_tickvals"],
+                     ticktext=tick_text,
                      ticklabelposition="outside",
                      )
     ret.update_yaxes(fixedrange=True,
@@ -409,8 +389,8 @@ def get_heatmap_nt_pos_axis_fig(data):
     ret.update_xaxes(range=[-0.5, len(data["heatmap_x_nt_pos"])-0.5],
                      fixedrange=True,
                      tickmode="array",
-                     tickvals=list(range(len(data["heatmap_x_nt_pos"]))),
-                     ticktext=data["heatmap_x_nt_pos"],
+                     tickvals=data["heatmap_x_tickvals"],
+                     ticktext=list(dict.fromkeys(data["heatmap_x_nt_pos"])),
                      ticklabelposition="inside")
     ret.update_yaxes(fixedrange=True,
                      visible=False,
@@ -447,14 +427,13 @@ def get_heatmap_cells_fig(data):
         }
     )
     ret.update_xaxes(range=[-0.5, len(data["heatmap_x_nt_pos"])-0.5],
-                     tickmode="linear",
-                     tick0=0,
-                     dtick=1,
+                     tickmode="array",
+                     tickvals=data["heatmap_cells_tickvals"],
                      fixedrange=True,
                      visible=True,
                      showticklabels=False,
                      zeroline=False,
-                     gridcolor="lightgrey",
+                     gridcolor="grey",
                      showspikes=True,
                      spikecolor="black",
                      side="top")

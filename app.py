@@ -26,10 +26,10 @@ from dash.dependencies import ALL, ClientsideFunction, Input, Output, State
 from dash.exceptions import PreventUpdate
 
 from data_parser import get_data, vcf_str_to_gvf_str
-import toolbar_generator
-import heatmap_generator
-import histogram_generator
-import table_generator
+from definitions import REFERENCE_DATA_DIR, USER_DATA_DIR
+from generators import (heatmap_generator, histogram_generator,
+                        table_generator, toolbar_generator)
+
 
 # This is the only global variable Dash plays nice with, and it
 # contains the visualization that is deployed by this file, when
@@ -95,7 +95,7 @@ def launch_app(_):
     if you do the following in the global scope--which you may be
     tempted to do because we are only doing it once!
     """
-    data_ = get_data(["reference_data", "user_data"])
+    data_ = get_data([REFERENCE_DATA_DIR, USER_DATA_DIR])
     return [
         # Bootstrap row containing tools at the top of the application
         toolbar_generator.get_toolbar_row(data_),
@@ -121,7 +121,7 @@ def launch_app(_):
         dcc.Store(id="last-heatmap-cell-clicked"),
         # Used to update certain figures only when necessary
         dcc.Store(id="heatmap-x-len", data=len(data_["heatmap_x_nt_pos"])),
-        dcc.Store(id="heatmap-y-len", data=len(data_["heatmap_y"])),
+        dcc.Store(id="heatmap-y", data=len(data_["heatmap_y"])),
         # Used to integrate some JS callbacks. The data values are
         # meaningless, we just need outputs to perform all clientside
         # functions.
@@ -186,7 +186,7 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
     else:
         min_mutation_freq, max_mutation_freq = None, None
 
-    return get_data(["reference_data", "user_data"],
+    return get_data([REFERENCE_DATA_DIR, USER_DATA_DIR],
                     clade_defining=show_clade_defining,
                     hidden_strains=hidden_strains,
                     strain_order=strain_order,
@@ -475,37 +475,35 @@ def route_data_heatmap_x_update(data, old_heatmap_x_len):
 
 
 @app.callback(
-    Output("heatmap-y-len", "data"),
+    Output("heatmap-y", "data"),
     Input("data", "data"),
-    State("heatmap-y-len", "data"),
+    State("heatmap-y", "data"),
     prevent_initial_call=True
 )
-def route_data_heatmap_y_update(data, old_heatmap_y_len):
-    """Update ``heatmap-y-len`` dcc variable when needed.
+def route_data_heatmap_y_update(data, old_heatmap_y):
+    """Update ``heatmap-y`` dcc variable when needed.
 
     This serves as a useful trigger for figs that only need to be
-    updated when heatmap y changes. We use the length of
-    data["heatmap_y"] because it is faster than comparing the entire
-    list, and appropriately alerts us when data["heatmap_y"] changed.
+    updated when heatmap y changes.
 
     :param data: ``get_data`` return value, transported here by
         ``update_data``.
     :type data: dict
-    :param old_heatmap_y_len: ``heatmap-y-len.data`` value
-    :type old_heatmap_y_len: dict
+    :param old_heatmap_y: ``heatmap-y.data`` value
+    :type old_heatmap_y: dict
     :return: New len of data["heatmap_y"]
     :rtype: int
     :raise PreventUpdate: If data["heatmap_y"] len did not change
     """
-    if old_heatmap_y_len == len(data["heatmap_y"]):
+    if old_heatmap_y == data["heatmap_y"]:
         raise PreventUpdate
-    return len(data["heatmap_y"])
+    return data["heatmap_y"]
 
 
 @app.callback(
     Output("heatmap-y-axis-fig", "figure"),
     Output("heatmap-y-axis-fig", "style"),
-    Input("heatmap-y-len", "data"),
+    Input("heatmap-y", "data"),
     State("data", "data"),
     prevent_initial_call=True
 )
@@ -523,8 +521,7 @@ def update_heatmap_y_axis_fig(_, data):
     :rtype: (plotly.graph_objects.Figure, dict)
     """
     y_axis_fig = heatmap_generator.get_heatmap_y_axis_fig(data)
-    y_axis_style = \
-        {"height": heatmap_generator.get_heatmap_cells_fig_height(data)}
+    y_axis_style = {"height": data["heatmap_cells_fig_height"]}
     return y_axis_fig, y_axis_style
 
 
@@ -549,8 +546,7 @@ def update_heatmap_gene_bar_fig(_, data):
     :rtype: (plotly.graph_objects.Figure, dict)
     """
     gene_bar_fig = heatmap_generator.get_heatmap_gene_bar_fig(data)
-    gene_bar_style = \
-        {"width": heatmap_generator.get_heatmap_cells_fig_width(data)}
+    gene_bar_style = {"width": data["heatmap_cells_fig_width"]}
     return gene_bar_fig, gene_bar_style
 
 
@@ -575,14 +571,13 @@ def update_heatmap_nt_pos_axis_fig(_, data):
     :rtype: (plotly.graph_objects.Figure, dict)
     """
     nt_pos_x_axis_fig = heatmap_generator.get_heatmap_nt_pos_axis_fig(data)
-    nt_pos_x_axis_style = \
-        {"width": heatmap_generator.get_heatmap_cells_fig_width(data)}
+    nt_pos_x_axis_style = {"width": data["heatmap_cells_fig_width"]}
     return nt_pos_x_axis_fig, nt_pos_x_axis_style
 
 
 @app.callback(
-    Output("heatmap-aa-axis-fig", "figure"),
-    Output("heatmap-aa-axis-fig", "style"),
+    Output("heatmap-aa-pos-axis-fig", "figure"),
+    Output("heatmap-aa-pos-axis-fig", "style"),
     Input("heatmap-x-len", "data"),
     State("data", "data"),
     prevent_initial_call=True
@@ -601,8 +596,7 @@ def update_heatmap_aa_pos_axis_fig(_, data):
     :rtype: (plotly.graph_objects.Figure, dict)
     """
     aa_pos_x_axis_fig = heatmap_generator.get_heatmap_aa_pos_axis_fig(data)
-    aa_pos_x_axis_style = \
-        {"width": heatmap_generator.get_heatmap_cells_fig_width(data)}
+    aa_pos_x_axis_style = {"width": data["heatmap_cells_fig_width"]}
     return aa_pos_x_axis_fig, aa_pos_x_axis_style
 
 
@@ -645,8 +639,8 @@ def update_heatmap_cells_fig(data):
     """
     cells_fig = heatmap_generator.get_heatmap_cells_fig(data)
     cells_fig_style = {
-        "height": heatmap_generator.get_heatmap_cells_fig_height(data),
-        "width": heatmap_generator.get_heatmap_cells_fig_width(data)
+        "height": data["heatmap_cells_fig_height"],
+        "width": data["heatmap_cells_fig_width"]
     }
     return cells_fig, cells_fig_style
 
@@ -802,9 +796,8 @@ app.clientside_callback(
         function_name="makeHistogramRelPosBarDynamic"
     ),
     Output("make-histogram-rel-pos-bar-dynamic", "data"),
-    Input("histogram", "id"),
-    Input("heatmap-cells-fig", "figure"),
-    Input("data", "data"),
+    Input("heatmap-nt-pos-axis-fig", "figure"),
+    State("data", "data")
 )
 
 if __name__ == "__main__":
