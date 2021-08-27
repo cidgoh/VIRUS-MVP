@@ -68,6 +68,10 @@ Hovering over cells displays detailed mutation information.
 Clicking cells opens a modal with detailed mutation function descriptions, and
 their citations.
 
+![scroll_hover_click]
+
+[scroll_hover_click]: screenshots/scroll_hover_click.gif
+
 ### Histogram
 
 The histogram bars encode the total number of mutations across all VOI/VOC every
