@@ -14,7 +14,13 @@ functional impact, based on Dash & Plotly frameworks.
 
 ## Installation
 
-Create a virtual environment. We use [Conda][0], but you can use [venv][1]. We
+### 1. Clone the repository and its submodules
+
+`$ git clone git@github.com:cidgoh/COVID-MVP.git --recurse-submodules`
+
+### 2. Create a virtual environment
+
+We use [Conda][0], but you can use [venv][1]. We
 recommend using Python 3.9 in your virtual environment. Older Python versions
 may break the application.
 
@@ -23,15 +29,17 @@ may break the application.
 
 `$ conda create --name=COVID-MVP python=3.9`
 
-Activate the environment.
+### 3. Activate the environment
 
 `$ conda activate COVID-MVP`
 
-Install requirements.
+### 4. Install requirements
 
 `(COVID-MVP) $ pip install -r requirements.txt`
 
-Run the application. If you do not run the application from the root directory,
+### 5. Run the application
+
+If you do not run the application from the root directory,
 some of the JavaScript assets will not be compiled.
 
 `(COVID-MVP) $ python app.py`
