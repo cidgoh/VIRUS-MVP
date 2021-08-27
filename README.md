@@ -8,9 +8,9 @@ module for functional annotation, based on literature curation; and an
 interactive visualization for prevalence of mutations in variants and their
 functional impact, based on Dash & Plotly frameworks.
 
-![2]
+![app_interface]
 
-[2]: screenshots/app_interface.png
+[app_interface]: screenshots/app_interface.png
 
 ## Installation
 
@@ -20,12 +20,12 @@ functional impact, based on Dash & Plotly frameworks.
 
 ### 2. Create a virtual environment
 
-We use [Conda][0], but you can use [venv][1]. We
+We use [Conda][conda], but you can use [venv][venv]. We
 recommend using Python 3.9 in your virtual environment. Older Python versions
 may break the application.
 
-[0]: https://docs.conda.io/en/latest/
-[1]: https://docs.python.org/3/library/venv.html
+[conda]: https://docs.conda.io/en/latest/
+[venv]: https://docs.python.org/3/library/venv.html
 
 `$ conda create --name=COVID-MVP python=3.9`
 
@@ -54,14 +54,16 @@ TODO: visuals
 
 The y-axis encodes VOI/VOC. The x-axis encodes nucleotide position on the top,
 and amino acid position on the bottom. Amino acid position is described in the
-following notation:
+following notations:
 
-`{GENE}.{AMINO ACID POSITION WITHIN THAT GENE}`
+**Genic:** `{GENE}.{AMINO ACID POSITION WITHIN THAT GENE}`
+
+**Intergenic:** `{NEAREST DOWNSTREAM GENE}.{NUMBER OF NUCLEOTIDES UPSTREAM}`
 
 The heatmap cells encode the presence of mutations. The color of these cells
 encodes mutation frequency. Insertions and deletions are annotated with markers.
 
-Hovering over cells displayed detailed mutation information.
+Hovering over cells displays detailed mutation information.
 
 Clicking cells opens a modal with detailed mutation function descriptions, and
 their citations.
@@ -98,20 +100,34 @@ frequency.
 The clade defining switch allows you to filter in and out heatmap cells
 corresponding to non-clade defining mutations.
 
+### Submodules
+
+#### [nf-ncov-voc][nf-ncov-voc]
+
+This pipeline generates the input files for the visualization. You can run the
+pipeline commands from the root COVID-MVP directory.
+
+#### [pokay][pokay]
+
+Repository of functional annotations used in this application.
+
+[nf-ncov-voc]: https://github.com/cidgoh/nf-ncov-voc/
+[pokay]: https://github.com/nodrogluap/pokay/
+
 ## Authors and acknowledgement
 
-[@ivansg44][4]: Visualization development
+[@ivansg44][ivan]: Visualization development
 
-[@Anoosha-Sehar][5]: Functional annotation
+[@Anoosha-Sehar][anoosha]: Functional annotation
 
-[@anwarMZ][6]: Genomic analysis
+[@anwarMZ][zohaib]: Genomic analysis
 
-[@miseminger][7]: Functional annotation and data standardization
+[@miseminger][madeline]: Functional annotation and data standardization
 
-[4]: https://github.com/ivansg44
-[5]: https://github.com/Anoosha-Sehar
-[6]: https://github.com/anwarMZ
-[7]: https://github.com/miseminger
+[ivan]: https://github.com/ivansg44
+[anoosha]: https://github.com/Anoosha-Sehar
+[zohaib]: https://github.com/anwarMZ
+[madeline]: https://github.com/miseminger
 
 William Hsiao, Gary Van Domselaar, and Paul Gordon
 
