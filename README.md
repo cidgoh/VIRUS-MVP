@@ -70,7 +70,7 @@ their citations.
 
 ![scroll_hover_click]
 
-[scroll_hover_click]: screenshots/scroll_hover_click.gif
+[scroll_hover_click]: screenshots/heatmap_scroll_hover_click.gif
 
 ### Histogram
 
@@ -79,6 +79,10 @@ The histogram bars encode the total number of mutations across all VOI/VOC every
 maps SARS-CoV-2 genes to the histogram x-axis. The black horizontal bar at the
 bottom maps the current position of the heatmap viewport to the SARS-CoV-2
 genome.
+
+![histogram_hover_scroll]
+
+[histogram_hover_scroll]: screenshots/histogram_hover_scroll.gif
 
 ### Table
 
