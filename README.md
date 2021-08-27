@@ -48,8 +48,6 @@ Go to http://127.0.0.1:8050/.
 
 ## Usage
 
-TODO: visuals
-
 ### Heatmap view
 
 The y-axis encodes VOI/VOC. The x-axis encodes nucleotide position on the top,
@@ -90,6 +88,10 @@ A tabular subset of fields for a single VOI/VOC, modified from the application
 data used to generate the heatmap and histogram views. You can alternate between
 VOI/VOI by clicking on the heatmap cells.
 
+![table_interface]
+
+[table_interface]: screenshots/table_interface.png
+
 ### Editing the visualization
 
 There are several tools in the top of the interface that can be used to edit the
@@ -107,6 +109,10 @@ frequency.
 
 The clade defining switch allows you to filter in and out heatmap cells
 corresponding to non-clade defining mutations.
+
+![editing_viz]
+
+[editing_viz]: screenshots/editing_viz.gif
 
 ## Submodules
 
