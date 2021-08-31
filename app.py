@@ -17,6 +17,7 @@ run faster.
 """
 
 from base64 import b64decode
+from os import path
 from time import sleep
 
 import dash
@@ -26,7 +27,7 @@ from dash.dependencies import ALL, ClientsideFunction, Input, Output, State
 from dash.exceptions import PreventUpdate
 
 from data_parser import get_data, vcf_str_to_gvf_str
-from definitions import REFERENCE_DATA_DIR, USER_DATA_DIR
+from definitions import ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR
 from generators import (heatmap_generator, histogram_generator,
                         table_generator, toolbar_generator)
 
@@ -35,9 +36,8 @@ from generators import (heatmap_generator, histogram_generator,
 # contains the visualization that is deployed by this file, when
 # ``app`` is served.
 app = dash.Dash(
-    # Fixes bug with debugger in PyCharm. See
-    # https://bit.ly/3j86GL1.
-    name="foo",
+    name="COVID-MVP",
+    assets_folder=ASSETS_DIR,
     # We bring in jQuery for some of the JavaScript
     # callbacks.
     external_scripts=[
@@ -258,7 +258,7 @@ def update_new_upload(file_contents, filename, old_data):
         vcf_str_bytes = b64decode(base64_str)
         vcf_str_utf8 = vcf_str_bytes.decode("utf-8")
         gvf_str = vcf_str_to_gvf_str(vcf_str_utf8, new_strain)
-        with open("user_data/" + new_strain + ".gvf", "w") as fp:
+        with open(path.join(USER_DATA_DIR, new_strain + ".gvf"), "w") as fp:
             fp.write("\n\n\n" + gvf_str)
         status = "ok"
         msg = ""
