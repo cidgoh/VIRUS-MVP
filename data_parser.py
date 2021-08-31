@@ -159,7 +159,7 @@ def parse_gvf_dir(dir_, file_order=None):
             if ext != "gvf":
                 continue
             ret[strain] = {}
-            with open(entry.path) as fp:
+            with open(entry.path, encoding="utf-8") as fp:
                 # Skip gvf header rows
                 reader = csv.DictReader(islice(fp, 3, None), delimiter="\t")
 
