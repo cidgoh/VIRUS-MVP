@@ -525,6 +525,7 @@ def update_heatmap_y_axis_fig(_, data):
     """
     y_axis_fig = heatmap_generator.get_heatmap_y_axis_fig(data)
     y_axis_style = {"height": data["heatmap_cells_fig_height"],
+                    "width": "101%",
                     "marginBottom": -data["heatmap_cells_container_height"]}
     inner_container_style = {
         "height": "100%",

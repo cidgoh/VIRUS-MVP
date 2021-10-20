@@ -71,6 +71,9 @@ def get_heatmap_row(data):
                                         config={"displayModeBar": False},
                                         style={
                                             "height": heatmap_cells_fig_height,
+                                            # Need a scrollbar to match
+                                            # cells fig.
+                                            "width": "101%",
                                             "marginBottom":
                                                 -heatmap_cells_container_height
                                         }
