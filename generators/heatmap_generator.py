@@ -64,20 +64,33 @@ def get_heatmap_row(data):
                     dbc.Row(
                         dbc.Col(
                             html.Div(
-                                dcc.Graph(
-                                    id="heatmap-y-axis-fig",
-                                    figure=get_heatmap_y_axis_fig(data),
-                                    config={"displayModeBar": False},
-                                    style={"height": heatmap_cells_fig_height}
+                                html.Div(
+                                    dcc.Graph(
+                                        id="heatmap-y-axis-fig",
+                                        figure=get_heatmap_y_axis_fig(data),
+                                        config={"displayModeBar": False},
+                                        style={
+                                            "height": heatmap_cells_fig_height,
+                                            "marginBottom":
+                                                -heatmap_cells_container_height
+                                        }
+                                    ),
+                                    id="heatmap-y-axis-inner-container",
+                                    style={
+                                        "height": "100%",
+                                        "overflowY": "scroll",
+                                        "marginBottom":
+                                            -heatmap_cells_container_height-50,
+                                        "paddingBottom":
+                                            heatmap_cells_container_height+50
+                                    }
                                 ),
-                                id="heatmap-y-axis-container",
+                                id="heatmap-y-axis-outer-container",
                                 style={
-                                    "height": "100%",
-                                    "overflowY": "scroll"
+                                    "height": heatmap_cells_container_height,
+                                    "overflow": "hidden"
                                 }
-                            ),
-                            style={"height": heatmap_cells_container_height,
-                                   "overflow": "hidden"}
+                            )
                         ),
                         no_gutters=True
                     )
@@ -131,7 +144,7 @@ def get_heatmap_row(data):
                                                 -heatmap_cells_container_height
                                         }
                                     ),
-                                    id="heatmap-cells-container",
+                                    id="heatmap-cells-inner-container",
                                     style={
                                         "height": "100%",
                                         "width": "100%",
@@ -146,6 +159,7 @@ def get_heatmap_row(data):
                                             heatmap_cells_container_height+50
                                     }
                                 ),
+                                id="heatmap-cells-outer-container",
                                 style={
                                     "height": heatmap_cells_container_height,
                                     "width": heatmap_cells_fig_width,

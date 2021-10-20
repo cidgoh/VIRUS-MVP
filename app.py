@@ -504,14 +504,16 @@ def route_data_heatmap_y_update(data, old_heatmap_y):
 @app.callback(
     Output("heatmap-y-axis-fig", "figure"),
     Output("heatmap-y-axis-fig", "style"),
+    Output("heatmap-y-axis-inner-container", "style"),
+    Output("heatmap-y-axis-outer-container", "style"),
     Input("heatmap-y", "data"),
     State("data", "data"),
     prevent_initial_call=True
 )
 def update_heatmap_y_axis_fig(_, data):
-    """Update heatmap y axis fig.
+    """Update heatmap y axis fig and containers.
 
-    We need to update style because y-axis fig height may change due to
+    We need to update style because attributes may change due to
     uploaded strains.
 
     :param _: Heatmap cells fig updated
@@ -522,8 +524,22 @@ def update_heatmap_y_axis_fig(_, data):
     :rtype: (plotly.graph_objects.Figure, dict)
     """
     y_axis_fig = heatmap_generator.get_heatmap_y_axis_fig(data)
-    y_axis_style = {"height": data["heatmap_cells_fig_height"]}
-    return y_axis_fig, y_axis_style
+    y_axis_style = {"height": data["heatmap_cells_fig_height"],
+                    "marginBottom": -data["heatmap_cells_container_height"]}
+    inner_container_style = {
+        "height": "100%",
+        "overflowY": "scroll",
+        "marginBottom":
+            -data["heatmap_cells_container_height"]-50,
+        "paddingBottom":
+            data["heatmap_cells_container_height"]+50
+    }
+    outer_container_style = {
+        "height": data["heatmap_cells_container_height"],
+        "overflow": "hidden"
+    }
+    return (y_axis_fig, y_axis_style, inner_container_style,
+            outer_container_style)
 
 
 @app.callback(
@@ -623,14 +639,16 @@ def update_histogram(data):
 @app.callback(
     Output("heatmap-cells-fig", "figure"),
     Output("heatmap-cells-fig", "style"),
+    Output("heatmap-cells-inner-container", "style"),
+    Output("heatmap-cells-outer-container", "style"),
     Input("data", "data"),
     prevent_initial_call=True
 )
 def update_heatmap_cells_fig(data):
-    """Update heatmap cells fig and style.
+    """Update heatmap cells fig, style, and containers.
 
     This is the fig with the heatmap cells and x axis. We return style
-    because width and height may need to change due to changes in data.
+    because attributes may need to change due to changes in data.
 
     :param data: Current value for ``data`` variable; see ``get_data``
         return value.
@@ -645,7 +663,26 @@ def update_heatmap_cells_fig(data):
         "marginRight": -data["heatmap_cells_fig_width"],
         "marginBottom": -data["heatmap_cells_container_height"]
     }
-    return cells_fig, cells_fig_style
+    inner_container_style = {
+        "height": "100%",
+        "width": "100%",
+        "overflow": "scroll",
+        "marginRight":
+            -data["heatmap_cells_fig_width"]-50,
+        "paddingRight":
+            data["heatmap_cells_fig_width"]+50,
+        "marginBottom":
+            -data["heatmap_cells_container_height"]-50,
+        "paddingBottom":
+            data["heatmap_cells_container_height"]+50
+    }
+    outer_container_style = {
+        "height": data["heatmap_cells_container_height"],
+        "width": data["heatmap_cells_fig_width"],
+        "overflow": "hidden"
+    }
+    return (cells_fig, cells_fig_style, inner_container_style,
+            outer_container_style)
 
 
 @app.callback(

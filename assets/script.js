@@ -156,8 +156,8 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
     linkHeatmapCellsYScrolling: (_, __) => {
       let isSyncingLeftScroll = false;
       let isSyncingRightScroll = false;
-      const leftDiv = document.getElementById('heatmap-y-axis-container');
-      const rightDiv = document.getElementById('heatmap-cells-container');
+      const leftDiv = document.getElementById('heatmap-y-axis-inner-container');
+      const rightDiv = document.getElementById('heatmap-cells-inner-container');
 
       leftDiv.onscroll = function() {
         if (!isSyncingLeftScroll) {
