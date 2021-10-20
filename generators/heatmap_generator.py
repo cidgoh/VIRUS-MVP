@@ -59,15 +59,28 @@ def get_heatmap_row(data):
                         ),
                         no_gutters=True
                     ),
-                    # Space for y-axis fig
+                    # Space for y-axis fig; hackeyness for scrolling
+                    # https://stackoverflow.com/a/49278385/11472358
                     dbc.Row(
                         dbc.Col(
-                            dcc.Graph(
-                                id="heatmap-y-axis-fig",
-                                figure=get_heatmap_y_axis_fig(data),
-                                config={"displayModeBar": False},
-                                style={"height": heatmap_cells_fig_height}
-                            )
+                            html.Div(
+                                dcc.Graph(
+                                    id="heatmap-y-axis-fig",
+                                    figure=get_heatmap_y_axis_fig(data),
+                                    config={"displayModeBar": False},
+                                    style={"height": heatmap_cells_fig_height}
+                                ),
+                                id="heatmap-y-axis-container",
+                                style={
+                                    "height": "100%",
+                                    "overflowY": "scroll",
+                                    "direction": "rtl",
+                                    "margin-left": "-25%",
+                                    "padding-left": "25%",
+                                }
+                            ),
+                            style={"height": heatmap_cells_container_height,
+                                   "overflow": "hidden"}
                         ),
                         no_gutters=True
                     )
