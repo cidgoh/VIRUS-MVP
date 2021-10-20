@@ -75,8 +75,8 @@ def get_heatmap_row(data):
                                     "height": "100%",
                                     "overflowY": "scroll",
                                     "direction": "rtl",
-                                    "margin-left": "-25%",
-                                    "padding-left": "25%",
+                                    "marginLeft": "-25%",
+                                    "paddingLeft": "25%",
                                 }
                             ),
                             style={"height": heatmap_cells_container_height,
@@ -128,7 +128,7 @@ def get_heatmap_row(data):
                                         style={
                                             "height": heatmap_cells_fig_height,
                                             "width": heatmap_cells_fig_width,
-                                            "margin-bottom":
+                                            "marginBottom":
                                                 -heatmap_cells_container_height
                                         }
                                     ),
@@ -136,9 +136,9 @@ def get_heatmap_row(data):
                                     style={
                                         "height": "100%",
                                         "overflowY": "scroll",
-                                        "margin-bottom":
+                                        "marginBottom":
                                             -heatmap_cells_container_height-50,
-                                        "padding-bottom":
+                                        "paddingBottom":
                                             heatmap_cells_container_height+50
                                     }
                                 ),
