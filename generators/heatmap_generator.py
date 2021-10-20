@@ -73,10 +73,7 @@ def get_heatmap_row(data):
                                 id="heatmap-y-axis-container",
                                 style={
                                     "height": "100%",
-                                    "overflowY": "scroll",
-                                    "direction": "rtl",
-                                    "marginLeft": "-25%",
-                                    "paddingLeft": "25%",
+                                    "overflowY": "scroll"
                                 }
                             ),
                             style={"height": heatmap_cells_container_height,
@@ -128,6 +125,8 @@ def get_heatmap_row(data):
                                         style={
                                             "height": heatmap_cells_fig_height,
                                             "width": heatmap_cells_fig_width,
+                                            "marginRight":
+                                                heatmap_cells_fig_width,
                                             "marginBottom":
                                                 -heatmap_cells_container_height
                                         }
@@ -135,7 +134,12 @@ def get_heatmap_row(data):
                                     id="heatmap-cells-container",
                                     style={
                                         "height": "100%",
-                                        "overflowY": "scroll",
+                                        "width": "100%",
+                                        "overflow": "scroll",
+                                        "marginRight":
+                                            -heatmap_cells_fig_width-50,
+                                        "paddingRight":
+                                            heatmap_cells_fig_width+50,
                                         "marginBottom":
                                             -heatmap_cells_container_height-50,
                                         "paddingBottom":
@@ -144,6 +148,7 @@ def get_heatmap_row(data):
                                 ),
                                 style={
                                     "height": heatmap_cells_container_height,
+                                    "width": heatmap_cells_fig_width,
                                     "overflow": "hidden"
                                 }
                             )
