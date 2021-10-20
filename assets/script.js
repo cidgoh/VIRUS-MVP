@@ -144,6 +144,36 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
       $heatmapCenterDiv.trigger('scroll')
       $(window).resize(() => {$heatmapCenterDiv.trigger('scroll')})
       return null
+    },
+    /**
+     * Using pure JS, link the scrolling of the heatmap cells and y-axis
+     * containers.
+     * Lifted from https://stackoverflow.com/a/41998497/11472358
+     * Seems to work smoothly.
+     * @param _ Heatmap y-axis fig generated
+     * @param __ Heatmap cells fig generated
+     */
+    linkHeatmapCellsYScrolling: (_, __) => {
+      let isSyncingLeftScroll = false;
+      let isSyncingRightScroll = false;
+      const leftDiv = document.getElementById('heatmap-y-axis-container');
+      const rightDiv = document.getElementById('heatmap-cells-container');
+
+      leftDiv.onscroll = function() {
+        if (!isSyncingLeftScroll) {
+          isSyncingRightScroll = true;
+          rightDiv.scrollTop = this.scrollTop;
+        }
+        isSyncingLeftScroll = false;
+      }
+
+      rightDiv.onscroll = function() {
+        if (!isSyncingRightScroll) {
+          isSyncingLeftScroll = true;
+          leftDiv.scrollTop = this.scrollTop;
+        }
+        isSyncingRightScroll = false;
+      }
     }
   }
 });

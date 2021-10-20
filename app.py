@@ -127,6 +127,7 @@ def launch_app(_):
         # functions.
         dcc.Store(id="make-select-lineages-modal-checkboxes-draggable"),
         dcc.Store(id="make-histogram-rel-pos-bar-dynamic"),
+        dcc.Store(id="link-heatmap-cells-y-scrolling")
     ]
 
 
@@ -799,6 +800,15 @@ app.clientside_callback(
     Output("make-histogram-rel-pos-bar-dynamic", "data"),
     Input("heatmap-nt-pos-axis-fig", "figure"),
     State("data", "data")
+)
+app.clientside_callback(
+    ClientsideFunction(
+        namespace="clientside",
+        function_name="linkHeatmapCellsYScrolling"
+    ),
+    Output("link-heatmap-cells-y-scrolling", "data"),
+    Input("heatmap-y-axis-fig", "figure"),
+    Input("heatmap-cells-fig", "figure")
 )
 
 if __name__ == "__main__":
