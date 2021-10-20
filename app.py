@@ -642,7 +642,8 @@ def update_heatmap_cells_fig(data):
     cells_fig_style = {
         "height": data["heatmap_cells_fig_height"],
         "width": data["heatmap_cells_fig_width"],
-        "margin-bottom": -data["heatmap_cells_container_height"]
+        "marginRight": -data["heatmap_cells_fig_width"],
+        "marginBottom": -data["heatmap_cells_container_height"]
     }
     return cells_fig, cells_fig_style
 

@@ -126,7 +126,7 @@ def get_heatmap_row(data):
                                             "height": heatmap_cells_fig_height,
                                             "width": heatmap_cells_fig_width,
                                             "marginRight":
-                                                heatmap_cells_fig_width,
+                                                -heatmap_cells_fig_width,
                                             "marginBottom":
                                                 -heatmap_cells_container_height
                                         }
