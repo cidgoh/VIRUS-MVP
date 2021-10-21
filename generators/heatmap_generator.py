@@ -45,6 +45,7 @@ def get_heatmap_row(data):
     :rtype: dbc.Row
     """
     heatmap_cells_fig_height = data["heatmap_cells_fig_height"]
+    heatmap_cells_container_height = data["heatmap_cells_container_height"]
     heatmap_cells_fig_width = data["heatmap_cells_fig_width"]
     ret = dbc.Row(
         [
@@ -58,14 +59,40 @@ def get_heatmap_row(data):
                         ),
                         no_gutters=True
                     ),
-                    # Space for y-axis fig
+                    # Space for y-axis fig; hackeyness for scrolling
+                    # https://stackoverflow.com/a/49278385/11472358
                     dbc.Row(
                         dbc.Col(
-                            dcc.Graph(
-                                id="heatmap-y-axis-fig",
-                                figure=get_heatmap_y_axis_fig(data),
-                                config={"displayModeBar": False},
-                                style={"height": heatmap_cells_fig_height}
+                            html.Div(
+                                html.Div(
+                                    dcc.Graph(
+                                        id="heatmap-y-axis-fig",
+                                        figure=get_heatmap_y_axis_fig(data),
+                                        config={"displayModeBar": False},
+                                        style={
+                                            "height": heatmap_cells_fig_height,
+                                            # Need a scrollbar to match
+                                            # cells fig.
+                                            "width": "101%",
+                                            "marginBottom":
+                                                -heatmap_cells_container_height
+                                        }
+                                    ),
+                                    id="heatmap-y-axis-inner-container",
+                                    style={
+                                        "height": "100%",
+                                        "overflowY": "scroll",
+                                        "marginBottom":
+                                            -heatmap_cells_container_height-50,
+                                        "paddingBottom":
+                                            heatmap_cells_container_height+50
+                                    }
+                                ),
+                                id="heatmap-y-axis-outer-container",
+                                style={
+                                    "height": heatmap_cells_container_height,
+                                    "overflow": "hidden"
+                                }
                             )
                         ),
                         no_gutters=True
@@ -101,15 +128,46 @@ def get_heatmap_row(data):
                             )
                         )
                     ),
-                    # Heatmap cells
+                    # Heatmap cells; some hackeyness for scrolling
+                    # https://stackoverflow.com/a/49278385/11472358
                     dbc.Row(
                         dbc.Col(
-                            dcc.Graph(
-                                id="heatmap-cells-fig",
-                                figure=get_heatmap_cells_fig(data),
-                                config={"displayModeBar": False},
-                                style={"height": heatmap_cells_fig_height,
-                                       "width": heatmap_cells_fig_width}
+                            html.Div(
+                                html.Div(
+                                    dcc.Graph(
+                                        id="heatmap-cells-fig",
+                                        figure=get_heatmap_cells_fig(data),
+                                        config={"displayModeBar": False},
+                                        style={
+                                            "height": heatmap_cells_fig_height,
+                                            "width": heatmap_cells_fig_width,
+                                            "marginRight":
+                                                -heatmap_cells_fig_width,
+                                            "marginBottom":
+                                                -heatmap_cells_container_height
+                                        }
+                                    ),
+                                    id="heatmap-cells-inner-container",
+                                    style={
+                                        "height": "100%",
+                                        "width": "100%",
+                                        "overflow": "scroll",
+                                        "marginRight":
+                                            -heatmap_cells_fig_width-50,
+                                        "paddingRight":
+                                            heatmap_cells_fig_width+50,
+                                        "marginBottom":
+                                            -heatmap_cells_container_height-50,
+                                        "paddingBottom":
+                                            heatmap_cells_container_height+50
+                                    }
+                                ),
+                                id="heatmap-cells-outer-container",
+                                style={
+                                    "height": heatmap_cells_container_height,
+                                    "width": heatmap_cells_fig_width,
+                                    "overflow": "hidden"
+                                }
                             )
                         ),
                         no_gutters=True
