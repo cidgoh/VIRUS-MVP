@@ -682,10 +682,12 @@ def get_single_genome_legend_fig():
         },
         plot_bgcolor="white",
         xaxis={
-            "visible": False
+            "visible": False,
+            "fixedrange": True
         },
         yaxis={
-            "visible": False
+            "visible": False,
+            "fixedrange": True
         }
     )
     return ret
@@ -704,7 +706,8 @@ def get_single_genome_legend_graph_obj():
             "size": 30
         },
         text=["dp==0"],
-        textposition="middle right"
+        textposition="middle right",
+        hoverinfo="skip"
     )
     return ret
 
