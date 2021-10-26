@@ -551,6 +551,7 @@ def get_heatmap_cells_graph_obj(data):
             "size": 30
         },
         hoverlabel={
+            "bgcolor": "#000000",
             "font_size": 18
         },
         hovertemplate="%{text}<extra></extra>",
