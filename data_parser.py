@@ -580,7 +580,12 @@ def get_heatmap_z(parsed_gvf_dirs, max_mutations_per_pos_dict):
             if pos in parsed_gvf_dirs[strain]:
                 for i, mutation in enumerate(parsed_gvf_dirs[strain][pos]):
                     if not mutation["hidden_cell"]:
-                        cols[i] = mutation["alt_freq"]
+                        # Set to 0 if sample size == 1, which allows it
+                        # to be displayed as white with our colorscale.
+                        if mutation["dp"] == 1:
+                            cols[i] = 0
+                        else:
+                            cols[i] = mutation["alt_freq"]
             row.extend(cols)
         ret.append(row)
     return ret

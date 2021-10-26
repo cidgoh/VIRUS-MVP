@@ -25,7 +25,8 @@ def get_color_scale():
     :rtype: list[list]
     """
     ret = [
-        [0, "#91bfdb"],
+        [0, "#ffffff"],
+        [0.0001, "#91bfdb"],
         [1/2, "#ffffbf"],
         [1, "#fc8d59"],
     ]
@@ -196,8 +197,12 @@ def get_heatmap_row(data):
                     # Empty space above colorbar fig
                     dbc.Row(
                         dbc.Col(
-                            None,
-                            style={"height": 100},
+                            dcc.Graph(
+                                id="single-genome-legend-fig",
+                                figure=get_single_genome_legend_fig(),
+                                config={"displayModeBar": False},
+                                style={"height": 100}
+                            )
                         ),
                         no_gutters=True
                     ),
@@ -208,8 +213,7 @@ def get_heatmap_row(data):
                                 id="heatmap-colorbar-fig",
                                 figure=get_heatmap_colorbar_fig(),
                                 config={"displayModeBar": False},
-                            ),
-                            className="ml-5"
+                            )
                         ),
                         no_gutters=True
                     )
@@ -547,6 +551,7 @@ def get_heatmap_cells_graph_obj(data):
             "size": 30
         },
         hoverlabel={
+            "bgcolor": "#000000",
             "font_size": 18
         },
         hovertemplate="%{text}<extra></extra>",
@@ -626,12 +631,20 @@ def get_heatmap_colorbar_fig():
             "l": 0,
             "r": 0,
             "t": 0,
-            "b": 0
+            "b": 0,
+            "pad": 0
         },
-        autosize=False
+        plot_bgcolor="white",
+        xaxis={
+            "visible": False,
+            "range": [0, 0],
+            "fixedrange": True
+        },
+        yaxis={
+            "visible": False,
+            "fixedrange": True
+        }
     )
-    ret.update_xaxes(visible=False)
-    ret.update_yaxes(visible=False)
     return ret
 
 
@@ -650,15 +663,60 @@ def get_heatmap_colorbar_graph_obj():
         y=[0],
         mode="markers",
         marker={
-            "color": [0],
+            "color": "#ffffff",
             "colorscale": get_color_scale(),
             "cmin": 0,
             "cmax": 1,
             "showscale": True,
             "colorbar": {
-                "x": -2
+                "x": 0.5
             }
+        },
+        hoverinfo="skip"
+    )
+    return ret
+
+
+def get_single_genome_legend_fig():
+    """TODO"""
+    ret = go.Figure(get_single_genome_legend_graph_obj())
+    ret.update_layout(
+        font={"size": 18},
+        margin={
+            "l": 0,
+            "r": 0,
+            "t": 0,
+            "b": 0,
+            "pad": 0
+        },
+        plot_bgcolor="white",
+        xaxis={
+            "visible": False,
+            "fixedrange": True
+        },
+        yaxis={
+            "visible": False,
+            "fixedrange": True
         }
+    )
+    return ret
+
+
+def get_single_genome_legend_graph_obj():
+    """TODO"""
+    ret = go.Scattergl(
+        x=[0],
+        y=[0],
+        mode="markers+text",
+        marker={
+            "color": "#ffffff",
+            "symbol": "square",
+            "line": {"width": 2},
+            "size": 30
+        },
+        text=["dp==0"],
+        textposition="middle right",
+        hoverinfo="skip"
     )
     return ret
 
