@@ -213,8 +213,7 @@ def get_heatmap_row(data):
                                 id="heatmap-colorbar-fig",
                                 figure=get_heatmap_colorbar_fig(),
                                 config={"displayModeBar": False},
-                            ),
-                            className="ml-5"
+                            )
                         ),
                         no_gutters=True
                     )
@@ -631,12 +630,20 @@ def get_heatmap_colorbar_fig():
             "l": 0,
             "r": 0,
             "t": 0,
-            "b": 0
+            "b": 0,
+            "pad": 0
         },
-        autosize=False
+        plot_bgcolor="white",
+        xaxis={
+            "visible": False,
+            "range": [0, 0],
+            "fixedrange": True
+        },
+        yaxis={
+            "visible": False,
+            "fixedrange": True
+        }
     )
-    ret.update_xaxes(visible=False)
-    ret.update_yaxes(visible=False)
     return ret
 
 
@@ -655,15 +662,16 @@ def get_heatmap_colorbar_graph_obj():
         y=[0],
         mode="markers",
         marker={
-            "color": [0],
+            "color": "#ffffff",
             "colorscale": get_color_scale(),
             "cmin": 0,
             "cmax": 1,
             "showscale": True,
             "colorbar": {
-                "x": -2
+                "x": 0.5
             }
-        }
+        },
+        hoverinfo="skip"
     )
     return ret
 
