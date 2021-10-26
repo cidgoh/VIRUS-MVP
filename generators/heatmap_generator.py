@@ -197,8 +197,12 @@ def get_heatmap_row(data):
                     # Empty space above colorbar fig
                     dbc.Row(
                         dbc.Col(
-                            None,
-                            style={"height": 100},
+                            dcc.Graph(
+                                id="single-genome-legend-fig",
+                                figure=get_single_genome_legend_fig(),
+                                config={"displayModeBar": False},
+                                style={"height": 100}
+                            )
                         ),
                         no_gutters=True
                     ),
@@ -660,6 +664,47 @@ def get_heatmap_colorbar_graph_obj():
                 "x": -2
             }
         }
+    )
+    return ret
+
+
+def get_single_genome_legend_fig():
+    """TODO"""
+    ret = go.Figure(get_single_genome_legend_graph_obj())
+    ret.update_layout(
+        font={"size": 18},
+        margin={
+            "l": 0,
+            "r": 0,
+            "t": 0,
+            "b": 0,
+            "pad": 0
+        },
+        plot_bgcolor="white",
+        xaxis={
+            "visible": False
+        },
+        yaxis={
+            "visible": False
+        }
+    )
+    return ret
+
+
+def get_single_genome_legend_graph_obj():
+    """TODO"""
+    ret = go.Scattergl(
+        x=[0],
+        y=[0],
+        mode="markers+text",
+        marker={
+            "color": "#ffffff",
+            "symbol": "square",
+            "line": {"width": 2},
+            "size": 30
+        },
+        text=["dp==0"],
+        textposition="middle right"
     )
     return ret
 
