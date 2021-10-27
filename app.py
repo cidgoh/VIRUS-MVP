@@ -16,8 +16,6 @@ I have unparallelized some callbacks, which allows certain callbacks to
 run faster.
 """
 
-from base64 import b64decode
-from os import path
 from time import sleep
 
 import dash
@@ -26,8 +24,8 @@ import dash_core_components as dcc
 from dash.dependencies import ALL, ClientsideFunction, Input, Output, State
 from dash.exceptions import PreventUpdate
 
-from data_parser import get_data, vcf_str_to_gvf_str
-from definitions import ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR
+from data_parser import get_data
+from definitions import ASSETS_DIR, REFERENCE_DATA_DIR
 from generators import (heatmap_generator, histogram_generator,
                         table_generator, toolbar_generator)
 
@@ -95,7 +93,7 @@ def launch_app(_):
     if you do the following in the global scope--which you may be
     tempted to do because we are only doing it once!
     """
-    data_ = get_data([REFERENCE_DATA_DIR, USER_DATA_DIR])
+    data_ = get_data([REFERENCE_DATA_DIR])
     return [
         # Bootstrap row containing tools at the top of the application
         toolbar_generator.get_toolbar_row(data_),
@@ -115,7 +113,6 @@ def launch_app(_):
         # The following in-browser variables simply exist to help
         # modularize the callbacks below.
         dcc.Store(id="show-clade-defining"),
-        dcc.Store(id="new-upload"),
         dcc.Store(id="hidden-strains"),
         dcc.Store(id="strain-order"),
         dcc.Store(id="last-heatmap-cell-clicked"),
@@ -135,14 +132,13 @@ def launch_app(_):
     Output("data", "data"),
     inputs=[
         Input("show-clade-defining", "data"),
-        Input("new-upload", "data"),
         Input("hidden-strains", "data"),
         Input("strain-order", "data"),
         Input("mutation-freq-slider", "value")
     ],
     prevent_initial_call=True
 )
-def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
+def update_data(show_clade_defining, hidden_strains, strain_order,
                 mutation_freq_vals):
     """Update ``data`` variable in dcc.Store.
 
@@ -154,8 +150,6 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
     :param show_clade_defining: ``update_show_clade-defining`` return
         value.
     :type show_clade_defining: bool
-    :param new_upload: ``update_new_upload`` return value
-    :type new_upload: dict
     :param hidden_strains: ``update_hidden_strains`` return value
     :type hidden_strains: list[str]
     :param strain_order: ``getStrainOrder`` return value from
@@ -172,9 +166,6 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
         new upload failed.
     """
     triggers = [x["prop_id"] for x in dash.callback_context.triggered]
-    if "new-upload.data" in triggers:
-        if new_upload["status"] == "error":
-            raise PreventUpdate
 
     # Do not use the current position of the mutation frequency slider
     # if this function was triggered by an input that will modify the
@@ -187,7 +178,7 @@ def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
     else:
         min_mutation_freq, max_mutation_freq = None, None
 
-    return get_data([REFERENCE_DATA_DIR, USER_DATA_DIR],
+    return get_data([REFERENCE_DATA_DIR],
                     clade_defining=show_clade_defining,
                     hidden_strains=hidden_strains,
                     strain_order=strain_order,
@@ -217,62 +208,11 @@ def update_show_clade_defining(switches_value):
 
 
 @app.callback(
-    Output("new-upload", "data"),
-    Input("upload-file", "contents"),
-    Input("upload-file", "filename"),
-    State("data", "data"),
-    prevent_initial_call=True
-)
-def update_new_upload(file_contents, filename, old_data):
-    """Update ``new_upload`` variable in dcc.Store.
-
-    If a valid file is uploaded, it will be written to ``user_data``.
-    But regardless of whether a valid file is uploaded, this function
-    will return a dict describing the name of the file the user
-    attempted to upload, and status of upload.
-
-    :param file_contents: Contents of uploaded file, formatted by Dash
-        into a base64 string.
-    :type file_contents: str
-    :param filename: Name of uploaded file
-    :type filename: str
-    :param old_data: ``get_data`` return value; current value for
-        ``data`` variable.
-    :type old_data: dict
-    :return: Dictionary describing upload attempt
-    :rtype: dict
-    """
-    # TODO more thorough validation, maybe once we finalize data
-    #  standards.
-    new_strain, ext = filename.rsplit(".", 1)
-    if ext != "vcf":
-        status = "error"
-        msg = "Filename must end in \".vcf\"."
-    elif new_strain in old_data["heatmap_y"]:
-        status = "error"
-        msg = "Filename must not conflict with existing variant."
-    else:
-        # Dash splits MIME type and the actual str with a comma
-        _, base64_str = file_contents.split(",")
-        # File gets written to ``user_data`` folder
-        # TODO: eventually replace with database
-        vcf_str_bytes = b64decode(base64_str)
-        vcf_str_utf8 = vcf_str_bytes.decode("utf-8")
-        gvf_str = vcf_str_to_gvf_str(vcf_str_utf8, new_strain)
-        with open(path.join(USER_DATA_DIR, new_strain + ".gvf"), "w") as fp:
-            fp.write("\n\n\n" + gvf_str)
-        status = "ok"
-        msg = ""
-    return {"filename": filename, "msg": msg, "status": status}
-
-
-@app.callback(
     Output("dialog-col", "children"),
-    Input("new-upload", "data"),
     Input("mutation-freq-slider", "marks"),
     prevent_initial_call=True
 )
-def update_dialog_col(new_upload, _):
+def update_dialog_col(_):
     """Update ``dialog-col`` div in toolbar.
 
     This function shows an error alert when there was an unsuccessful
@@ -280,8 +220,6 @@ def update_dialog_col(new_upload, _):
     re-rendered. In a hackey way, this function triggers
     ``hide_dialog_col``, which hides the dialog col after some time.
 
-    :param new_upload: ``update_new_upload`` return value
-    :type new_upload: dict
     :param _: Unused input variable that allows re-rendering of the
         mutation frequency slider to trigger this function.
     :return: Dash Bootstrap Components alert if new_upload describes an
@@ -290,15 +228,7 @@ def update_dialog_col(new_upload, _):
     """
     triggers = [x["prop_id"] for x in dash.callback_context.triggered]
 
-    if "new-upload.data" in triggers and new_upload["status"] == "error":
-        return dbc.Fade(
-            dbc.Alert(new_upload["msg"],
-                      color="danger",
-                      className="mb-0 p-1 d-inline-block"),
-            id="temp-dialog-col",
-            style={"transition": "all 500ms linear 0s"}
-        )
-    elif "mutation-freq-slider.marks" in triggers:
+    if "mutation-freq-slider.marks" in triggers:
         return dbc.Fade(
             dbc.Alert("Mutation frequency slider values reset.",
                       color="warning",

@@ -24,8 +24,7 @@ def get_toolbar_row(data):
             dbc.Col(
                 dbc.ButtonGroup(
                     [
-                        get_select_lineages_toolbar_btn(),
-                        get_file_upload_component()
+                        get_select_lineages_toolbar_btn()
                     ],
                     className="pl-4 pl-xl-5"
                 ),
@@ -135,19 +134,6 @@ def get_select_lineages_modal_footer():
                    color="danger",
                    id="select-lineages-cancel-btn"),
     ])
-
-
-def get_file_upload_component():
-    """Get Dash component for upload button.
-
-    :return: Dash upload component with a dash bootstrap button
-        component inside.
-    :rtype: dcc.Upload
-    """
-    return dcc.Upload(
-        dbc.Button("Upload", color="primary"),
-        id="upload-file"
-    )
 
 
 def get_mutation_freq_slider(data):
