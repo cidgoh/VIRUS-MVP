@@ -5,12 +5,9 @@ Entry point is ``get_data``.
 
 from copy import deepcopy
 import csv
-from io import StringIO
 from itertools import islice
 import os
 
-import numpy as np
-import pandas as pd
 
 from definitions import GENE_POSITIONS_DICT
 
