@@ -187,8 +187,8 @@ def parse_gvf_dir(dir_, file_order=None):
                                 "mutation_name": attrs["Name"],
                                 "functions": {}
                             }
-                            mutation_dict["alt_freq"] = \
-                                str(mutation_dict["ao"] / mutation_dict["dp"])
+                            alt_freq = mutation_dict["ao"]/mutation_dict["dp"]
+                            mutation_dict["alt_freq"] = str(round(alt_freq, 4))
                             type = mutation_types[i]
                             if type == "ins":
                                 mutation_dict["mutation_type"] = "insertion"
