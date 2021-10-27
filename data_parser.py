@@ -613,7 +613,7 @@ def get_heatmap_hover_text(parsed_gvf_dirs, max_mutations_per_pos_dict):
                 for i, mutation in enumerate(parsed_gvf_dirs[strain][pos]):
                     mutation_name = mutation["mutation_name"]
                     if not mutation_name:
-                        mutation_name = "n/a"
+                        mutation_name = "No recorded name"
 
                     functions_str = ""
                     for j, fn_category in enumerate(mutation["functions"]):
@@ -622,7 +622,7 @@ def get_heatmap_hover_text(parsed_gvf_dirs, max_mutations_per_pos_dict):
                             break
                         functions_str += fn_category + "<br>"
                     if not functions_str:
-                        functions_str = "n/a"
+                        functions_str = "None recorded so far"
 
                     cell_text_str = "<b>Mutation name: %s</b><br>" \
                                     "<br>" \
