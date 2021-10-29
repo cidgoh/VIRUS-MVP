@@ -128,6 +128,12 @@ Repository of functional annotations used in this application.
 [nf-ncov-voc]: https://github.com/cidgoh/nf-ncov-voc/
 [pokay]: https://github.com/nodrogluap/pokay/
 
+## Support
+
+We encourage you to add any problems with the application as an issue in this
+repository, but if you need to contact us by email, you can email us at
+isgill93@student.ubc.ca.
+
 ## Authors and acknowledgement
 
 [@ivansg44][ivan]: Visualization development

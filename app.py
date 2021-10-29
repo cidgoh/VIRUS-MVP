@@ -757,10 +757,10 @@ def toggle_mutation_details_modal(click_data, _, data):
         y = click_data["points"][0]["y"]
         mutation_name = data["heatmap_mutation_names"][y][x]
         if not mutation_name:
-            mutation_name = "n/a"
+            mutation_name = "No recorded mutation name"
         mutation_fns = data["heatmap_mutation_fns"][y][x]
         if not mutation_fns:
-            body = "n/a"
+            body = "No functions recorded so far"
         else:
             body = \
                 heatmap_generator.get_mutation_details_modal_body(mutation_fns)
