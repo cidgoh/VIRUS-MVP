@@ -155,17 +155,15 @@ def parse_gvf_dir(dir_, file_order=None):
             else:
                 return os.path.getmtime(e)
         for entry in sorted(it, key=key):
-            strain, ext = entry.name.rsplit(".", 1)
+            _, ext = entry.name.rsplit(".", 1)
             if ext != "gvf":
                 continue
-            ret[strain] = {
-                "mutations": {},
-                "status": {},
-                "who_label": {}
-            }
             with open(entry.path, encoding="utf-8") as fp:
                 # Skip gvf header rows
                 reader = csv.DictReader(islice(fp, 3, None), delimiter="\t")
+
+                # Assign value after we read first row
+                strain = None
 
                 for row in reader:
                     attrs_first_split = row["#attributes"].split(";")[:-1]
@@ -173,8 +171,13 @@ def parse_gvf_dir(dir_, file_order=None):
                         [x.split("=", 1) for x in attrs_first_split]
                     attrs = {k: v for k, v in attrs_second_split}
 
-                    ret[strain]["status"] = attrs["status"]
-                    ret[strain]["who_label"] = attrs["who_label"]
+                    if not strain:
+                        strain = attrs["viral_lineage"]
+                        ret[strain] = {
+                            "mutations": {},
+                            "status": attrs["status"],
+                            "who_label": attrs["who_label"]
+                        }
 
                     pos = row["#start"]
                     if pos not in ret[strain]["mutations"]:
