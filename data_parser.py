@@ -172,7 +172,7 @@ def parse_gvf_dir(dir_, file_order=None):
                     attrs = {k: v for k, v in attrs_second_split}
 
                     pos = row["#start"]
-                    if pos not in ret[strain]:
+                    if pos not in ret[strain]["mutations"]:
                         ret[strain]["mutations"][pos] = []
                         mutation_types = row["#type"].split(",")
                         num_of_mutations = len(mutation_types)
