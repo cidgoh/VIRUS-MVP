@@ -159,7 +159,9 @@ def parse_gvf_dir(dir_, file_order=None):
             if ext != "gvf":
                 continue
             ret[strain] = {
-                "mutations": {}
+                "mutations": {},
+                "status": {},
+                "who_label": {}
             }
             with open(entry.path, encoding="utf-8") as fp:
                 # Skip gvf header rows
@@ -170,6 +172,9 @@ def parse_gvf_dir(dir_, file_order=None):
                     attrs_second_split = \
                         [x.split("=", 1) for x in attrs_first_split]
                     attrs = {k: v for k, v in attrs_second_split}
+
+                    ret[strain]["status"] = attrs["status"]
+                    ret[strain]["who_label"] = attrs["who_label"]
 
                     pos = row["#start"]
                     if pos not in ret[strain]["mutations"]:
