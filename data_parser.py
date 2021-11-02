@@ -172,7 +172,9 @@ def parse_gvf_dir(dir_, file_order=None):
                     attrs = {k: v for k, v in attrs_second_split}
 
                     if not strain:
-                        strain = attrs["viral_lineage"]
+                        strain = "%s (%s)"
+                        strain %= \
+                            (attrs["viral_lineage"], attrs["who_variant"])
                         ret[strain] = {
                             "mutations": {},
                             "status": attrs["status"],
