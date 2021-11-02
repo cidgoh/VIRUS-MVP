@@ -176,7 +176,7 @@ def parse_gvf_dir(dir_, file_order=None):
                         ret[strain] = {
                             "mutations": {},
                             "status": attrs["status"],
-                            "who_label": attrs["who_label"]
+                            "who_variant": attrs["who_variant"]
                         }
 
                     pos = row["#start"]
@@ -188,7 +188,7 @@ def parse_gvf_dir(dir_, file_order=None):
                             mutation_dict = {
                                 "ref": attrs["Reference_seq"],
                                 "alt": attrs["Variant_seq"].split(",")[i],
-                                "gene": attrs["gene"],
+                                "gene": attrs["vcf_gene"],
                                 "ao": float(attrs["ao"].split(",")[i]),
                                 "dp": float(attrs["dp"]),
                                 "clade_defining":
