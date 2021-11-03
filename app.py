@@ -852,4 +852,4 @@ app.clientside_callback(
 
 if __name__ == "__main__":
     # Serve ``app``
-    app.run_server(debug=True)
+    app.run_server(debug=True, host='0.0.0.0')
