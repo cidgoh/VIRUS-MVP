@@ -128,7 +128,7 @@ def map_pos_to_gene(pos):
     return "INTERGENIC"
 
 
-def parse_gvf_dir(dir_, file_order=None):
+def parse_gvf_dir(dir_):
     """Parse a directory with gvf files for relevant data.
 
     This supplies ``get_data`` with the relevant information it needs
@@ -136,93 +136,80 @@ def parse_gvf_dir(dir_, file_order=None):
 
     :param dir_: Path to directory to parse
     :type dir_: str
-    :param file_order: List of files you want parsed first in order,
-        otherwise files are parsed in order of modification time.
-    :type file_order: list[str]
     :return: Relevant strain data from gvf files used by ``get_data``
     :rtype: dict
     """
-    if file_order is None:
-        file_order = []
-
     ret = {}
-    with os.scandir(dir_) as it:
-        # Iterate through gvf files in dir_ sorted by ``file_order``
-        # first, and then modification time.
-        def key(e):
-            if e.name in file_order:
-                return file_order.index(e.name)
-            else:
-                return os.path.getmtime(e)
-        for entry in sorted(it, key=key):
-            _, ext = entry.name.rsplit(".", 1)
-            if ext != "gvf":
-                continue
-            with open(entry.path, encoding="utf-8") as fp:
-                # Skip gvf header rows
-                reader = csv.DictReader(islice(fp, 3, None), delimiter="\t")
+    for entry in os.scandir(dir_):
+        _, ext = entry.name.rsplit(".", 1)
+        if ext != "gvf":
+            continue
+        with open(entry.path, encoding="utf-8") as fp:
+            # Skip gvf header rows
+            reader = csv.DictReader(islice(fp, 3, None), delimiter="\t")
 
-                # Assign value after we read first row
-                strain = None
+            # Assign value after we read first row
+            strain = None
 
-                for row in reader:
-                    attrs_first_split = row["#attributes"].split(";")[:-1]
-                    attrs_second_split = \
-                        [x.split("=", 1) for x in attrs_first_split]
-                    attrs = {k: v for k, v in attrs_second_split}
+            for row in reader:
+                attrs_first_split = row["#attributes"].split(";")[:-1]
+                attrs_second_split = \
+                    [x.split("=", 1) for x in attrs_first_split]
+                attrs = {k: v for k, v in attrs_second_split}
 
-                    if not strain:
-                        strain = "%s (%s)"
-                        strain %= \
-                            (attrs["viral_lineage"], attrs["who_variant"])
-                        ret[strain] = {
-                            "mutations": {},
-                            "status": attrs["status"],
-                            "who_variant": attrs["who_variant"]
+                if not strain:
+                    strain = "%s (%s)"
+                    strain %= \
+                        (attrs["viral_lineage"], attrs["who_variant"])
+                    ret[strain] = {
+                        "mutations": {},
+                        "status": attrs["status"],
+                        "who_variant": attrs["who_variant"]
+                    }
+
+                pos = row["#start"]
+                if pos not in ret[strain]["mutations"]:
+                    ret[strain]["mutations"][pos] = []
+                    mutation_types = row["#type"].split(",")
+                    num_of_mutations = len(mutation_types)
+                    for i in range(num_of_mutations):
+                        mutation_dict = {
+                            "ref": attrs["Reference_seq"],
+                            "alt": attrs["Variant_seq"].split(",")[i],
+                            "gene": attrs["vcf_gene"],
+                            "ao": float(attrs["ao"].split(",")[i]),
+                            "dp": float(attrs["dp"]),
+                            "clade_defining":
+                                attrs["clade_defining"] == "True",
+                            "hidden_cell": False,
+                            "mutation_name": attrs["Name"],
+                            "functions": {}
                         }
+                        alt_freq = mutation_dict["ao"]/mutation_dict["dp"]
+                        mutation_dict["alt_freq"] = str(round(alt_freq, 4))
+                        type = mutation_types[i]
+                        if type == "ins":
+                            mutation_dict["mutation_type"] = "insertion"
+                        elif type == "del":
+                            mutation_dict["mutation_type"] = "deletion"
+                        else:
+                            mutation_dict["mutation_type"] = "snp"
+                        ret[strain]["mutations"][pos].append(mutation_dict)
 
-                    pos = row["#start"]
-                    if pos not in ret[strain]["mutations"]:
-                        ret[strain]["mutations"][pos] = []
-                        mutation_types = row["#type"].split(",")
-                        num_of_mutations = len(mutation_types)
-                        for i in range(num_of_mutations):
-                            mutation_dict = {
-                                "ref": attrs["Reference_seq"],
-                                "alt": attrs["Variant_seq"].split(",")[i],
-                                "gene": attrs["vcf_gene"],
-                                "ao": float(attrs["ao"].split(",")[i]),
-                                "dp": float(attrs["dp"]),
-                                "clade_defining":
-                                    attrs["clade_defining"] == "True",
-                                "hidden_cell": False,
-                                "mutation_name": attrs["Name"],
-                                "functions": {}
-                            }
-                            alt_freq = mutation_dict["ao"]/mutation_dict["dp"]
-                            mutation_dict["alt_freq"] = str(round(alt_freq, 4))
-                            type = mutation_types[i]
-                            if type == "ins":
-                                mutation_dict["mutation_type"] = "insertion"
-                            elif type == "del":
-                                mutation_dict["mutation_type"] = "deletion"
-                            else:
-                                mutation_dict["mutation_type"] = "snp"
-                            ret[strain]["mutations"][pos].append(mutation_dict)
+                fn_category = attrs["function_category"].strip('"')
+                fn_desc = attrs["function_description"].strip('"')
+                fn_source = attrs["source"].strip('"')
+                fn_citation = attrs["citation"].strip('"')
+                fn_dict = {}
+                if fn_category:
+                    if fn_category not in fn_dict:
+                        fn_dict[fn_category] = {}
+                    fn_dict[fn_category][fn_desc] = \
+                        {"source": fn_source, "citation": fn_citation}
+                for i in range(len(ret[strain]["mutations"][pos])):
+                    parsed_mutation = ret[strain]["mutations"][pos]
+                    parsed_mutation[i]["functions"].update(fn_dict)
 
-                    fn_category = attrs["function_category"].strip('"')
-                    fn_desc = attrs["function_description"].strip('"')
-                    fn_source = attrs["source"].strip('"')
-                    fn_citation = attrs["citation"].strip('"')
-                    fn_dict = {}
-                    if fn_category:
-                        if fn_category not in fn_dict:
-                            fn_dict[fn_category] = {}
-                        fn_dict[fn_category][fn_desc] = \
-                            {"source": fn_source, "citation": fn_citation}
-                    for i in range(len(ret[strain]["mutations"][pos])):
-                        parsed_mutation = ret[strain]["mutations"][pos]
-                        parsed_mutation[i]["functions"].update(fn_dict)
     return ret
 
 
@@ -315,11 +302,23 @@ def get_data(dirs, clade_defining=False, hidden_strains=None,
     if strain_order is None:
         strain_order = []
 
+    # Faster sort with this obj
+    strain_order_dict = {s: i for i, s in enumerate(strain_order)}
+
     dir_strains = {}
-    file_order = [strain + ".gvf" for strain in strain_order]
     parsed_gvf_dirs = {}
     for dir_ in dirs:
-        parsed_gvf_dir = parse_gvf_dir(dir_, file_order)
+        unsorted_parsed_gvf_dir = parse_gvf_dir(dir_)
+
+        unsorted_items = unsorted_parsed_gvf_dir.items()
+        if strain_order_dict:
+            sorted_items = sorted(unsorted_items,
+                                  key=lambda item: strain_order_dict[item[0]])
+        else:
+            sorted_items = sorted(unsorted_items,
+                                  key=lambda item: item[0])
+        parsed_gvf_dir = {k: v for k, v in sorted_items}
+
         parsed_gvf_dirs = {**parsed_gvf_dirs, **parsed_gvf_dir}
         dir_strains[dir_] = list(parsed_gvf_dir.keys())
 
