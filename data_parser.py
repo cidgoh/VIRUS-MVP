@@ -56,7 +56,7 @@ def vcf_str_to_gvf_str(vcf_str, strain):
     new_df["#attributes"] = \
         new_df["#attributes"].astype(str) + "nt_name=" + hgvs_nucleotide + ";"
     new_df["#attributes"] = \
-        new_df["#attributes"].astype(str) + "gene=" + eff_info[5] + ";"
+        new_df["#attributes"].astype(str) + "vcf_gene=" + eff_info[5] + ";"
     new_df["#attributes"] = (new_df["#attributes"].astype(str)
                              + "mutation_type=" + eff_info[1] + ";")
 
@@ -141,15 +141,14 @@ def parse_gvf_dir(dir_):
     """
     ret = {}
     for entry in os.scandir(dir_):
-        _, ext = entry.name.rsplit(".", 1)
+        filename, ext = entry.name.rsplit(".", 1)
         if ext != "gvf":
             continue
         with open(entry.path, encoding="utf-8") as fp:
             # Skip gvf header rows
             reader = csv.DictReader(islice(fp, 3, None), delimiter="\t")
 
-            # Assign value after we read first row
-            strain = None
+            parsing_first_row = True
 
             for row in reader:
                 attrs_first_split = row["#attributes"].split(";")[:-1]
@@ -157,15 +156,27 @@ def parse_gvf_dir(dir_):
                     [x.split("=", 1) for x in attrs_first_split]
                 attrs = {k: v for k, v in attrs_second_split}
 
-                if not strain:
-                    strain = "%s (%s)"
-                    strain %= \
-                        (attrs["viral_lineage"], attrs["who_variant"])
+                if parsing_first_row:
+                    # Default values
+                    strain = filename
+                    who_variant = None
+                    status = None
+
+                    if "viral_lineage" in attrs:
+                        strain = attrs["viral_lineage"]
+                    if "who_variant" in attrs:
+                        strain += " (" + attrs["who_variant"] + ")"
+                        who_variant = attrs["who_variant"]
+                    if "status" in attrs:
+                        status = attrs["status"]
+
                     ret[strain] = {
                         "mutations": {},
-                        "status": attrs["status"],
-                        "who_variant": attrs["who_variant"]
+                        "who_variant": who_variant,
+                        "status": status
                     }
+
+                    parsing_first_row = False
 
                 pos = row["#start"]
                 if pos not in ret[strain]["mutations"]:
