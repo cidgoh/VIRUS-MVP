@@ -345,7 +345,7 @@ def get_data(dirs, clade_defining=False, hidden_strains=None,
 
     mutation_freq_slider_vals = \
         get_mutation_freq_slider_vals(visible_parsed_mutations)
-    if min_mutation_freq and max_mutation_freq:
+    if min_mutation_freq is not None and max_mutation_freq is not None:
         visible_parsed_mutations = \
             filter_parsed_mutations_by_freq(visible_parsed_mutations,
                                             min_mutation_freq,
