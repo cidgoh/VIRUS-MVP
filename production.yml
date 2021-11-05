@@ -12,7 +12,10 @@ services:
       - "8050:8050"
 
   nginx:
-    image: nginx:1.15-alpine
+    build:
+      context: .
+      dockerfile: ./dockerConf/nginx/Dockerfile
+    image: covid_mvp_production_nginx
     ports:
       - "80:80"
       - "443:443"
