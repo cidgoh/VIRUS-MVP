@@ -1,5 +1,8 @@
 version: '3'
 
+volumes:
+    letsencrypt:
+
 services:
   app:
     build:
@@ -8,3 +11,17 @@ services:
     image: covid_mvp_production_app
     ports:
       - "8050:8050"
+
+  nginx:
+    build:
+      context: .
+      dockerfile: ./dockerConf/nginx/Dockerfile
+    image: covid_mvp_production_nginx
+    ports:
+      - 80:80/tcp
+      - 443:443/tcp
+    environment:
+      CERTBOT_EMAIL: owner@company.com
+      STAGING: 1
+    volumes:
+        - letsencrypt:/etc/letsencrypt

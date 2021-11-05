@@ -1,4 +1,4 @@
-FROM nginx:1.15-alpine
+FROM jonasal/nginx-certbot:latest
 
-COPY ./dockerConf/nginx/nginx.conf /etc/nginx
+COPY ./dockerConf/nginx/nginx.conf /etc/nginx/conf.d/
 
