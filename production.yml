@@ -1,7 +1,5 @@
 version: '3'
 
-volumes:
-
 services:
   app:
     build:
