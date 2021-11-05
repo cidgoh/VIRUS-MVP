@@ -444,7 +444,7 @@ def get_heatmap_nt_pos_axis_fig(data):
         margin={
             "l": 0,
             "r": 0,
-            "t": 0,
+            "t": 500,
             "b": 0
         }
     )
@@ -453,7 +453,8 @@ def get_heatmap_nt_pos_axis_fig(data):
                      tickmode="array",
                      tickvals=data["heatmap_x_tickvals"],
                      ticktext=list(dict.fromkeys(data["heatmap_x_nt_pos"])),
-                     ticklabelposition="inside")
+                     side="top",
+                     ticklabelposition="outside")
     ret.update_yaxes(fixedrange=True,
                      visible=False,
                      zeroline=True)
