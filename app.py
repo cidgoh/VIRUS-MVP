@@ -50,6 +50,8 @@ app = dash.Dash(
     # until ``launch_app`` has finished executing.
     suppress_callback_exceptions=True
 )
+# server instance used for gunicorn deployment
+server = app.server
 
 # The ``layout`` attribute determines what HTML ``app`` renders when it
 # is served. We start with an empty bootstrap container, but it will be
