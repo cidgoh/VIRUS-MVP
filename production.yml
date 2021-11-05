@@ -1,5 +1,8 @@
 version: '3'
 
+volumes:
+    letsencrypt:
+
 services:
   app:
     build:
@@ -8,24 +11,15 @@ services:
     image: covid_mvp_production_app
     ports:
       - "8050:8050"
-
   nginx:
-    build:
-      context: .
-      dockerfile: ./dockerConf/nginx/Dockerfile
-    image: covid_mvp_production_nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./dockerConf/nginx:/etc/nginx/conf.d
-      - ./dockerConf/certbot/conf:/etc/letsencrypt
-      - ./dockerConf/certbot/www:/var/www/certbot
-    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
-
-  certbot:
-    image: certbot/certbot
-    volumes:
-      - ./dockerConf/certbot/conf:/etc/letsencrypt
-      - ./dockerConf/certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+      build:
+        context: .
+        dockerfile: ./dockerConf/nginx/Dockerfile
+      image: covid_mvp_production_nginx
+      ports:
+        - 80:80/tcp
+        - 443:443/tcp
+      environment:
+        CERTBOT_EMAIL: owner@company.com
+      volumes:
+          - letsencrypt:/etc/letsencrypt
