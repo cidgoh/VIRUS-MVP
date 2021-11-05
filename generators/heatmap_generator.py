@@ -4,7 +4,7 @@ The heatmap view is composed of several figures, because native figure
 functionality did not provide the view we wanted.
 
 We are not using the Plotly heatmap object. It is too slow. We are
-using the Plotly scattergl object, and making it look like a heatmap.
+using the Plotly scatter object, and making it look like a heatmap.
 """
 
 import dash_bootstrap_components as dbc
@@ -444,7 +444,7 @@ def get_heatmap_nt_pos_axis_fig(data):
         margin={
             "l": 0,
             "r": 0,
-            "t": 0,
+            "t": 500,
             "b": 0
         }
     )
@@ -453,7 +453,8 @@ def get_heatmap_nt_pos_axis_fig(data):
                      tickmode="array",
                      tickvals=data["heatmap_x_tickvals"],
                      ticktext=list(dict.fromkeys(data["heatmap_x_nt_pos"])),
-                     ticklabelposition="inside")
+                     side="top",
+                     ticklabelposition="outside")
     ret.update_yaxes(fixedrange=True,
                      visible=False,
                      zeroline=True)
@@ -517,13 +518,13 @@ def get_heatmap_cells_fig(data):
 def get_heatmap_cells_graph_obj(data):
     """Get Plotly graph object representing heatmap cells.
 
-    This is actually a scattergl object, not a heatmap object. We make
+    This is actually a scatter object, not a heatmap object. We make
     it look like a heatmap object. This is faster.
 
     :param data: ``data_parser.get_data`` return value
     :type data: dict
     :return: Plotly graph object containing cells
-    :rtype: go.Scattergl
+    :rtype: go.Scatter
     """
     scatter_y = []
     scatter_x = []
@@ -537,7 +538,7 @@ def get_heatmap_cells_graph_obj(data):
                 scatter_y.append(j)
                 scatter_marker_color.append(float(freq))
                 scatter_text.append(data["heatmap_hover_text"][j][i])
-    ret = go.Scattergl(
+    ret = go.Scatter(
         x=scatter_x,
         y=scatter_y,
         mode="markers",
@@ -569,9 +570,9 @@ def get_heatmap_main_insertions_graph_obj(data):
     :param data: ``data_parser.get_data`` return value
     :type data: dict
     :return: Plotly scatterplot object containing insertion markers
-    :rtype: go.Scattergl
+    :rtype: go.Scatter
     """
-    ret = go.Scattergl(
+    ret = go.Scatter(
         x=data["insertions_x"],
         y=data["insertions_y"],
         hoverinfo="skip",
@@ -595,9 +596,9 @@ def get_heatmap_main_deletions_graph_obj(data):
     :param data: ``data_parser.get_data`` return value
     :type data: dict
     :return: Plotly scatterplot object containing deletion markers
-    :rtype: go.Scattergl
+    :rtype: go.Scatter
     """
-    ret = go.Scattergl(
+    ret = go.Scatter(
         x=data["deletions_x"],
         y=data["deletions_y"],
         hoverinfo="skip",
