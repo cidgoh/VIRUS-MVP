@@ -161,6 +161,7 @@ def parse_gvf_dir(dir_):
                     strain = filename
                     who_variant = None
                     status = None
+                    single_genome = False
 
                     if "viral_lineage" in attrs:
                         strain = attrs["viral_lineage"]
@@ -169,11 +170,14 @@ def parse_gvf_dir(dir_):
                         who_variant = attrs["who_variant"]
                     if "status" in attrs:
                         status = attrs["status"]
+                    if "sample_size" in attrs and attrs["sample_size"] == "1":
+                        single_genome = True
 
                     ret[strain] = {
                         "mutations": {},
                         "who_variant": who_variant,
-                        "status": status
+                        "status": status,
+                        "single_genome": single_genome
                     }
 
                     parsing_first_row = False
@@ -335,6 +339,8 @@ def get_data(dirs, clade_defining=False, hidden_strains=None,
 
     parsed_mutations = \
         {k: v["mutations"] for k, v in parsed_gvf_dirs.items()}
+    single_genomes = \
+        {k for k in parsed_gvf_dirs if parsed_gvf_dirs[k]["single_genome"]}
 
     visible_parsed_mutations = \
         {k: v for k, v in parsed_mutations.items() if k not in hidden_strains}
@@ -383,7 +389,8 @@ def get_data(dirs, clade_defining=False, hidden_strains=None,
             get_deletions_y(visible_parsed_mutations),
         "heatmap_z":
             get_heatmap_z(visible_parsed_mutations,
-                          max_mutations_per_pos_dict),
+                          max_mutations_per_pos_dict,
+                          single_genomes),
         "heatmap_hover_text":
             get_heatmap_hover_text(visible_parsed_mutations,
                                    max_mutations_per_pos_dict),
@@ -583,7 +590,8 @@ def get_heatmap_y(parsed_mutations):
     return ret
 
 
-def get_heatmap_z(parsed_mutations, max_mutations_per_pos_dict):
+def get_heatmap_z(parsed_mutations, max_mutations_per_pos_dict,
+                  single_genomes):
     """Get z values of heatmap cells.
 
     These are the mutation frequencies, and the z values dictate the
@@ -595,6 +603,9 @@ def get_heatmap_z(parsed_mutations, max_mutations_per_pos_dict):
     :param max_mutations_per_pos_dict: See
         ``get_max_mutations_per_pos`` return value.
     :type max_mutations_per_pos_dict: dict
+    :param single_genomes: Set of strains with single genome sample
+        size.
+    :type single_genomes: set[str]
     :return: List of z values
     :rtype: list[list[str]]
     """
@@ -608,7 +619,7 @@ def get_heatmap_z(parsed_mutations, max_mutations_per_pos_dict):
                     if not mutation["hidden_cell"]:
                         # Set to 0 if sample size == 1, which allows it
                         # to be displayed as white with our colorscale.
-                        if mutation["dp"] == 1:
+                        if strain in single_genomes:
                             cols[i] = 0
                         else:
                             cols[i] = mutation["alt_freq"]

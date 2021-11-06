@@ -715,7 +715,7 @@ def get_single_genome_legend_graph_obj():
             "line": {"width": 2},
             "size": 30
         },
-        text=["dp==0"],
+        text=["N==1"],
         textposition="middle right",
         hoverinfo="skip"
     )
