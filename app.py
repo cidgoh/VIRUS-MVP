@@ -27,7 +27,7 @@ from dash.exceptions import PreventUpdate
 from data_parser import get_data
 from definitions import ASSETS_DIR, REFERENCE_DATA_DIR
 from generators import (heatmap_generator, histogram_generator,
-                        table_generator, toolbar_generator)
+                        table_generator, toolbar_generator, footer_generator)
 
 
 # This is the only global variable Dash plays nice with, and it
@@ -105,6 +105,10 @@ def launch_app(_):
         histogram_generator.get_histogram_row(data_),
         # Bootstrap row containing table
         table_generator.get_table_row_div(data_),
+        # Bootstrap row containing footer
+        footer_generator.get_footer_row_div(
+            app.get_asset_url("cidgoh_logo.png")
+        ),
         # These are in-browser variables that Dash can treat as Inputs and
         # Outputs, in addition to more conventional Dash components like
         # HTML divs and Plotly figures. ``data`` is the data used to

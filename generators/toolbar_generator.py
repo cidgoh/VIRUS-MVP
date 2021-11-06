@@ -77,7 +77,9 @@ def get_select_lineages_modal():
     return dbc.Modal([
         dbc.ModalHeader("Select lineages"),
         # Empty at launch; populated when user opens modal
-        dbc.ModalBody(None, id="select-lineages-modal-body"),
+        dbc.ModalBody(None,
+                      id="select-lineages-modal-body",
+                      style={"height": "50vh", "overflowY": "scroll"}),
         dbc.ModalFooter(get_select_lineages_modal_footer())
     ], id="select-lineages-modal")
 
