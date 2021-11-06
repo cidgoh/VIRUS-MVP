@@ -16,7 +16,7 @@ functional impact, based on Dash & Plotly frameworks.
 
 ### 1. Clone the repository and its submodules
 
-`$ git clone git@github.com:cidgoh/COVID-MVP.git --recurse-submodules`
+`$ git clone git@github.com:cidgoh/COVID-MVP.git`
 
 ### 2. Create a virtual environment
 
@@ -146,6 +146,17 @@ isgill93@student.ubc.ca.
 [madeline]: https://github.com/miseminger
 
 William Hsiao, Gary Van Domselaar, and Paul Gordon
+
+The results here are in whole or part based upon data hosted at the Canadian
+VirusSeq Data Portal: https://virusseq-dataportal.ca/. We wish to acknowledge
+the following organisations/laboratories for contributing data to the Portal:
+Canadian Public Health Laboratory Network (CPHLN), CanCOGGeN VirusSeq,
+Saskatchewan - Roy Romanow Provincial Laboratory(RRPL), Nova Scotia Health
+Authority, Alberta ProvLab North(APLN), Queen's University / Kingston Health
+Sciences Centre, National Microbiology Laboratory(NML), BCCDC Public Health
+Laboratory, Public Health Ontario(PHO), Newfoundland and Labrador - Eastern
+Health, Unity Health Toronto, Ontario Institute for Cancer Research(OICR),
+Manitoba Cadham Provincial Laborator, and Manitoba Cadham Provincial Laboratory.
 
 ## License
 
