@@ -46,7 +46,11 @@ app = dash.Dash(
     ],
     # We can use bootstrap CSS.
     # https://bit.ly/3tMqY0W for details.
-    external_stylesheets=[dbc.themes.COSMO],
+    external_stylesheets=[
+        dbc.themes.COSMO,
+        "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.0/font/"
+        "bootstrap-icons.css"
+    ],
     # Callbacks break without this, because they reference
     # divs that are not present on initial page load, or
     # until ``launch_app`` has finished executing.
