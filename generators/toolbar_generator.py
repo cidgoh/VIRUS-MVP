@@ -164,8 +164,11 @@ def get_file_download_component():
     """
     icon = html.I(className="bi-cloud-download-fill", style={"font-size": 18})
     return html.Div([
-        dbc.Button(icon, color="primary", outline=True),
-        dcc.Download(id="download-file")
+        dbc.Button(icon,
+                   color="primary",
+                   outline=True,
+                   id="download-file-btn"),
+        dcc.Download(id="download-file-data")
     ])
 
 
