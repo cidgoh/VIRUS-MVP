@@ -4,6 +4,7 @@ import os
 
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
+import dash_html_components as html
 
 
 def get_toolbar_row(data):
@@ -24,11 +25,12 @@ def get_toolbar_row(data):
             dbc.Col(
                 dbc.ButtonGroup(
                     [
-                        get_select_lineages_toolbar_btn()
+                        get_select_lineages_toolbar_btn(),
+                        get_file_download_component()
                     ],
                     className="pl-4 pl-xl-5"
                 ),
-                width=3
+                width=4
             ),
             dbc.Col(
                 # Empty on launch
@@ -135,6 +137,22 @@ def get_select_lineages_modal_footer():
         dbc.Button("Cancel",
                    color="danger",
                    id="select-lineages-cancel-btn"),
+    ])
+
+
+def get_file_download_component():
+    """Get dash component for download button.
+
+    :return: Dash html div with button and download component inside.
+    :rtype: html.Div
+    """
+    icon = html.I(className="bi-cloud-download-fill", style={"font-size": 18})
+    return html.Div([
+        dbc.Button(icon,
+                   color="primary",
+                   outline=True,
+                   id="download-file-btn"),
+        dcc.Download(id="download-file-data")
     ])
 
 

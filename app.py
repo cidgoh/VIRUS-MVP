@@ -25,7 +25,8 @@ from dash.dependencies import ALL, ClientsideFunction, Input, Output, State
 from dash.exceptions import PreventUpdate
 
 from data_parser import get_data
-from definitions import ASSETS_DIR, REFERENCE_DATA_DIR
+from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR,
+                         SURVEILLANCE_DOWNLOAD_PATH)
 from generators import (heatmap_generator, histogram_generator,
                         table_generator, toolbar_generator, footer_generator)
 
@@ -44,7 +45,11 @@ app = dash.Dash(
     ],
     # We can use bootstrap CSS.
     # https://bit.ly/3tMqY0W for details.
-    external_stylesheets=[dbc.themes.COSMO],
+    external_stylesheets=[
+        dbc.themes.COSMO,
+        "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.0/font/"
+        "bootstrap-icons.css"
+    ],
     # Callbacks break without this, because they reference
     # divs that are not present on initial page load, or
     # until ``launch_app`` has finished executing.
@@ -211,6 +216,23 @@ def update_show_clade_defining(switches_value):
     :rtype: bool
     """
     return len(switches_value) > 0
+
+
+@app.callback(
+    Output("download-file-data", "data"),
+    Input("download-file-btn", "n_clicks"),
+    prevent_initial_call=True
+)
+def trigger_download(_):
+    """Send download file when user clicks download btn.
+
+    This is a zip object of surveillance reports.
+
+    :param _: Unused input variable that monitors when download btn is
+        clicked.
+    :return: Fires dash function that triggers file download
+    """
+    return dcc.send_file(SURVEILLANCE_DOWNLOAD_PATH)
 
 
 @app.callback(

@@ -6,6 +6,7 @@ REFERENCE_DATA_DIR = os.path.join(ROOT_DIR, "reference_data")
 ASSETS_DIR = os.path.join(ROOT_DIR, "assets")
 GENE_COLORS_PATH = os.path.join(ROOT_DIR, "assets", "gene_colors.json")
 GENE_POSITIONS_PATH = os.path.join(ROOT_DIR, "assets", "gene_positions.json")
+SURVEILLANCE_DOWNLOAD_PATH = os.path.join(ROOT_DIR, "surveillance_reports.zip")
 
 with open(GENE_COLORS_PATH) as fp:
     GENE_COLORS_DICT = json.load(fp)
