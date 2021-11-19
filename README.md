@@ -3,10 +3,11 @@
 SARS-CoV-2 Variants of Concern (VOC) & Interest (VOI) pose high risks to global
 public health. COVID-MVP tracks mutations from VOCs and VOIs to enable
 interactive visualization in near-real time. COVID-MVP has 3 modules: A
-Nextflow-wrapped workflow for identifying mutations in genomic data; a Python
-module for functional annotation, based on literature curation; and an
-interactive visualization for prevalence of mutations in variants and their
-functional impact, based on Dash & Plotly frameworks.
+Nextflow-wrapped workflow ([nf-ncov-voc][nf-ncov-voc]) for identifying mutations
+in genomic data; a Python module that integrates functional annotations from the
+[Pokay repository][pokay], based on literature curation; and an interactive
+visualization for prevalence of mutations in variants and their functional
+impact, based on Dash & Plotly frameworks.
 
 ![app_interface]
 
@@ -97,12 +98,8 @@ VOI/VOI by clicking on the heatmap cells.
 There are several tools in the top of the interface that can be used to edit the
 visualization.
 
-The select lineages modal allows yoi to rearrange and hide VOI/VOC.
+The select lineages modal allows you to rearrange and hide VOI/VOC.
 
-The upload button allows you to upload data on additional VOI/VOC in gvf format.
-You can find examples of files users can upload in [test_data/][3].
-
-[3]: test_data/
 
 The mutation frequency slider allows you to filter heatmap cells by mutation
 frequency.
@@ -110,16 +107,33 @@ frequency.
 The clade defining switch allows you to filter in and out heatmap cells
 corresponding to non-clade defining mutations.
 
-## Submodules
+#### Uploading data
 
-### [nf-ncov-voc][nf-ncov-voc]
+The upload button ![upload_btn] allows you to upload data on additional VOI/VOC
+in gvf format. You can find examples of files users can upload in
+[test_data/][3].
+
+[upload_btn]: screenshots/upload_btn.png
+[3]: test_data/
+
+#### Downloading data
+
+The download button ![download_btn] allows you to download a zip object
+containing surveillance reports for each reference variant. You can find
+examples of these reports in [surveillance_reports_/][4].
+
+[download_btn]: screenshots/download_btn.png
+[4]: surveillance_reports_/
+
+## [nf-ncov-voc][nf-ncov-voc]
 
 This pipeline generates the input files for the visualization. You can run the
 pipeline commands from the root COVID-MVP directory.
 
-### [pokay][pokay]
+## [pokay][pokay]
 
-Repository of functional annotations used in this application.
+Stand-alone repository of functional annotations, that we use as an annotation
+source in this application.
 
 [nf-ncov-voc]: https://github.com/cidgoh/nf-ncov-voc/
 [pokay]: https://github.com/nodrogluap/pokay/
@@ -128,7 +142,7 @@ Repository of functional annotations used in this application.
 
 We encourage you to add any problems with the application as an issue in this
 repository, but if you need to contact us by email, you can email us at
-isgill93@student.ubc.ca.
+contact@cidgoh.ca.
 
 ## Authors and acknowledgement
 
@@ -160,6 +174,6 @@ Manitoba Cadham Provincial Laborator, and Manitoba Cadham Provincial Laboratory.
 
 ## License
 
-[MIT][4]
+[MIT][5]
 
-[4]: LICENSE
+[5]: LICENSE
