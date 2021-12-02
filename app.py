@@ -15,7 +15,6 @@ benefits. However, due to what I assume is a limited number of workers,
 I have unparallelized some callbacks, which allows certain callbacks to
 run faster.
 """
-import json
 from base64 import b64decode
 from os import path
 from time import sleep
@@ -60,10 +59,12 @@ app = dash.Dash(
 )
 # server instance used for gunicorn deployment
 server = app.server
-# TODO
+
+# Cache specifications
 cache = Cache(server, config={
     "CACHE_TYPE": "filesystem",
-    "CACHE_DIR": "cache-directory",
+    "CACHE_DIR": "cache_directory",
+    # Max number of files app will store before it starts deleting some
     "CACHE_THRESHOLD": 200
 })
 
@@ -90,7 +91,6 @@ app.layout = dbc.Container(
 )
 def launch_app(_):
     """Populate empty container in initial layout served by ``app``.
-    *also
 
     This not only adds HTML, but also several in-browser variables that
     are useful for triggering other callbacks.
@@ -123,14 +123,15 @@ def launch_app(_):
         footer_generator.get_footer_row_div(
             app.get_asset_url("cidgoh_logo.png")
         ),
-        # These are in-browser variables that Dash can treat as Inputs and
-        # Outputs, in addition to more conventional Dash components like
-        # HTML divs and Plotly figures. ``data`` is the data used to
-        # generate the heatmap and table. A bit confusing, but dcc.Store
-        # variables have data attributes. So ``data`` has a ``data``
-        # attribute. TODO
-        # dcc.Store(id="data", data=data_),
+        # These are in-browser variables that Dash can treat as Inputs
+        # and Outputs, in addition to more conventional Dash components
+        # like HTML divs and Plotly figures. ``get-data-args`` are the
+        # args used to call ``get_data`` when the underlying data
+        # structure is needed.
         dcc.Store(id="get-data-args"),
+        # Clientside callbacks use the return val of ``get_data``
+        # directly.
+        dcc.Store(id="data", data=data_),
         # The following in-browser variables simply exist to help
         # modularize the callbacks below.
         dcc.Store(id="show-clade-defining"),
@@ -151,7 +152,10 @@ def launch_app(_):
 
 
 @app.callback(
-    Output("get-data-args", "data"),
+    output=[
+        Output("get-data-args", "data"),
+        Output("data", "data")
+    ],
     inputs=[
         Input("show-clade-defining", "data"),
         Input("new-upload", "data"),
@@ -163,7 +167,37 @@ def launch_app(_):
 )
 def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
                          strain_order, mutation_freq_vals):
-    """TODO"""
+    """Update ``get-data-args`` and ``data`` variables in dcc.Store.
+
+    This is a central callback. Updating ``get-data-args`` triggers a
+    change to the ``get-data-args`` variable in dcc.Store, which
+    triggers multiple other callbacks to call ``read_data``, which is a
+    fn that calls ``get_data`` with ``get-data-args``, and caches the
+    ret val. This fn calls ``read_data`` first, so it is already cached
+    before those callbacks need it.
+
+    We also update ``data`` for the clientside callbacks.
+
+    :param show_clade_defining: ``update_show_clade-defining`` return
+        value.
+    :type show_clade_defining: bool
+    :param new_upload: ``update_new_upload`` return value
+    :type new_upload: dict
+    :param hidden_strains: ``update_hidden_strains`` return value
+    :type hidden_strains: list[str]
+    :param strain_order: ``getStrainOrder`` return value from
+        ``script.js``.
+    :type strain_order: list[str]
+    :param mutation_freq_vals: Position of handles in mutation freq
+        slider.
+    :type mutation_freq_vals: list[int|float]
+    :param gff3_annotations: ``parse_gff3_file`` return value
+    :type gff3_annotations: dict
+    :return: ``get_data`` return value
+    :rtype: dict
+    :raise PreventUpdate: New upload triggered this function, and that
+        new upload failed.
+    """
     triggers = [x["prop_id"] for x in dash.callback_context.triggered]
     if "new-upload.data" in triggers:
         if new_upload["status"] == "error":
@@ -180,100 +214,60 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     else:
         min_mutation_freq, max_mutation_freq = None, None
 
-    ret = {
+    args = {
         "show_clade_defining": show_clade_defining,
         "hidden_strains": hidden_strains,
         "strain_order": strain_order,
         "min_mutation_freq": min_mutation_freq,
         "max_mutation_freq": max_mutation_freq
     }
-    return ret
 
+    # We call ``read_data`` here, so it gets cached. Otherwise, the
+    # callbacks that call ``read_data`` may do it in parallel--blocking
+    # multiple processes.
+    data_ = read_data(args)
 
-def read_data(get_data_args=None):
-    """TODO"""
-    if get_data_args:
-        return json.loads(call_get_data(**get_data_args))
-    else:
-        return json.loads(call_get_data())
+    return args, data_
 
 
 @cache.memoize()
-def call_get_data(show_clade_defining=None, hidden_strains=None,
-                  strain_order=None, min_mutation_freq=None,
-                  max_mutation_freq=None):
-    """TODO"""
-    ret = get_data([REFERENCE_DATA_DIR, USER_DATA_DIR],
-                   show_clade_defining=show_clade_defining,
-                   hidden_strains=hidden_strains,
-                   strain_order=strain_order,
-                   min_mutation_freq=min_mutation_freq,
-                   max_mutation_freq=max_mutation_freq)
-    return json.dumps(ret)
+def read_data(get_data_args=None):
+    """Returns and caches return value of ``get_data``.
 
+    Why is this function necessary?
 
-# @app.callback(
-#     Output("data", "data"),
-#     inputs=[
-#         Input("show-clade-defining", "data"),
-#         Input("new-upload", "data"),
-#         Input("hidden-strains", "data"),
-#         Input("strain-order", "data"),
-#         Input("mutation-freq-slider", "value")
-#     ],
-#     prevent_initial_call=True
-# )
-# def update_data(show_clade_defining, new_upload, hidden_strains, strain_order,
-#                 mutation_freq_vals):
-#     """Update ``data`` variable in dcc.Store.
-# 
-#     This is a central callback. It triggers a change to the ``data``
-#     variable in dcc.Store, which triggers cascading changes in several
-#     divs. This function receives multiple inputs, corresponding to
-#     different ways the ``data`` variable could be changed.
-# 
-#     :param show_clade_defining: ``update_show_clade-defining`` return
-#         value.
-#     :type show_clade_defining: bool
-#     :param new_upload: ``update_new_upload`` return value
-#     :type new_upload: dict
-#     :param hidden_strains: ``update_hidden_strains`` return value
-#     :type hidden_strains: list[str]
-#     :param strain_order: ``getStrainOrder`` return value from
-#         ``script.js``.
-#     :type strain_order: list[str]
-#     :param mutation_freq_vals: Position of handles in mutation freq
-#         slider.
-#     :type mutation_freq_vals: list[int|float]
-#     :param gff3_annotations: ``parse_gff3_file`` return value
-#     :type gff3_annotations: dict
-#     :return: ``get_data`` return value
-#     :rtype: dict
-#     :raise PreventUpdate: New upload triggered this function, and that
-#         new upload failed.
-#     """
-#     triggers = [x["prop_id"] for x in dash.callback_context.triggered]
-#     if "new-upload.data" in triggers:
-#         if new_upload["status"] == "error":
-#             raise PreventUpdate
-# 
-#     # Do not use the current position of the mutation frequency slider
-#     # if this function was triggered by an input that will modify the
-#     # slider values. We must reset the slider in that case to avoid
-#     # bugs.
-#     use_mutation_freq_vals = "mutation-freq-slider.value" in triggers
-#     use_mutation_freq_vals |= "strain-order.data" in triggers
-#     if use_mutation_freq_vals:
-#         [min_mutation_freq, max_mutation_freq] = mutation_freq_vals
-#     else:
-#         min_mutation_freq, max_mutation_freq = None, None
-# 
-#     return get_data([REFERENCE_DATA_DIR, USER_DATA_DIR],
-#                     clade_defining=show_clade_defining,
-#                     hidden_strains=hidden_strains,
-#                     strain_order=strain_order,
-#                     min_mutation_freq=min_mutation_freq,
-#                     max_mutation_freq=max_mutation_freq)
+    Problem: Callbacks need access to the ``get_data`` return value,
+    but moving it across the network from callback to callback greatly
+    decreases performance (because it is large).
+
+    So what are our options?
+
+    Each callback that needs access to the ``get_data`` callback could
+    call the serverside fn ``get_data`` directly, right? No need to
+    move it from callback to callback? WRONG. ``get_data`` is an
+    expensive step. It would be called too often, which again decreases
+    performance.
+
+    Instead, each callback calls this function, which was already
+    called when ``get-data-args`` was first updated. This fn cached the
+    return value, so it can now quickly supply it to the callbacks when
+    necessary. And since this fn is a server-side fn too, it does not
+    move the cached value over the network.
+
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
+    """
+    if get_data_args:
+        return get_data(
+            [REFERENCE_DATA_DIR, USER_DATA_DIR],
+            show_clade_defining=get_data_args["show_clade_defining"],
+            hidden_strains=get_data_args["hidden_strains"],
+            strain_order=get_data_args["strain_order"],
+            min_mutation_freq=get_data_args["min_mutation_freq"],
+            max_mutation_freq=get_data_args["max_mutation_freq"]
+        )
+    else:
+        return get_data([REFERENCE_DATA_DIR, USER_DATA_DIR])
 
 
 @app.callback(
@@ -305,7 +299,7 @@ def update_show_clade_defining(switches_value):
     prevent_initial_call=True
 )
 def update_new_upload(file_contents, filename, get_data_args):
-    """Update ``new_upload`` variable in dcc.Store.TODO
+    """Update ``new_upload`` variable in dcc.Store.
 
     If a valid file is uploaded, it will be written to ``user_data``.
     But regardless of whether a valid file is uploaded, this function
@@ -317,13 +311,14 @@ def update_new_upload(file_contents, filename, get_data_args):
     :type file_contents: str
     :param filename: Name of uploaded file
     :type filename: str
-    :param old_data: ``get_data`` return value; current value for
-        ``data`` variable.
-    :type old_data: dict
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
     :return: Dictionary describing upload attempt
     :rtype: dict
     """
+    # Current ``get_data`` return val
     old_data = read_data(get_data_args)
+
     # TODO more thorough validation, maybe once we finalize data
     #  standards.
     new_strain, ext = filename.rsplit(".", 1)
@@ -432,7 +427,7 @@ def hide_dialog_col(_):
     prevent_initial_call=True
 )
 def update_hidden_strains(_, values, get_data_args):
-    """Update ``hidden-strains`` variable in dcc.Store.TODO
+    """Update ``hidden-strains`` variable in dcc.Store.
 
     When the OK button is clicked in the select lineages modal, the
     unchecked boxes are returned as the new ``hidden-strains`` value.
@@ -443,15 +438,15 @@ def update_hidden_strains(_, values, get_data_args):
         strains from different directories, that had checked boxes when
         the select lineages modal was closed.
     :type values: list
-    :param data: Current value for ``data`` variable; see ``get_data``
-        return value.
-    :type data: dict
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
     :return: List of strains that should not be displayed by the
         heatmap or table.
     :rtype: list[str]
     :raise PreventUpdate: Hidden strains did not change, or the user
         chose to hide all strains.
     """
+    # Current ``get_data`` return val
     data = read_data(get_data_args)
 
     # Merge list of lists into single list. I got it from:
@@ -483,7 +478,7 @@ def update_hidden_strains(_, values, get_data_args):
     prevent_initial_call=True
 )
 def toggle_select_lineages_modal(_, __, ___, get_data_args):
-    """Open or close select lineages modal.TODO
+    """Open or close select lineages modal.
 
     Not only is this function in charge of opening or closing the
     select lineages modal, it is also in charge of dynamically
@@ -492,14 +487,14 @@ def toggle_select_lineages_modal(_, __, ___, get_data_args):
     :param _: Select lineages button in toolbar was clicked
     :param __: OK button in select lineages modal was clicked
     :param ___: Cancel button in select lineages modal was clicked
-    :param data: Current value for ``data`` variable; see ``get_data``
-        return value.
-    :type data: dict
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
     :return: Boolean representing whether the select lineages modal is
         open or closed, and content representing the select lineages
         modal body.
     :rtype: (bool, list[dbc.FormGroup])
     """
+    # Current ``get_data`` return val
     data = read_data(get_data_args)
 
     ctx = dash.callback_context
@@ -521,15 +516,14 @@ def toggle_select_lineages_modal(_, __, ___, get_data_args):
     prevent_initial_call=True
 )
 def update_mutation_freq_slider(get_data_args, old_slider_marks):
-    """Update mutation frequency slider div.TODO
+    """Update mutation frequency slider div.
 
     If the ``data`` dcc variable is updated, this function will
     re-render the slider if the new ``data`` variable has a different
     set of mutation frequencies.
 
-    :param data: ``get_data`` return value, transported here by
-        ``update_data``.
-    :type data: dict
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
     :param old_slider_marks: ``marks`` property of the current
         mutation frequency slider div.
     :type old_slider_marks: dict
@@ -539,6 +533,7 @@ def update_mutation_freq_slider(get_data_args, old_slider_marks):
         different than the number of mutation frequencies in the
         current slider.
     """
+    # Current ``get_data`` return val
     data = read_data(get_data_args)
 
     # This is very hackey, but also very fast. I do not think this will
@@ -565,9 +560,8 @@ def route_data_heatmap_x_update(get_data_args, old_heatmap_x_len):
     entire list, and appropriately alerts us when
     data["heatmap_x_nt_pos"] changed.
 
-    :param data: ``get_data`` return value, transported here by
-        ``update_data``.
-    :type data: dict
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
     :param old_heatmap_x_len: ``heatmap-x-len.data`` value
     :type old_heatmap_x_len: dict
     :return: New len of data["heatmap_x_nt_pos"]
@@ -575,7 +569,9 @@ def route_data_heatmap_x_update(get_data_args, old_heatmap_x_len):
     :raise PreventUpdate: If data["heatmap_x_nt_pos"] len did not
         change.
     """
+    # Current ``get_data`` return val
     data = read_data(get_data_args)
+
     if old_heatmap_x_len == len(data["heatmap_x_nt_pos"]):
         raise PreventUpdate
     return len(data["heatmap_x_nt_pos"])
@@ -593,16 +589,17 @@ def route_data_heatmap_y_update(get_data_args, old_heatmap_y):
     This serves as a useful trigger for figs that only need to be
     updated when heatmap y changes.
 
-    :param data: ``get_data`` return value, transported here by
-        ``update_data``.
-    :type data: dict
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
     :param old_heatmap_y: ``heatmap-y.data`` value
     :type old_heatmap_y: dict
     :return: New len of data["heatmap_y"]
     :rtype: int
     :raise PreventUpdate: If data["heatmap_y"] len did not change
     """
+    # Current ``get_data`` return val
     data = read_data(get_data_args)
+
     if old_heatmap_y == data["heatmap_y"]:
         raise PreventUpdate
     return data["heatmap_y"]
@@ -624,13 +621,14 @@ def update_heatmap_y_axis_fig(_, get_data_args):
     uploaded strains.
 
     :param _: Heatmap cells fig updated
-    :param data: Current value for ``data`` variable; see ``get_data``
-        return value.
-    :type data: dict
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
     :return: New heatmap y axis fig and style
     :rtype: (plotly.graph_objects.Figure, dict)
     """
+    # Current ``get_data`` return val
     data = read_data(get_data_args)
+
     y_axis_fig = heatmap_generator.get_heatmap_y_axis_fig(data)
     y_axis_style = {"height": data["heatmap_cells_fig_height"],
                     "width": "101%",
@@ -665,13 +663,14 @@ def update_heatmap_gene_bar_fig(_, get_data_args):
     added nt positions in data.
 
     :param _: Heatmap cells fig updated
-    :param data: Current value for ``data`` variable; see ``get_data``
-        return value.
-    :type data: dict
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
     :return: New heatmap gene bar fig and style
     :rtype: (plotly.graph_objects.Figure, dict)
     """
+    # Current ``get_data`` return val
     data = read_data(get_data_args)
+
     gene_bar_fig = heatmap_generator.get_heatmap_gene_bar_fig(data)
     gene_bar_style = {"width": data["heatmap_cells_fig_width"]}
     return gene_bar_fig, gene_bar_style
@@ -691,13 +690,14 @@ def update_heatmap_nt_pos_axis_fig(_, get_data_args):
     added nt positions in data.
 
     :param _: Heatmap cells fig updated
-    :param data: Current value for ``data`` variable; see ``get_data``
-        return value.
-    :type data: dict
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
     :return: New heatmap nt pos x-axis fig and style
     :rtype: (plotly.graph_objects.Figure, dict)
     """
+    # Current ``get_data`` return val
     data = read_data(get_data_args)
+
     nt_pos_x_axis_fig = heatmap_generator.get_heatmap_nt_pos_axis_fig(data)
     nt_pos_x_axis_style = {"width": data["heatmap_cells_fig_width"]}
     return nt_pos_x_axis_fig, nt_pos_x_axis_style
@@ -717,13 +717,14 @@ def update_heatmap_aa_pos_axis_fig(_, get_data_args):
     added nt positions in data.
 
     :param _: Heatmap cells fig updated
-    :param data: Current value for ``data`` variable; see ``get_data``
-        return value.
-    :type data: dict
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
     :return: New heatmap amino acid position x-axis fig and style
     :rtype: (plotly.graph_objects.Figure, dict)
     """
+    # Current ``get_data`` return val
     data = read_data(get_data_args)
+
     aa_pos_x_axis_fig = heatmap_generator.get_heatmap_aa_pos_axis_fig(data)
     aa_pos_x_axis_style = {"width": data["heatmap_cells_fig_width"]}
     return aa_pos_x_axis_fig, aa_pos_x_axis_style
@@ -741,8 +742,8 @@ def update_histogram(get_data_args):
     in the histogram view is updated to reflect the new data. This
     includes the actual histogram bars, and the y axis.
 
-    :param data: ``get_data`` return value, transported here by
-    :type data: dict
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
     :return: New histogram figure corresponding to new data
     :rtype: plotly.graph_objects.Figure
     """
@@ -763,13 +764,14 @@ def update_heatmap_cells_fig(get_data_args):
     This is the fig with the heatmap cells and x axis. We return style
     because attributes may need to change due to changes in data.
 
-    :param data: Current value for ``data`` variable; see ``get_data``
-        return value.
-    :type data: dict
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
     :return: New heatmap cells fig
     :rtype: plotly.graph_objects.Figure
     """
+    # Current ``get_data`` return val
     data = read_data(get_data_args)
+
     cells_fig = heatmap_generator.get_heatmap_cells_fig(data)
     cells_fig_style = {
         "height": data["heatmap_cells_fig_height"],
@@ -844,7 +846,7 @@ def route_heatmap_cells_fig_click(click_data):
     prevent_initial_call=True
 )
 def toggle_mutation_details_modal(click_data, _, get_data_args):
-    """Open or close mutation details modal.TODO
+    """Open or close mutation details modal.
 
     Not only is this function in charge of opening or closing the
     mutation details modal, it is also in charge of dynamically
@@ -855,14 +857,15 @@ def toggle_mutation_details_modal(click_data, _, get_data_args):
         variable value.
     :type click_data: dict
     :param _: Close button in mutation details modal was clicked
-    :param data: Current value for ``data`` variable; see ``get_data``
-        return value.
-    :type data: dict or None
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
     :return: Boolean representing whether the mutation details modal is
         open or closed, mutation details modal header, and mutation
         details body.
     :rtype: (bool, str, dbc.ListGroup)"""
+    # Current ``get_data`` return val
     data = read_data(get_data_args)
+
     ctx = dash.callback_context
     triggered_prop_id = ctx.triggered[0]["prop_id"]
     # We only open the modal when the heatmap is clicked
@@ -893,7 +896,7 @@ def toggle_mutation_details_modal(click_data, _, get_data_args):
     prevent_initial_call=True
 )
 def update_table(get_data_args, click_data):
-    """Update table figure.TODO
+    """Update table figure.
 
     When the ``data`` variable in the dcc.Store is updated, the table
     figure is updated as well. The table figure is also updated when
@@ -935,26 +938,26 @@ app.clientside_callback(
     Input({"type": "select-lineages-modal-checklist", "index": ALL}, "id"),
     prevent_initial_call=True
 )
-# app.clientside_callback(
-#     ClientsideFunction(
-#         namespace="clientside",
-#         function_name="getStrainOrder"
-#     ),
-#     Output("strain-order", "data"),
-#     Input("select-lineages-ok-btn", "n_clicks"),
-#     State({"type": "select-lineages-modal-checklist", "index": ALL}, "id"),
-#     State("data", "data"),
-#     prevent_initial_call=True
-# )
-# app.clientside_callback(
-#     ClientsideFunction(
-#         namespace="clientside",
-#         function_name="makeHistogramRelPosBarDynamic"
-#     ),
-#     Output("make-histogram-rel-pos-bar-dynamic", "data"),
-#     Input("heatmap-nt-pos-axis-fig", "figure"),
-#     State("data", "data")
-# )
+app.clientside_callback(
+    ClientsideFunction(
+        namespace="clientside",
+        function_name="getStrainOrder"
+    ),
+    Output("strain-order", "data"),
+    Input("select-lineages-ok-btn", "n_clicks"),
+    State({"type": "select-lineages-modal-checklist", "index": ALL}, "id"),
+    State("data", "data"),
+    prevent_initial_call=True
+)
+app.clientside_callback(
+    ClientsideFunction(
+        namespace="clientside",
+        function_name="makeHistogramRelPosBarDynamic"
+    ),
+    Output("make-histogram-rel-pos-bar-dynamic", "data"),
+    Input("heatmap-nt-pos-axis-fig", "figure"),
+    State("data", "data")
+)
 app.clientside_callback(
     ClientsideFunction(
         namespace="clientside",
