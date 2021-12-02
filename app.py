@@ -109,7 +109,16 @@ def launch_app(_):
     if you do the following in the global scope--which you may be
     tempted to do because we are only doing it once!
     """
-    data_ = read_data()
+    # Some default vals
+    get_data_args = {
+        "show_clade_defining": False,
+        "hidden_strains": [],
+        "strain_order": [],
+        "min_mutation_freq": None,
+        "max_mutation_freq": None
+    }
+    data_ = read_data(get_data_args)
+
     return [
         # Bootstrap row containing tools at the top of the application
         toolbar_generator.get_toolbar_row(data_),
@@ -134,10 +143,11 @@ def launch_app(_):
         dcc.Store(id="data", data=data_),
         # The following in-browser variables simply exist to help
         # modularize the callbacks below.
-        dcc.Store(id="show-clade-defining"),
+        dcc.Store(id="show-clade-defining",
+                  data=get_data_args["show_clade_defining"]),
         dcc.Store(id="new-upload"),
-        dcc.Store(id="hidden-strains"),
-        dcc.Store(id="strain-order"),
+        dcc.Store(id="hidden-strains", data=get_data_args["hidden_strains"]),
+        dcc.Store(id="strain-order", data=get_data_args["strain_order"]),
         dcc.Store(id="last-heatmap-cell-clicked"),
         # Used to update certain figures only when necessary
         dcc.Store(id="heatmap-x-len", data=len(data_["heatmap_x_nt_pos"])),
@@ -220,13 +230,13 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     # We call ``read_data`` here, so it gets cached. Otherwise, the
     # callbacks that call ``read_data`` may do it in parallel--blocking
     # multiple processes.
-    data_ = read_data(args)
+    read_data(args)
 
     return args
 
 
 @cache.memoize()
-def read_data(get_data_args=None):
+def read_data(get_data_args):
     """Returns and caches return value of ``get_data``.
 
     Why is this function necessary?
@@ -252,17 +262,15 @@ def read_data(get_data_args=None):
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
     """
-    if get_data_args:
-        return get_data(
-            [REFERENCE_DATA_DIR, USER_DATA_DIR],
-            show_clade_defining=get_data_args["show_clade_defining"],
-            hidden_strains=get_data_args["hidden_strains"],
-            strain_order=get_data_args["strain_order"],
-            min_mutation_freq=get_data_args["min_mutation_freq"],
-            max_mutation_freq=get_data_args["max_mutation_freq"]
-        )
-    else:
-        return get_data([REFERENCE_DATA_DIR, USER_DATA_DIR])
+    ret = get_data(
+        [REFERENCE_DATA_DIR, USER_DATA_DIR],
+        show_clade_defining=get_data_args["show_clade_defining"],
+        hidden_strains=get_data_args["hidden_strains"],
+        strain_order=get_data_args["strain_order"],
+        min_mutation_freq=get_data_args["min_mutation_freq"],
+        max_mutation_freq=get_data_args["max_mutation_freq"]
+    )
+    return ret
 
 
 @app.callback(
