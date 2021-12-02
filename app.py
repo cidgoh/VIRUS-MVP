@@ -152,10 +152,7 @@ def launch_app(_):
 
 
 @app.callback(
-    output=[
-        Output("get-data-args", "data"),
-        Output("data", "data")
-    ],
+    Output("get-data-args", "data"),
     inputs=[
         Input("show-clade-defining", "data"),
         Input("new-upload", "data"),
@@ -167,7 +164,7 @@ def launch_app(_):
 )
 def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
                          strain_order, mutation_freq_vals):
-    """Update ``get-data-args`` and ``data`` variables in dcc.Store.
+    """Update ``get-data-args`` variables in dcc.Store.
 
     This is a central callback. Updating ``get-data-args`` triggers a
     change to the ``get-data-args`` variable in dcc.Store, which
@@ -175,8 +172,6 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     fn that calls ``get_data`` with ``get-data-args``, and caches the
     ret val. This fn calls ``read_data`` first, so it is already cached
     before those callbacks need it.
-
-    We also update ``data`` for the clientside callbacks.
 
     :param show_clade_defining: ``update_show_clade-defining`` return
         value.
@@ -227,7 +222,7 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     # multiple processes.
     data_ = read_data(args)
 
-    return args, data_
+    return args
 
 
 @cache.memoize()
@@ -903,8 +898,8 @@ def update_table(get_data_args, click_data):
     the user clicks a heatmap cell. If no cell was clicked, a default
     strain is shown.
 
-    :param data: ``get_data`` return value, transported here by
-    :type data: dict
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
     :param click_data: ``last-heatmap-cell-clicked`` in-browser
         variable value.
     :type click_data: dict
@@ -912,7 +907,9 @@ def update_table(get_data_args, click_data):
         selected strain.
     :rtype: plotly.graph_objects.Figure
     """
+    # Current ``get_data`` return val
     data = read_data(get_data_args)
+
     ctx = dash.callback_context
     triggered_prop_id = ctx.triggered[0]["prop_id"]
     if triggered_prop_id == "get-data-args.data":
@@ -926,6 +923,25 @@ def update_table(get_data_args, click_data):
         table_strain = data["heatmap_y"][0]
 
     return table_generator.get_table_fig(data, table_strain)
+
+
+@app.callback(
+    Output("data", "data"),
+    Input("get-data-args", "data"),
+    prevent_initial_call=True
+)
+def update_data(get_data_args):
+    """Update ``data`` in dcc.Store.
+
+    The output is only used in clientside callbacks. It is too large to
+    transport over the network.
+
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
+    """
+    # Current ``get_data`` return val
+    data = read_data(get_data_args)
+    return data
 
 
 # This is how Dash allows you to write callbacks in JavaScript
