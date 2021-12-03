@@ -16,7 +16,7 @@ I have unparallelized some callbacks, which allows certain callbacks to
 run faster.
 """
 from base64 import b64decode
-from os import path
+from os import path, walk
 from time import sleep
 
 import dash
@@ -117,7 +117,11 @@ def launch_app(_):
         "min_mutation_freq": None,
         "max_mutation_freq": None
     }
-    data_ = read_data(get_data_args)
+    last_data_mtime = max([
+        max(path.getmtime(root) for root, _, _ in walk(REFERENCE_DATA_DIR)),
+        max(path.getmtime(root) for root, _, _ in walk(USER_DATA_DIR))
+    ])
+    data_ = read_data(get_data_args, last_data_mtime)
 
     return [
         # Bootstrap row containing tools at the top of the application
@@ -137,7 +141,10 @@ def launch_app(_):
         # like HTML divs and Plotly figures. ``get-data-args`` are the
         # args used to call ``get_data`` when the underlying data
         # structure is needed.
-        dcc.Store(id="get-data-args"),
+        dcc.Store(id="get-data-args", data=get_data_args),
+        # Last data file modification date. Sometimes data changes, but
+        # ``get_data`` args do not. Need to rewrite cache.
+        dcc.Store(id="last-data-mtime", data=last_data_mtime),
         # Clientside callbacks use the return val of ``get_data``
         # directly.
         dcc.Store(id="data", data=data_),
@@ -162,7 +169,10 @@ def launch_app(_):
 
 
 @app.callback(
-    Output("get-data-args", "data"),
+    output=[
+        Output("get-data-args", "data"),
+        Output("last-data-mtime", "data")
+    ],
     inputs=[
         Input("show-clade-defining", "data"),
         Input("new-upload", "data"),
@@ -183,6 +193,8 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     ret val. This fn calls ``read_data`` first, so it is already cached
     before those callbacks need it.
 
+    We also update ``last-data-mtime`` here.
+
     :param show_clade_defining: ``update_show_clade-defining`` return
         value.
     :type show_clade_defining: bool
@@ -198,8 +210,9 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     :type mutation_freq_vals: list[int|float]
     :param gff3_annotations: ``parse_gff3_file`` return value
     :type gff3_annotations: dict
-    :return: ``get_data`` return value
-    :rtype: dict
+    :return: ``get_data`` return value, and last mtime across all data
+        files.
+    :rtype: tuple[dict, float]
     :raise PreventUpdate: New upload triggered this function, and that
         new upload failed.
     """
@@ -227,16 +240,22 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
         "max_mutation_freq": max_mutation_freq
     }
 
+    # Update ``last-data-mtime`` too
+    last_data_mtime = max([
+        max(path.getmtime(root) for root, _, _ in walk(REFERENCE_DATA_DIR)),
+        max(path.getmtime(root) for root, _, _ in walk(USER_DATA_DIR))
+    ])
+
     # We call ``read_data`` here, so it gets cached. Otherwise, the
     # callbacks that call ``read_data`` may do it in parallel--blocking
     # multiple processes.
-    read_data(args)
+    read_data(args, last_data_mtime)
 
-    return args
+    return args, last_data_mtime
 
 
 @cache.memoize()
-def read_data(get_data_args):
+def read_data(get_data_args, last_data_mtime):
     """Returns and caches return value of ``get_data``.
 
     Why is this function necessary?
@@ -261,6 +280,8 @@ def read_data(get_data_args):
 
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
     """
     ret = get_data(
         [REFERENCE_DATA_DIR, USER_DATA_DIR],
@@ -299,9 +320,10 @@ def update_show_clade_defining(switches_value):
     Input("upload-file", "contents"),
     Input("upload-file", "filename"),
     State("get-data-args", "data"),
+    State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def update_new_upload(file_contents, filename, get_data_args):
+def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
     """Update ``new_upload`` variable in dcc.Store.
 
     If a valid file is uploaded, it will be written to ``user_data``.
@@ -316,11 +338,13 @@ def update_new_upload(file_contents, filename, get_data_args):
     :type filename: str
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
     :return: Dictionary describing upload attempt
     :rtype: dict
     """
     # Current ``get_data`` return val
-    old_data = read_data(get_data_args)
+    old_data = read_data(get_data_args, last_data_mtime)
 
     # TODO more thorough validation, maybe once we finalize data
     #  standards.
@@ -427,9 +451,10 @@ def hide_dialog_col(_):
     Input("select-lineages-ok-btn", "n_clicks"),
     State({"type": "select-lineages-modal-checklist", "index": ALL}, "value"),
     State("get-data-args", "data"),
+    State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def update_hidden_strains(_, values, get_data_args):
+def update_hidden_strains(_, values, get_data_args, last_data_mtime):
     """Update ``hidden-strains`` variable in dcc.Store.
 
     When the OK button is clicked in the select lineages modal, the
@@ -443,6 +468,8 @@ def update_hidden_strains(_, values, get_data_args):
     :type values: list
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
     :return: List of strains that should not be displayed by the
         heatmap or table.
     :rtype: list[str]
@@ -450,7 +477,7 @@ def update_hidden_strains(_, values, get_data_args):
         chose to hide all strains.
     """
     # Current ``get_data`` return val
-    data = read_data(get_data_args)
+    data = read_data(get_data_args, last_data_mtime)
 
     # Merge list of lists into single list. I got it from:
     # https://stackoverflow.com/a/716761/11472358.
@@ -478,9 +505,10 @@ def update_hidden_strains(_, values, get_data_args):
     Input("select-lineages-ok-btn", "n_clicks"),
     Input("select-lineages-cancel-btn", "n_clicks"),
     State("get-data-args", "data"),
+    State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def toggle_select_lineages_modal(_, __, ___, get_data_args):
+def toggle_select_lineages_modal(_, __, ___, get_data_args, last_data_mtime):
     """Open or close select lineages modal.
 
     Not only is this function in charge of opening or closing the
@@ -492,13 +520,15 @@ def toggle_select_lineages_modal(_, __, ___, get_data_args):
     :param ___: Cancel button in select lineages modal was clicked
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
     :return: Boolean representing whether the select lineages modal is
         open or closed, and content representing the select lineages
         modal body.
     :rtype: (bool, list[dbc.FormGroup])
     """
     # Current ``get_data`` return val
-    data = read_data(get_data_args)
+    data = read_data(get_data_args, last_data_mtime)
 
     ctx = dash.callback_context
     triggered_prop_id = ctx.triggered[0]["prop_id"]
@@ -516,9 +546,11 @@ def toggle_select_lineages_modal(_, __, ___, get_data_args):
     Output("mutation-freq-slider-col", "children"),
     Input("get-data-args", "data"),
     State("mutation-freq-slider", "marks"),
+    State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def update_mutation_freq_slider(get_data_args, old_slider_marks):
+def update_mutation_freq_slider(get_data_args, old_slider_marks,
+                                last_data_mtime):
     """Update mutation frequency slider div.
 
     If the ``data`` dcc variable is updated, this function will
@@ -530,6 +562,8 @@ def update_mutation_freq_slider(get_data_args, old_slider_marks):
     :param old_slider_marks: ``marks`` property of the current
         mutation frequency slider div.
     :type old_slider_marks: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
     :return: New mutation frequency slider div, if one is needed
     :rtype: dcc.RangeSlider
     :raise PreventUpdate: Number of mutation frequencies in ``data`` is
@@ -537,7 +571,7 @@ def update_mutation_freq_slider(get_data_args, old_slider_marks):
         current slider.
     """
     # Current ``get_data`` return val
-    data = read_data(get_data_args)
+    data = read_data(get_data_args, last_data_mtime)
 
     # This is very hackey, but also very fast. I do not think this will
     # currently break anything.
@@ -552,10 +586,12 @@ def update_mutation_freq_slider(get_data_args, old_slider_marks):
     Output("heatmap-x-len", "data"),
     Input("get-data-args", "data"),
     State("heatmap-x-len", "data"),
+    State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def route_data_heatmap_x_update(get_data_args, old_heatmap_x_len):
-    """Update ``heatmap-x-len`` dcc variable when needed.TODO
+def route_data_heatmap_x_update(get_data_args, old_heatmap_x_len,
+                                last_data_mtime):
+    """Update ``heatmap-x-len`` dcc variable when needed.
 
     This serves as a useful trigger for figs that only need to be
     updated when heatmap x coords change. We use the length of
@@ -567,13 +603,15 @@ def route_data_heatmap_x_update(get_data_args, old_heatmap_x_len):
     :type get_data_args: dict
     :param old_heatmap_x_len: ``heatmap-x-len.data`` value
     :type old_heatmap_x_len: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
     :return: New len of data["heatmap_x_nt_pos"]
     :rtype: int
     :raise PreventUpdate: If data["heatmap_x_nt_pos"] len did not
         change.
     """
     # Current ``get_data`` return val
-    data = read_data(get_data_args)
+    data = read_data(get_data_args, last_data_mtime)
 
     if old_heatmap_x_len == len(data["heatmap_x_nt_pos"]):
         raise PreventUpdate
@@ -584,9 +622,10 @@ def route_data_heatmap_x_update(get_data_args, old_heatmap_x_len):
     Output("heatmap-y", "data"),
     Input("get-data-args", "data"),
     State("heatmap-y", "data"),
+    State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def route_data_heatmap_y_update(get_data_args, old_heatmap_y):
+def route_data_heatmap_y_update(get_data_args, old_heatmap_y, last_data_mtime):
     """Update ``heatmap-y`` dcc variable when needed.
 
     This serves as a useful trigger for figs that only need to be
@@ -596,12 +635,14 @@ def route_data_heatmap_y_update(get_data_args, old_heatmap_y):
     :type get_data_args: dict
     :param old_heatmap_y: ``heatmap-y.data`` value
     :type old_heatmap_y: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
     :return: New len of data["heatmap_y"]
     :rtype: int
     :raise PreventUpdate: If data["heatmap_y"] len did not change
     """
     # Current ``get_data`` return val
-    data = read_data(get_data_args)
+    data = read_data(get_data_args, last_data_mtime)
 
     if old_heatmap_y == data["heatmap_y"]:
         raise PreventUpdate
@@ -615,10 +656,11 @@ def route_data_heatmap_y_update(get_data_args, old_heatmap_y):
     Output("heatmap-y-axis-outer-container", "style"),
     Input("heatmap-y", "data"),
     State("get-data-args", "data"),
+    State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def update_heatmap_y_axis_fig(_, get_data_args):
-    """Update heatmap y axis fig and containers.TODO
+def update_heatmap_y_axis_fig(_, get_data_args, last_data_mtime):
+    """Update heatmap y axis fig and containers.
 
     We need to update style because attributes may change due to
     uploaded strains.
@@ -626,11 +668,13 @@ def update_heatmap_y_axis_fig(_, get_data_args):
     :param _: Heatmap cells fig updated
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
     :return: New heatmap y axis fig and style
     :rtype: (plotly.graph_objects.Figure, dict)
     """
     # Current ``get_data`` return val
-    data = read_data(get_data_args)
+    data = read_data(get_data_args, last_data_mtime)
 
     y_axis_fig = heatmap_generator.get_heatmap_y_axis_fig(data)
     y_axis_style = {"height": data["heatmap_cells_fig_height"],
@@ -657,9 +701,10 @@ def update_heatmap_y_axis_fig(_, get_data_args):
     Output("heatmap-gene-bar-fig", "style"),
     Input("heatmap-x-len", "data"),
     State("get-data-args", "data"),
+    State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def update_heatmap_gene_bar_fig(_, get_data_args):
+def update_heatmap_gene_bar_fig(_, get_data_args, last_data_mtime):
     """Update heatmap gene bar fig.TODO
 
     We need to update style because width might have changed due to
@@ -668,11 +713,13 @@ def update_heatmap_gene_bar_fig(_, get_data_args):
     :param _: Heatmap cells fig updated
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
     :return: New heatmap gene bar fig and style
     :rtype: (plotly.graph_objects.Figure, dict)
     """
     # Current ``get_data`` return val
-    data = read_data(get_data_args)
+    data = read_data(get_data_args, last_data_mtime)
 
     gene_bar_fig = heatmap_generator.get_heatmap_gene_bar_fig(data)
     gene_bar_style = {"width": data["heatmap_cells_fig_width"]}
@@ -684,9 +731,10 @@ def update_heatmap_gene_bar_fig(_, get_data_args):
     Output("heatmap-nt-pos-axis-fig", "style"),
     Input("heatmap-x-len", "data"),
     State("get-data-args", "data"),
+    State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def update_heatmap_nt_pos_axis_fig(_, get_data_args):
+def update_heatmap_nt_pos_axis_fig(_, get_data_args, last_data_mtime):
     """Update heatmap nt pos axis fig.
 
     We need to update style because width might have changed due to
@@ -695,11 +743,13 @@ def update_heatmap_nt_pos_axis_fig(_, get_data_args):
     :param _: Heatmap cells fig updated
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
     :return: New heatmap nt pos x-axis fig and style
     :rtype: (plotly.graph_objects.Figure, dict)
     """
     # Current ``get_data`` return val
-    data = read_data(get_data_args)
+    data = read_data(get_data_args, last_data_mtime)
 
     nt_pos_x_axis_fig = heatmap_generator.get_heatmap_nt_pos_axis_fig(data)
     nt_pos_x_axis_style = {"width": data["heatmap_cells_fig_width"]}
@@ -711,9 +761,10 @@ def update_heatmap_nt_pos_axis_fig(_, get_data_args):
     Output("heatmap-aa-pos-axis-fig", "style"),
     Input("heatmap-x-len", "data"),
     State("get-data-args", "data"),
+    State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def update_heatmap_aa_pos_axis_fig(_, get_data_args):
+def update_heatmap_aa_pos_axis_fig(_, get_data_args, last_data_mtime):
     """Update heatmap amino acid position axis fig.TODO
 
     We need to update style because width might have changed due to
@@ -722,11 +773,13 @@ def update_heatmap_aa_pos_axis_fig(_, get_data_args):
     :param _: Heatmap cells fig updated
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
     :return: New heatmap amino acid position x-axis fig and style
     :rtype: (plotly.graph_objects.Figure, dict)
     """
     # Current ``get_data`` return val
-    data = read_data(get_data_args)
+    data = read_data(get_data_args, last_data_mtime)
 
     aa_pos_x_axis_fig = heatmap_generator.get_heatmap_aa_pos_axis_fig(data)
     aa_pos_x_axis_style = {"width": data["heatmap_cells_fig_width"]}
@@ -736,9 +789,10 @@ def update_heatmap_aa_pos_axis_fig(_, get_data_args):
 @app.callback(
     Output("histogram-top-row-div", "children"),
     Input("get-data-args", "data"),
+    State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def update_histogram(get_data_args):
+def update_histogram(get_data_args, last_data_mtime):
     """Update histogram top row div.TODO
 
     When the ``data`` variable in the dcc.Store is updated, the top row
@@ -747,10 +801,12 @@ def update_histogram(get_data_args):
 
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
     :return: New histogram figure corresponding to new data
     :rtype: plotly.graph_objects.Figure
     """
-    data = read_data(get_data_args)
+    data = read_data(get_data_args, last_data_mtime)
     return histogram_generator.get_histogram_top_row(data)
 
 @app.callback(
@@ -759,21 +815,24 @@ def update_histogram(get_data_args):
     Output("heatmap-cells-inner-container", "style"),
     Output("heatmap-cells-outer-container", "style"),
     Input("get-data-args", "data"),
+    State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def update_heatmap_cells_fig(get_data_args):
-    """Update heatmap cells fig, style, and containers.TODO
+def update_heatmap_cells_fig(get_data_args, last_data_mtime):
+    """Update heatmap cells fig, style, and containers.
 
     This is the fig with the heatmap cells and x axis. We return style
     because attributes may need to change due to changes in data.
 
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
     :return: New heatmap cells fig
     :rtype: plotly.graph_objects.Figure
     """
     # Current ``get_data`` return val
-    data = read_data(get_data_args)
+    data = read_data(get_data_args, last_data_mtime)
 
     cells_fig = heatmap_generator.get_heatmap_cells_fig(data)
     cells_fig_style = {
@@ -846,9 +905,11 @@ def route_heatmap_cells_fig_click(click_data):
     Input("last-heatmap-cell-clicked", "data"),
     Input("mutation-details-close-btn", "n_clicks"),
     State("get-data-args", "data"),
+    State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def toggle_mutation_details_modal(click_data, _, get_data_args):
+def toggle_mutation_details_modal(click_data, _, get_data_args,
+                                  last_data_mtime):
     """Open or close mutation details modal.
 
     Not only is this function in charge of opening or closing the
@@ -862,12 +923,14 @@ def toggle_mutation_details_modal(click_data, _, get_data_args):
     :param _: Close button in mutation details modal was clicked
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
     :return: Boolean representing whether the mutation details modal is
         open or closed, mutation details modal header, and mutation
         details body.
     :rtype: (bool, str, dbc.ListGroup)"""
     # Current ``get_data`` return val
-    data = read_data(get_data_args)
+    data = read_data(get_data_args, last_data_mtime)
 
     ctx = dash.callback_context
     triggered_prop_id = ctx.triggered[0]["prop_id"]
@@ -896,9 +959,12 @@ def toggle_mutation_details_modal(click_data, _, get_data_args):
         Input("get-data-args", "data"),
         Input("last-heatmap-cell-clicked", "data"),
     ],
+    state=[
+        State("last-data-mtime", "data")
+    ],
     prevent_initial_call=True
 )
-def update_table(get_data_args, click_data):
+def update_table(get_data_args, click_data, last_data_mtime):
     """Update table figure.
 
     When the ``data`` variable in the dcc.Store is updated, the table
@@ -911,12 +977,14 @@ def update_table(get_data_args, click_data):
     :param click_data: ``last-heatmap-cell-clicked`` in-browser
         variable value.
     :type click_data: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
     :return: New table figure corresponding to new data, or user
         selected strain.
     :rtype: plotly.graph_objects.Figure
     """
     # Current ``get_data`` return val
-    data = read_data(get_data_args)
+    data = read_data(get_data_args, last_data_mtime)
 
     ctx = dash.callback_context
     triggered_prop_id = ctx.triggered[0]["prop_id"]
@@ -936,9 +1004,10 @@ def update_table(get_data_args, click_data):
 @app.callback(
     Output("data", "data"),
     Input("get-data-args", "data"),
+    State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def update_data(get_data_args):
+def update_data(get_data_args, last_data_mtime):
     """Update ``data`` in dcc.Store.
 
     The output is only used in clientside callbacks. It is too large to
@@ -946,9 +1015,13 @@ def update_data(get_data_args):
 
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
+    :return: ``get_data`` return val
+    :rtype: dict
     """
     # Current ``get_data`` return val
-    data = read_data(get_data_args)
+    data = read_data(get_data_args, last_data_mtime)
     return data
 
 
