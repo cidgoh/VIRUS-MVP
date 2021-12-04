@@ -274,7 +274,7 @@ def filter_parsed_mutations_by_freq(parsed_mutations, min_mutation_freq,
     return ret
 
 
-def get_data(dirs, clade_defining=False, hidden_strains=None,
+def get_data(dirs, show_clade_defining=False, hidden_strains=None,
              strain_order=None, min_mutation_freq=None,
              max_mutation_freq=None):
     """Get relevant data for Plotly visualizations in this application.
@@ -294,8 +294,9 @@ def get_data(dirs, clade_defining=False, hidden_strains=None,
 
     :param dirs: List of paths to folders to obtain data from
     :type dirs: list[str]
-    :param clade_defining: Set non-clade defining mutations as hidden
-    :type clade_defining: bool
+    :param show_clade_defining: Set non-clade defining mutations as
+        hidden.
+    :type show_clade_defining: bool
     :param hidden_strains: List of strains from the dirs that the user
         does not want to display in the heatmap and table.
     :type hidden_strains: list[str]
@@ -345,7 +346,7 @@ def get_data(dirs, clade_defining=False, hidden_strains=None,
     visible_parsed_mutations = \
         {k: v for k, v in parsed_mutations.items() if k not in hidden_strains}
 
-    if clade_defining:
+    if show_clade_defining:
         visible_parsed_mutations = \
             filter_parsed_mutations_by_clade_defining(visible_parsed_mutations)
 
