@@ -1,5 +1,7 @@
 name: deployment
 on:
+  workflow_dispatch:
+
   pull_request:
     types: [synchronize]
     branches:
@@ -10,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Code deploy to covidmvp.cidgoh.ca
+        id: prod_deploy
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
