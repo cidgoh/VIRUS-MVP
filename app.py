@@ -38,6 +38,7 @@ from generators import (heatmap_generator, histogram_generator,
 # ``app`` is served.
 app = dash.Dash(
     name="COVID-MVP",
+    title="COVID-MVP",
     assets_folder=ASSETS_DIR,
     # We bring in jQuery for some of the JavaScript
     # callbacks.
