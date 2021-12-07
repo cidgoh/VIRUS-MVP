@@ -18,7 +18,7 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.KEY }}
-          port: ${{ secrets.PORT }}
+          port: 22
           script_stop: true
           script: |
             cd COVID-MVP
