@@ -579,7 +579,7 @@ def get_heatmap_main_insertions_graph_obj(data):
         mode="markers",
         marker={
             "color": "lime",
-            "size": 18,
+            "size": 12,
             "symbol": "cross",
             "line": {"width": 2}
         },
@@ -605,7 +605,7 @@ def get_heatmap_main_deletions_graph_obj(data):
         mode="markers",
         marker={
             "color": "red",
-            "size": 18,
+            "size": 12,
             "symbol": "x",
             "line": {"width": 2}
         },
