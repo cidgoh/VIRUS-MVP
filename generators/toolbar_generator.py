@@ -148,7 +148,7 @@ def get_file_upload_component():
         component inside.
     :rtype: dcc.Upload
     """
-    icon = html.I(className="bi-cloud-upload-fill", style={"font-size": 18})
+    icon = html.I(className="bi-cloud-upload-fill", style={"font-size": 16})
     return dcc.Upload(
         dbc.Button(icon, color="success", outline=True),
         id="upload-file",
@@ -162,7 +162,7 @@ def get_file_download_component():
     :return: Dash html div with button and download component inside.
     :rtype: html.Div
     """
-    icon = html.I(className="bi-cloud-download-fill", style={"font-size": 18})
+    icon = html.I(className="bi-cloud-download-fill", style={"font-size": 16})
     return html.Div([
         dbc.Button(icon,
                    color="primary",

@@ -247,7 +247,7 @@ def get_heatmap_y_axis_fig(data):
         yaxis_type="linear",
         plot_bgcolor="white",
         font={
-            "size": 18
+            "size": 16
         },
         margin={
             "l": 300,
@@ -315,7 +315,7 @@ def get_heatmap_gene_bar_fig(data):
             y=heatmap_gene_bar_obj["y"][0],
             text=gene_label,
             showarrow=False,
-            font={"color": "white", "size": 18}
+            font={"color": "white", "size": 16}
         )
     return ret
 
@@ -396,7 +396,7 @@ def get_heatmap_aa_pos_axis_fig(data):
         yaxis_type="linear",
         plot_bgcolor="white",
         font={
-            "size": 18
+            "size": 16
         },
         margin={
             "l": 0,
@@ -439,7 +439,7 @@ def get_heatmap_nt_pos_axis_fig(data):
         yaxis_type="linear",
         plot_bgcolor="white",
         font={
-            "size": 18
+            "size": 16
         },
         margin={
             "l": 0,
@@ -479,7 +479,7 @@ def get_heatmap_cells_fig(data):
         yaxis_type="linear",
         plot_bgcolor="white",
         font={
-            "size": 18
+            "size": 16
         },
         margin={
             "l": 0,
@@ -553,7 +553,7 @@ def get_heatmap_cells_graph_obj(data):
         },
         hoverlabel={
             "bgcolor": "#000000",
-            "font_size": 18
+            "font_size": 16
         },
         hovertemplate="%{text}<extra></extra>",
         text=scatter_text,
@@ -579,7 +579,7 @@ def get_heatmap_main_insertions_graph_obj(data):
         mode="markers",
         marker={
             "color": "lime",
-            "size": 18,
+            "size": 12,
             "symbol": "cross",
             "line": {"width": 2}
         },
@@ -605,7 +605,7 @@ def get_heatmap_main_deletions_graph_obj(data):
         mode="markers",
         marker={
             "color": "red",
-            "size": 18,
+            "size": 12,
             "symbol": "x",
             "line": {"width": 2}
         },
@@ -627,7 +627,7 @@ def get_heatmap_colorbar_fig():
     """
     ret = go.Figure(get_heatmap_colorbar_graph_obj())
     ret.update_layout(
-        font={"size": 18},
+        font={"size": 16},
         margin={
             "l": 0,
             "r": 0,
@@ -682,7 +682,7 @@ def get_single_genome_legend_fig():
     """TODO"""
     ret = go.Figure(get_single_genome_legend_graph_obj())
     ret.update_layout(
-        font={"size": 18},
+        font={"size": 16},
         margin={
             "l": 0,
             "r": 0,

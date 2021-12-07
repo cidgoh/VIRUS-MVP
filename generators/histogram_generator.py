@@ -110,7 +110,7 @@ def get_histogram_mock_axis(np_histogram):
     ret.update_layout(
         margin={"t": 0, "b": 0, "l": 0, "r": 0, "pad": 0},
         plot_bgcolor="white",
-        font={"size": 18},
+        font={"size": 16},
         xaxis1={"visible": False, "range": [0, 100], "fixedrange": True},
         yaxis1={"visible": False, "range": [0, 100], "fixedrange": True},
     )
@@ -137,7 +137,7 @@ def get_histogram_fig(np_histogram):
         margin={"t": 0, "b": 0, "l": 0, "r": 0, "pad": 0},
         plot_bgcolor="white",
         bargap=0.1,
-        font={"size": 18},
+        font={"size": 16},
         # TODO hardcoding genome length here because I'm lazy
         xaxis1={"visible": False, "range": [1, 29903], "fixedrange": True},
         xaxis2={"visible": False, "range": [1, 29903], "fixedrange": True},
