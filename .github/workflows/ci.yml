@@ -1,0 +1,25 @@
+name: deployment
+on:
+  pull_request:
+    types: [synchronize]
+    branches:
+      - no_upload_master
+jobs:
+  build:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code deploy to covidmvp.cidgoh.ca
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          port: ${{ secrets.PORT }}
+          script_stop: true
+          script: |
+            cd COVID-MVP
+            sudo docker-compose -f production.yml stop
+            git pull
+            sudo docker-compose -f production.yml build
+            sudo docker-compose -f production.yml up
