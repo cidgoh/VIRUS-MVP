@@ -530,6 +530,7 @@ def get_heatmap_cells_graph_obj(data):
     scatter_x = []
     scatter_marker_color = []
     scatter_text = []
+    scatter_line_width = []
     for i, pos in enumerate(data["heatmap_x_nt_pos"]):
         for j, strain in enumerate(data["heatmap_y"]):
             freq = data["heatmap_z"][j][i]
@@ -538,6 +539,9 @@ def get_heatmap_cells_graph_obj(data):
                 scatter_y.append(j)
                 scatter_marker_color.append(float(freq))
                 scatter_text.append(data["heatmap_hover_text"][j][i])
+
+                mutation_fns = data["heatmap_mutation_fns"][j][i]
+                scatter_line_width.append(2 if mutation_fns is None else 4)
     ret = go.Scatter(
         x=scatter_x,
         y=scatter_y,
@@ -548,7 +552,7 @@ def get_heatmap_cells_graph_obj(data):
             "cmin": 0,
             "cmax": 1,
             "symbol": "square",
-            "line": {"width": 2},
+            "line": {"width": scatter_line_width},
             "size": 30
         },
         hoverlabel={
