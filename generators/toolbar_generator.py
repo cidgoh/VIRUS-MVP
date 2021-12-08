@@ -51,7 +51,8 @@ def get_toolbar_row(data):
             ),
             get_select_lineages_modal()
         ],
-        className="mt-3 ml-xl-3"
+        className="mt-3 ml-xl-3",
+        style={"fontSize": 16}
     )
     return ret
 
@@ -217,22 +218,29 @@ def get_mutation_freq_slider(data):
 def get_clade_defining_mutations_switch_form_group():
     """Get form group for clade defining mutations switch.
 
-    This is a Dash Bootstrap Components form group.
+    This is a Dash Bootstrap Components form group. We also add a
+    tooltip.
 
     :return: Dash Bootstrap Components form group with clade defining
         mutations switch.
     :rtype: dbc.FormGroup
     """
-    ret = dbc.FormGroup([
-        dbc.Checklist(
-            options=[{
-                "label": "Clade defining",
-                "value": 1
-            }],
-            value=[],
-            id="clade-defining-mutations-switch",
-            switch=True
-        )],
+    ret = dbc.FormGroup(
+        [
+            dbc.Checklist(
+                options=[{
+                    "label": "Clade defining",
+                    "value": 1
+                }],
+                value=[],
+                id="clade-defining-mutations-switch",
+                switch=True
+            ),
+            dbc.Tooltip(
+                "Hello world!",
+                target="clade-defining-mutations-switch"
+            )
+        ],
         className="mb-0 pl-xl-2"
     )
     return ret
