@@ -52,11 +52,15 @@ def get_heatmap_row(data):
         [
             dbc.Col(
                 [
-                    # Empty space above y axis fig
+                    # Space for voc and voi legend
                     dbc.Row(
                         dbc.Col(
-                            None,
-                            style={"height": 100}
+                            dcc.Graph(
+                                id="voc-voi-legend-fig",
+                                figure=get_voc_voi_legend_fig(),
+                                config={"displayModeBar": False},
+                                style={"height": 100}
+                            )
                         ),
                         no_gutters=True
                     ),
@@ -686,6 +690,54 @@ def get_heatmap_colorbar_graph_obj():
                 "x": 0.5
             }
         },
+        hoverinfo="skip"
+    )
+    return ret
+
+
+def get_voc_voi_legend_fig():
+    """Get Plotly figure used as voc and voi legend.
+
+    :return: Plotly figure containing single genome legend
+    :rtype: go.Figure
+    """
+    ret = go.Figure(get_voc_voi_legend_graph_obj())
+    ret.update_layout(
+        font={"size": 16},
+        margin={
+            "l": 0,
+            "r": 0,
+            "t": 0,
+            "b": 0,
+            "pad": 0
+        },
+        plot_bgcolor="white",
+        xaxis={
+            "visible": False,
+            "fixedrange": True
+        },
+        yaxis={
+            "visible": False,
+            "fixedrange": True,
+            "range": [-1, 4]
+        }
+    )
+    return ret
+
+
+def get_voc_voi_legend_graph_obj():
+    """Get Plotly graph obj used as voc voi legend.
+
+    This is really just a scatterplot with a single point.
+
+    :return: Plotly scatterplot obj containing single genome legend
+    :rtype: go.Scattergl
+    """
+    ret = go.Scatter(
+        x=[0, 0],
+        y=[0, 1],
+        mode="text",
+        text=["<b>Variant of concern</b>", "<i>Variant of interest</i>"],
         hoverinfo="skip"
     )
     return ret
