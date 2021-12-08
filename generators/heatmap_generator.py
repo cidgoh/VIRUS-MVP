@@ -258,13 +258,22 @@ def get_heatmap_y_axis_fig(data):
     )
     ret.update_xaxes(fixedrange=True,
                      visible=False)
+
+    tick_text = []
+    for strain in data["heatmap_y"]:
+        if strain in data["voc_strains"]:
+            tick_text.append("<b>%s</b>" % strain)
+        elif strain in data["voi_strains"]:
+            tick_text.append("<i>%s</i>" % strain)
+        else:
+            tick_text.append(strain)
     ret.update_yaxes(range=[-0.5, len(data["heatmap_y"])-0.5],
                      fixedrange=True,
                      tickmode="array",
                      tick0=0,
                      dtick=1,
                      tickvals=list(range(len(data["heatmap_y"]))),
-                     ticktext=data["heatmap_y"],
+                     ticktext=tick_text,
                      ticklabelposition="outside")
     return ret
 
