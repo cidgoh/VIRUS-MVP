@@ -194,7 +194,7 @@ def get_heatmap_row(data):
             ),
             dbc.Col(
                 [
-                    # Empty space above colorbar fig
+                    # Space for single genome legend
                     dbc.Row(
                         dbc.Col(
                             dcc.Graph(
