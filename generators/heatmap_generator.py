@@ -692,7 +692,11 @@ def get_heatmap_colorbar_graph_obj():
 
 
 def get_single_genome_legend_fig():
-    """TODO"""
+    """Get Plotly figure used as single genome legend.
+
+    :return: Plotly figure containing single genome legend
+    :rtype: go.Figure
+    """
     ret = go.Figure(get_single_genome_legend_graph_obj())
     ret.update_layout(
         font={"size": 16},
@@ -717,7 +721,13 @@ def get_single_genome_legend_fig():
 
 
 def get_single_genome_legend_graph_obj():
-    """TODO"""
+    """Get Plotly graph obj used as single genome legend.
+
+    This is really just a scatterplot with a single point.
+
+    :return: Plotly scatterplot obj containing single genome legend
+    :rtype: go.Scattergl
+    """
     ret = go.Scattergl(
         x=[0],
         y=[0],
