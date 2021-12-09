@@ -59,6 +59,7 @@ def get_heatmap_row(data):
                                 id="voc-voi-legend-fig",
                                 figure=get_voc_voi_legend_fig(),
                                 config={"displayModeBar": False},
+                                className="pl-3 pl-xl-5 ml-xl-2",
                                 style={"height": 100}
                             )
                         ),
