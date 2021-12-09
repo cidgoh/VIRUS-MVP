@@ -52,11 +52,16 @@ def get_heatmap_row(data):
         [
             dbc.Col(
                 [
-                    # Empty space above y axis fig
+                    # Space for voc and voi legend
                     dbc.Row(
                         dbc.Col(
-                            None,
-                            style={"height": 100}
+                            dcc.Graph(
+                                id="voc-voi-legend-fig",
+                                figure=get_voc_voi_legend_fig(),
+                                config={"displayModeBar": False},
+                                className="pl-3 pl-xl-5 ml-xl-2",
+                                style={"height": 100}
+                            )
                         ),
                         no_gutters=True
                     ),
@@ -194,7 +199,7 @@ def get_heatmap_row(data):
             ),
             dbc.Col(
                 [
-                    # Empty space above colorbar fig
+                    # Space for single genome legend
                     dbc.Row(
                         dbc.Col(
                             dcc.Graph(
@@ -258,13 +263,22 @@ def get_heatmap_y_axis_fig(data):
     )
     ret.update_xaxes(fixedrange=True,
                      visible=False)
+
+    tick_text = []
+    for strain in data["heatmap_y"]:
+        if strain in data["voc_strains"]:
+            tick_text.append("<b>%s</b>" % strain)
+        elif strain in data["voi_strains"]:
+            tick_text.append("<i>%s</i>" % strain)
+        else:
+            tick_text.append(strain)
     ret.update_yaxes(range=[-0.5, len(data["heatmap_y"])-0.5],
                      fixedrange=True,
                      tickmode="array",
                      tick0=0,
                      dtick=1,
                      tickvals=list(range(len(data["heatmap_y"]))),
-                     ticktext=data["heatmap_y"],
+                     ticktext=tick_text,
                      ticklabelposition="outside")
     return ret
 
@@ -682,8 +696,60 @@ def get_heatmap_colorbar_graph_obj():
     return ret
 
 
+def get_voc_voi_legend_fig():
+    """Get Plotly figure used as voc and voi legend.
+
+    :return: Plotly figure containing single genome legend
+    :rtype: go.Figure
+    """
+    ret = go.Figure(get_voc_voi_legend_graph_obj())
+    ret.update_layout(
+        font={"size": 16},
+        margin={
+            "l": 0,
+            "r": 0,
+            "t": 0,
+            "b": 0,
+            "pad": 0
+        },
+        plot_bgcolor="white",
+        xaxis={
+            "visible": False,
+            "fixedrange": True
+        },
+        yaxis={
+            "visible": False,
+            "fixedrange": True,
+            "range": [-1, 4]
+        }
+    )
+    return ret
+
+
+def get_voc_voi_legend_graph_obj():
+    """Get Plotly graph obj used as voc voi legend.
+
+    This is really just a scatterplot with a single point.
+
+    :return: Plotly scatterplot obj containing single genome legend
+    :rtype: go.Scattergl
+    """
+    ret = go.Scatter(
+        x=[0, 0],
+        y=[0, 1],
+        mode="text",
+        text=["<b>Variant of concern</b>", "<i>Variant of interest</i>"],
+        hoverinfo="skip"
+    )
+    return ret
+
+
 def get_single_genome_legend_fig():
-    """TODO"""
+    """Get Plotly figure used as single genome legend.
+
+    :return: Plotly figure containing single genome legend
+    :rtype: go.Figure
+    """
     ret = go.Figure(get_single_genome_legend_graph_obj())
     ret.update_layout(
         font={"size": 16},
@@ -708,7 +774,13 @@ def get_single_genome_legend_fig():
 
 
 def get_single_genome_legend_graph_obj():
-    """TODO"""
+    """Get Plotly graph obj used as single genome legend.
+
+    This is really just a scatterplot with a single point.
+
+    :return: Plotly scatterplot obj containing single genome legend
+    :rtype: go.Scattergl
+    """
     ret = go.Scattergl(
         x=[0],
         y=[0],

@@ -343,6 +343,14 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
     single_genomes = \
         {k for k in parsed_gvf_dirs if parsed_gvf_dirs[k]["single_genome"]}
 
+    # These are dictionary because they are in the return val, which
+    # needs to be json compatible (how Dash moves content across
+    # network).
+    voc_strains = {k: None for k in parsed_gvf_dirs
+                   if parsed_gvf_dirs[k]["status"] == "VOC"}
+    voi_strains = {k: None for k in parsed_gvf_dirs
+                   if parsed_gvf_dirs[k]["status"] == "VOI"}
+
     visible_parsed_mutations = \
         {k: v for k, v in parsed_mutations.items() if k not in hidden_strains}
 
@@ -374,6 +382,10 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
             dir_strains,
         "hidden_strains":
             hidden_strains,
+        "voc_strains":
+            voc_strains,
+        "voi_strains":
+            voi_strains,
         "all_strains":
             get_heatmap_y(parsed_gvf_dirs),
         "mutation_freq_slider_vals":
