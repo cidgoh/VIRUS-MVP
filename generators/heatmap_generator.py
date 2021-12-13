@@ -223,7 +223,7 @@ def get_heatmap_row(data):
                         no_gutters=True
                     )
                 ],
-                width=2,
+                width={"size": 1, "offset": 1},
                 style={"overflowX": "hidden"}
             ),
             get_mutation_details_modal()
@@ -688,7 +688,7 @@ def get_heatmap_colorbar_graph_obj():
             "cmax": 1,
             "showscale": True,
             "colorbar": {
-                "x": 0.5
+                "x": 0
             }
         },
         hoverinfo="skip"
@@ -792,7 +792,7 @@ def get_single_genome_legend_graph_obj():
             "size": 30
         },
         text=["N==1"],
-        textposition="middle right",
+        textposition="top center",
         hoverinfo="skip"
     )
     return ret
