@@ -161,7 +161,7 @@ def parse_gvf_dir(dir_):
                     strain = filename
                     who_variant = None
                     status = None
-                    single_genome = False
+                    sample_size = attrs["sample_size"]
 
                     if "viral_lineage" in attrs:
                         strain = attrs["viral_lineage"]
@@ -170,14 +170,12 @@ def parse_gvf_dir(dir_):
                         who_variant = attrs["who_variant"]
                     if "status" in attrs:
                         status = attrs["status"]
-                    if "sample_size" in attrs and attrs["sample_size"] == "1":
-                        single_genome = True
 
                     ret[strain] = {
                         "mutations": {},
                         "who_variant": who_variant,
                         "status": status,
-                        "single_genome": single_genome
+                        "sample_size": sample_size
                     }
 
                     parsing_first_row = False
@@ -341,7 +339,8 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
     parsed_mutations = \
         {k: v["mutations"] for k, v in parsed_gvf_dirs.items()}
     single_genomes = \
-        {k for k in parsed_gvf_dirs if parsed_gvf_dirs[k]["single_genome"]}
+        {k for k in parsed_gvf_dirs
+         if parsed_gvf_dirs[k]["sample_size"] == "1"}
 
     # These are dictionary because they are in the return val, which
     # needs to be json compatible (how Dash moves content across
