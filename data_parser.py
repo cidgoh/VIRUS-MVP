@@ -338,9 +338,7 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
 
     parsed_mutations = \
         {k: v["mutations"] for k, v in parsed_gvf_dirs.items()}
-    single_genomes = \
-        {k for k in parsed_gvf_dirs
-         if parsed_gvf_dirs[k]["sample_size"] == "1"}
+    sample_sizes = {k: v["sample_size"] for k, v in parsed_gvf_dirs.items()}
 
     # These are dictionary because they are in the return val, which
     # needs to be json compatible (how Dash moves content across
@@ -402,7 +400,7 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
         "heatmap_z":
             get_heatmap_z(visible_parsed_mutations,
                           max_mutations_per_pos_dict,
-                          single_genomes),
+                          sample_sizes),
         "heatmap_hover_text":
             get_heatmap_hover_text(visible_parsed_mutations,
                                    max_mutations_per_pos_dict),
@@ -602,8 +600,7 @@ def get_heatmap_y(parsed_mutations):
     return ret
 
 
-def get_heatmap_z(parsed_mutations, max_mutations_per_pos_dict,
-                  single_genomes):
+def get_heatmap_z(parsed_mutations, max_mutations_per_pos_dict, sample_sizes):
     """Get z values of heatmap cells.
 
     These are the mutation frequencies, and the z values dictate the
@@ -615,9 +612,9 @@ def get_heatmap_z(parsed_mutations, max_mutations_per_pos_dict,
     :param max_mutations_per_pos_dict: See
         ``get_max_mutations_per_pos`` return value.
     :type max_mutations_per_pos_dict: dict
-    :param single_genomes: Set of strains with single genome sample
-        size.
-    :type single_genomes: set[str]
+    :param sample_sizes: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return "sample_size" values.
+    :type sample_sizes: dict
     :return: List of z values
     :rtype: list[list[str]]
     """
@@ -631,7 +628,7 @@ def get_heatmap_z(parsed_mutations, max_mutations_per_pos_dict,
                     if not mutation["hidden_cell"]:
                         # Set to 0 if sample size == 1, which allows it
                         # to be displayed as white with our colorscale.
-                        if strain in single_genomes:
+                        if sample_sizes[strain] == "1":
                             cols[i] = 0
                         else:
                             cols[i] = mutation["alt_freq"]
