@@ -201,7 +201,10 @@ def get_heatmap_row(data):
                 [
                     # Empty space above sample size axis
                     dbc.Row(
-                        None,
+                        dbc.Col(
+                            "Sample size",
+                            style={"padding-top": 75}
+                        ),
                         style={"height": 100},
                         no_gutters=True
                     ),
