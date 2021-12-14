@@ -666,7 +666,7 @@ def update_heatmap_y_axis_fig(_, get_data_args, last_data_mtime):
     We need to update style because attributes may change due to
     uploaded strains.
 
-    :param _: Heatmap cells fig updated
+    :param _: Heatmap strains updated
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
     :param last_data_mtime: Last mtime across all data files
@@ -695,6 +695,58 @@ def update_heatmap_y_axis_fig(_, get_data_args, last_data_mtime):
     }
     return (y_axis_fig, y_axis_style, inner_container_style,
             outer_container_style)
+
+
+@app.callback(
+    Output("heatmap-sample-size-axis-fig", "figure"),
+    Output("heatmap-sample-size-axis-fig", "style"),
+    Output("heatmap-sample-size-axis-inner-container", "style"),
+    Output("heatmap-sample-size-axis-outer-container", "style"),
+    Input("heatmap-y", "data"),
+    State("get-data-args", "data"),
+    State("last-data-mtime", "data"),
+    prevent_initial_call=True
+)
+def update_heatmap_sample_size_axis_fig(_, get_data_args, last_data_mtime):
+    """Update heatmap sample size axis fig and containers.
+
+    We need to update style because attributes may change due to
+    uploaded strains.
+
+    :param _: Heatmap strains updated
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
+    :return: New heatmap sample size axis fig and style
+    :rtype: (plotly.graph_objects.Figure, dict)
+    """
+    # Current ``get_data`` return val
+    data = read_data(get_data_args, last_data_mtime)
+
+    sample_size_axis_fig = \
+        heatmap_generator.get_heatmap_sample_size_axis_fig(data)
+    sample_size_axis_style = \
+        {"height": data["heatmap_cells_fig_height"],
+         "width": "101%",
+         "marginBottom": -data["heatmap_cells_container_height"]}
+    inner_container_style = {
+        "height": "100%",
+        "overflowX": "scroll",
+        "overflowY": "scroll",
+        "marginRight": -50,
+        "paddingRight": 50,
+        "marginBottom":
+            -data["heatmap_cells_container_height"]-50,
+        "paddingBottom":
+            data["heatmap_cells_container_height"]+50
+    }
+    outer_container_style = {
+        "height": data["heatmap_cells_container_height"],
+        "overflow": "hidden"
+    }
+    return (sample_size_axis_fig, sample_size_axis_style,
+            inner_container_style, outer_container_style)
 
 
 @app.callback(
