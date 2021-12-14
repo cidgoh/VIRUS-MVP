@@ -192,6 +192,7 @@ def parse_gvf_dir(dir_):
                             "gene": attrs["vcf_gene"],
                             "ao": float(attrs["ao"].split(",")[i]),
                             "dp": float(attrs["dp"]),
+                            "multi_aa_name": attrs["multi_aa_name"],
                             "clade_defining":
                                 attrs["clade_defining"] == "True",
                             "hidden_cell": False,
@@ -679,6 +680,10 @@ def get_heatmap_hover_text(parsed_mutations, max_mutations_per_pos_dict):
                     if not mutation_name:
                         mutation_name = "No recorded name"
 
+                    multi_aa_name = mutation["multi_aa_name"]
+                    if not multi_aa_name:
+                        multi_aa_name = "No recorded multi aa"
+
                     functions_str = ""
                     for j, fn_category in enumerate(mutation["functions"]):
                         if j == 7:
@@ -688,7 +693,8 @@ def get_heatmap_hover_text(parsed_mutations, max_mutations_per_pos_dict):
                     if not functions_str:
                         functions_str = "None recorded so far"
 
-                    cell_text_str = "<b>Mutation name: %s</b><br>" \
+                    cell_text_str = "<b>Mutation name:</b> %s<br>" \
+                                    "Multi AA name: %s<br>" \
                                     "<br>" \
                                     "Reference: %s<br>" \
                                     "Alternate: %s<br>" \
@@ -696,6 +702,7 @@ def get_heatmap_hover_text(parsed_mutations, max_mutations_per_pos_dict):
                                     "<br>" \
                                     "<b>Functions:</b> <br>%s"
                     cell_text_params = (mutation_name,
+                                        multi_aa_name,
                                         mutation["ref"],
                                         mutation["alt"],
                                         mutation["alt_freq"],
