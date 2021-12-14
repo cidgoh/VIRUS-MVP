@@ -369,8 +369,11 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
             get_heatmap_cells_tickvals(max_mutations_per_pos_dict),
         "heatmap_x_nt_pos":
             get_heatmap_x_nt_pos(max_mutations_per_pos_dict),
+        # TODO specify what y here
         "heatmap_y":
             get_heatmap_y(visible_parsed_mutations),
+        "heatmap_y_sample_sizes":
+            get_heatmap_y_sample_sizes(visible_parsed_mutations, sample_sizes),
         "tables":
             get_tables(visible_parsed_mutations),
         "histogram_x":
@@ -597,6 +600,24 @@ def get_heatmap_y(parsed_mutations):
     ret = []
     for strain in parsed_mutations:
         ret.append(strain)
+    return ret
+
+
+def get_heatmap_y_sample_sizes(parsed_mutations, sample_sizes):
+    """Get sample size y axis values of heatmap cells.
+
+    :param parsed_mutations: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return "mutations" values.
+    :type parsed_mutations: dict
+    :param sample_sizes: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return "sample_size" values.
+    :type sample_sizes: dict
+    :return: List of sample size y axis values
+    :rtype: list[str]
+    """
+    ret = []
+    for strain in parsed_mutations:
+        ret.append(sample_sizes[strain])
     return ret
 
 

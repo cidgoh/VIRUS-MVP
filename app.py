@@ -1063,6 +1063,7 @@ app.clientside_callback(
     ),
     Output("link-heatmap-cells-y-scrolling", "data"),
     Input("heatmap-y-axis-fig", "figure"),
+    Input("heatmap-sample-size-axis-fig", "figure"),
     Input("heatmap-cells-fig", "figure")
 )
 

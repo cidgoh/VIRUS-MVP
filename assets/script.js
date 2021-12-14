@@ -151,26 +151,43 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
      * Lifted from https://stackoverflow.com/a/41998497/11472358
      * Seems to work smoothly.
      * @param _ Heatmap y-axis fig generated
-     * @param __ Heatmap cells fig generated
+     * @param __ Heatmap sample size axis fig generated
+     * @param ___ Heatmap cells fig generated
      */
-    linkHeatmapCellsYScrolling: (_, __) => {
+    linkHeatmapCellsYScrolling: (_, __, ___) => {
       let isSyncingLeftScroll = false;
+      let isSyncingMidScroll = false;
       let isSyncingRightScroll = false;
       const leftDiv = document.getElementById('heatmap-y-axis-inner-container');
-      const rightDiv = document.getElementById('heatmap-cells-inner-container');
+      const midDiv = document.getElementById('heatmap-cells-inner-container');
+      const rightDiv = document.getElementById('heatmap-sample-size-axis-inner-container');
 
       leftDiv.onscroll = function() {
         if (!isSyncingLeftScroll) {
+          isSyncingMidScroll = true;
+          midDiv.scrollTop = this.scrollTop;
           isSyncingRightScroll = true;
           rightDiv.scrollTop = this.scrollTop;
         }
         isSyncingLeftScroll = false;
       }
 
+      midDiv.onscroll = function() {
+        if (!isSyncingMidScroll) {
+          isSyncingLeftScroll = true;
+          leftDiv.scrollTop = this.scrollTop;
+          isSyncingRightScroll = true;
+          rightDiv.scrollTop = this.scrollTop;
+        }
+        isSyncingMidScroll = false;
+      }
+
       rightDiv.onscroll = function() {
         if (!isSyncingRightScroll) {
           isSyncingLeftScroll = true;
           leftDiv.scrollTop = this.scrollTop;
+          isSyncingMidScroll = true;
+          midDiv.scrollTop = this.scrollTop;
         }
         isSyncingRightScroll = false;
       }

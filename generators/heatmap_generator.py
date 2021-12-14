@@ -199,6 +199,61 @@ def get_heatmap_row(data):
             ),
             dbc.Col(
                 [
+                    # Empty space above sample size axis
+                    dbc.Row(
+                        None,
+                        style={"height": 100},
+                        no_gutters=True
+                    ),
+                    # Space for sample size axis; some hackeyness for
+                    # scrolling
+                    # https://stackoverflow.com/a/49278385/11472358
+                    dbc.Row(
+                        dbc.Col(
+                            html.Div(
+                                html.Div(
+                                    dcc.Graph(
+                                        id="heatmap-sample-size-axis-fig",
+                                        figure=
+                                        get_heatmap_sample_size_axis_fig(data),
+                                        config={"displayModeBar": False},
+                                        style={
+                                            "height": heatmap_cells_fig_height,
+                                            # Need a scrollbar to match
+                                            # cells fig.
+                                            "width": "125%",
+                                            "marginBottom":
+                                                -heatmap_cells_container_height
+                                        }
+                                    ),
+                                    id="heatmap-sample-size-axis-inner-"
+                                       "container",
+                                    style={
+                                        "height": "100%",
+                                        "overflowX": "scroll",
+                                        "overflowY": "scroll",
+                                        "marginRight": -50,
+                                        "paddingRight": 50,
+                                        "marginBottom":
+                                            -heatmap_cells_container_height-50,
+                                        "paddingBottom":
+                                            heatmap_cells_container_height+50
+                                    }
+                                ),
+                                id="heatmap-sample-size-axis-outer-container",
+                                style={
+                                    "height": heatmap_cells_container_height,
+                                    "overflow": "hidden"
+                                }
+                            )
+                        ),
+                        no_gutters=True
+                    )
+                ],
+                width=1
+            ),
+            dbc.Col(
+                [
                     # Space for single genome legend
                     dbc.Row(
                         dbc.Col(
@@ -223,7 +278,7 @@ def get_heatmap_row(data):
                         no_gutters=True
                     )
                 ],
-                width={"size": 1, "offset": 1},
+                width=1,
                 style={"overflowX": "hidden"}
             ),
             get_mutation_details_modal()
@@ -280,6 +335,45 @@ def get_heatmap_y_axis_fig(data):
                      tickvals=list(range(len(data["heatmap_y"]))),
                      ticktext=tick_text,
                      ticklabelposition="outside")
+    return ret
+
+
+def get_heatmap_sample_size_axis_fig(data):
+    """Get Plotly figure used as a sample size y-axis for the heatmap.
+
+    The reason we have a separate figure for the y axis view is that
+    there is no native way to have a fixed y axis as you scroll the
+    heatmap cells.
+
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
+    :return: Plotly figure containing heatmap sample size y axis
+    :rtype: go.Figure
+    """
+    ret = go.Figure({})
+    ret.update_layout(
+        xaxis_type="linear",
+        yaxis_type="linear",
+        plot_bgcolor="white",
+        font={
+            "size": 16
+        },
+        margin={
+            "l": 0,
+            "r": 0,
+            "t": 0,
+            "b": 0
+        }
+    )
+    ret.update_xaxes(fixedrange=True, visible=False)
+    ret.update_yaxes(range=[-0.5, len(data["heatmap_y"])-0.5],
+                     fixedrange=True,
+                     tickmode="array",
+                     tick0=0,
+                     dtick=1,
+                     tickvals=list(range(len(data["heatmap_y"]))),
+                     ticktext=data["heatmap_y_sample_sizes"],
+                     ticklabelposition="inside")
     return ret
 
 
