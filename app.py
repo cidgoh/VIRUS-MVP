@@ -159,7 +159,8 @@ def launch_app(_):
         dcc.Store(id="last-heatmap-cell-clicked"),
         # Used to update certain figures only when necessary
         dcc.Store(id="heatmap-x-len", data=len(data_["heatmap_x_nt_pos"])),
-        dcc.Store(id="heatmap-y", data=len(data_["heatmap_y"])),
+        dcc.Store(id="heatmap-y-strains",
+                  data=len(data_["heatmap_y_strains"])),
         # Used to integrate some JS callbacks. The data values are
         # meaningless, we just need outputs to perform all clientside
         # functions.
@@ -353,7 +354,7 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
     if ext != "vcf":
         status = "error"
         msg = "Filename must end in \".vcf\"."
-    elif new_strain in old_data["heatmap_y"]:
+    elif new_strain in old_data["heatmap_y_strains"]:
         status = "error"
         msg = "Filename must not conflict with existing variant."
     else:
@@ -620,48 +621,50 @@ def route_data_heatmap_x_update(get_data_args, old_heatmap_x_len,
 
 
 @app.callback(
-    Output("heatmap-y", "data"),
+    Output("heatmap-y-strains", "data"),
     Input("get-data-args", "data"),
-    State("heatmap-y", "data"),
+    State("heatmap-y-strains", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def route_data_heatmap_y_update(get_data_args, old_heatmap_y, last_data_mtime):
-    """Update ``heatmap-y`` dcc variable when needed.
+def route_data_heatmap_y_strains_update(get_data_args, old_heatmap_y_strains,
+                                        last_data_mtime):
+    """Update ``heatmap-y-strains`` dcc variable when needed.
 
     This serves as a useful trigger for figs that only need to be
-    updated when heatmap y changes.
+    updated when heatmap strains change.
 
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
-    :param old_heatmap_y: ``heatmap-y.data`` value
-    :type old_heatmap_y: dict
+    :param old_heatmap_y_strains: ``heatmap-y-strains.data`` value
+    :type old_heatmap_y_strains: dict
     :param last_data_mtime: Last mtime across all data files
     :type last_data_mtime: float
-    :return: New len of data["heatmap_y"]
+    :return: New len of data["heatmap_y_strains"]
     :rtype: int
-    :raise PreventUpdate: If data["heatmap_y"] len did not change
+    :raise PreventUpdate: If data["heatmap_y_strains"] len did not
+        change.
     """
     # Current ``get_data`` return val
     data = read_data(get_data_args, last_data_mtime)
 
-    if old_heatmap_y == data["heatmap_y"]:
+    if old_heatmap_y_strains == data["heatmap_y_strains"]:
         raise PreventUpdate
-    return data["heatmap_y"]
+    return data["heatmap_y_strains"]
 
 
 @app.callback(
-    Output("heatmap-y-axis-fig", "figure"),
-    Output("heatmap-y-axis-fig", "style"),
-    Output("heatmap-y-axis-inner-container", "style"),
-    Output("heatmap-y-axis-outer-container", "style"),
-    Input("heatmap-y", "data"),
+    Output("heatmap-strains-axis-fig", "figure"),
+    Output("heatmap-strains-axis-fig", "style"),
+    Output("heatmap-strains-axis-inner-container", "style"),
+    Output("heatmap-strains-axis-outer-container", "style"),
+    Input("heatmap-y-strains", "data"),
     State("get-data-args", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def update_heatmap_y_axis_fig(_, get_data_args, last_data_mtime):
-    """Update heatmap y axis fig and containers.
+def update_heatmap_strains_axis_fig(_, get_data_args, last_data_mtime):
+    """Update heatmap strains axis fig and containers.
 
     We need to update style because attributes may change due to
     uploaded strains.
@@ -671,16 +674,17 @@ def update_heatmap_y_axis_fig(_, get_data_args, last_data_mtime):
     :type get_data_args: dict
     :param last_data_mtime: Last mtime across all data files
     :type last_data_mtime: float
-    :return: New heatmap y axis fig and style
+    :return: New heatmap strains axis fig and style
     :rtype: (plotly.graph_objects.Figure, dict)
     """
     # Current ``get_data`` return val
     data = read_data(get_data_args, last_data_mtime)
 
-    y_axis_fig = heatmap_generator.get_heatmap_y_axis_fig(data)
-    y_axis_style = {"height": data["heatmap_cells_fig_height"],
-                    "width": "101%",
-                    "marginBottom": -data["heatmap_cells_container_height"]}
+    strain_axis_fig = heatmap_generator.get_heatmap_strains_axis_fig(data)
+    strain_axis_style = \
+        {"height": data["heatmap_cells_fig_height"],
+         "width": "101%",
+         "marginBottom": -data["heatmap_cells_container_height"]}
     inner_container_style = {
         "height": "100%",
         "overflowY": "scroll",
@@ -693,7 +697,7 @@ def update_heatmap_y_axis_fig(_, get_data_args, last_data_mtime):
         "height": data["heatmap_cells_container_height"],
         "overflow": "hidden"
     }
-    return (y_axis_fig, y_axis_style, inner_container_style,
+    return (strain_axis_fig, strain_axis_style, inner_container_style,
             outer_container_style)
 
 
@@ -702,7 +706,7 @@ def update_heatmap_y_axis_fig(_, get_data_args, last_data_mtime):
     Output("heatmap-sample-size-axis-fig", "style"),
     Output("heatmap-sample-size-axis-inner-container", "style"),
     Output("heatmap-sample-size-axis-outer-container", "style"),
-    Input("heatmap-y", "data"),
+    Input("heatmap-y-strains", "data"),
     State("get-data-args", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
@@ -1042,14 +1046,14 @@ def update_table(get_data_args, click_data, last_data_mtime):
     ctx = dash.callback_context
     triggered_prop_id = ctx.triggered[0]["prop_id"]
     if triggered_prop_id == "get-data-args.data":
-        table_strain = data["heatmap_y"][0]
+        table_strain = data["heatmap_y_strains"][0]
     else:
-        table_strain = data["heatmap_y"][click_data["points"][0]["y"]]
+        table_strain = data["heatmap_y_strains"][click_data["points"][0]["y"]]
 
     # If you click a strain, but then hide it, this condition stops
     # things from breaking.
     if table_strain in data["hidden_strains"]:
-        table_strain = data["heatmap_y"][0]
+        table_strain = data["heatmap_y_strains"][0]
 
     return table_generator.get_table_fig(data, table_strain)
 
@@ -1114,7 +1118,7 @@ app.clientside_callback(
         function_name="linkHeatmapCellsYScrolling"
     ),
     Output("link-heatmap-cells-y-scrolling", "data"),
-    Input("heatmap-y-axis-fig", "figure"),
+    Input("heatmap-strains-axis-fig", "figure"),
     Input("heatmap-sample-size-axis-fig", "figure"),
     Input("heatmap-cells-fig", "figure")
 )

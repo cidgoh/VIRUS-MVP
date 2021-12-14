@@ -67,8 +67,8 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
       }
       // Heatmap displays rows in reverse
       ret = ret.reverse()
-      // Do not update if strain order reflects current heatmap y axis
-      if (JSON.stringify(ret) === JSON.stringify(data.heatmap_y)) {
+      // Do not update if strain order reflects current heatmap strains axis
+      if (JSON.stringify(ret) === JSON.stringify(data.heatmap_y_strains)) {
         return window.dash_clientside.no_update
       } else {
         return ret
@@ -150,7 +150,7 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
      * containers.
      * Lifted from https://stackoverflow.com/a/41998497/11472358
      * Seems to work smoothly.
-     * @param _ Heatmap y-axis fig generated
+     * @param _ Heatmap strains-axis fig generated
      * @param __ Heatmap sample size axis fig generated
      * @param ___ Heatmap cells fig generated
      */
@@ -158,9 +158,11 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
       let isSyncingLeftScroll = false;
       let isSyncingMidScroll = false;
       let isSyncingRightScroll = false;
-      const leftDiv = document.getElementById('heatmap-y-axis-inner-container');
+      const leftDiv =
+          document.getElementById('heatmap-strains-axis-inner-container');
       const midDiv = document.getElementById('heatmap-cells-inner-container');
-      const rightDiv = document.getElementById('heatmap-sample-size-axis-inner-container');
+      const rightDiv =
+          document.getElementById('heatmap-sample-size-axis-inner-container');
 
       leftDiv.onscroll = function() {
         if (!isSyncingLeftScroll) {

@@ -17,7 +17,7 @@ def get_table_row_div(data):
         dbc.Col(
             dcc.Graph(
                 id="table",
-                figure=get_table_fig(data, data["heatmap_y"][0]),
+                figure=get_table_fig(data, data["heatmap_y_strains"][0]),
                 config={"displayModeBar": False}
             )
         ),

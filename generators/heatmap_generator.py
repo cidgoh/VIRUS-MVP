@@ -72,8 +72,9 @@ def get_heatmap_row(data):
                             html.Div(
                                 html.Div(
                                     dcc.Graph(
-                                        id="heatmap-y-axis-fig",
-                                        figure=get_heatmap_y_axis_fig(data),
+                                        id="heatmap-strains-axis-fig",
+                                        figure=
+                                        get_heatmap_strains_axis_fig(data),
                                         config={"displayModeBar": False},
                                         style={
                                             "height": heatmap_cells_fig_height,
@@ -84,7 +85,7 @@ def get_heatmap_row(data):
                                                 -heatmap_cells_container_height
                                         }
                                     ),
-                                    id="heatmap-y-axis-inner-container",
+                                    id="heatmap-strains-axis-inner-container",
                                     style={
                                         "height": "100%",
                                         "overflowY": "scroll",
@@ -94,7 +95,7 @@ def get_heatmap_row(data):
                                             heatmap_cells_container_height+50
                                     }
                                 ),
-                                id="heatmap-y-axis-outer-container",
+                                id="heatmap-strains-axis-outer-container",
                                 style={
                                     "height": heatmap_cells_container_height,
                                     "overflow": "hidden"
@@ -292,8 +293,8 @@ def get_heatmap_row(data):
     return ret
 
 
-def get_heatmap_y_axis_fig(data):
-    """Get Plotly figure used as a mock y-axis for the heatmap.
+def get_heatmap_strains_axis_fig(data):
+    """Get Plotly figure used as a strains y-axis for the heatmap.
 
     The reason we have a separate figure for the y axis view is that
     there is no native way to have a fixed y axis as you scroll the
@@ -301,7 +302,7 @@ def get_heatmap_y_axis_fig(data):
 
     :param data: ``data_parser.get_data`` return value
     :type data: dict
-    :return: Plotly figure containing heatmap y axis
+    :return: Plotly figure containing heatmap strains axis
     :rtype: go.Figure
     """
     ret = go.Figure({})
@@ -323,19 +324,19 @@ def get_heatmap_y_axis_fig(data):
                      visible=False)
 
     tick_text = []
-    for strain in data["heatmap_y"]:
+    for strain in data["heatmap_y_strains"]:
         if strain in data["voc_strains"]:
             tick_text.append("<b>%s</b>" % strain)
         elif strain in data["voi_strains"]:
             tick_text.append("<i>%s</i>" % strain)
         else:
             tick_text.append(strain)
-    ret.update_yaxes(range=[-0.5, len(data["heatmap_y"])-0.5],
+    ret.update_yaxes(range=[-0.5, len(data["heatmap_y_strains"])-0.5],
                      fixedrange=True,
                      tickmode="array",
                      tick0=0,
                      dtick=1,
-                     tickvals=list(range(len(data["heatmap_y"]))),
+                     tickvals=list(range(len(data["heatmap_y_strains"]))),
                      ticktext=tick_text,
                      ticklabelposition="outside")
     return ret
@@ -369,12 +370,12 @@ def get_heatmap_sample_size_axis_fig(data):
         }
     )
     ret.update_xaxes(fixedrange=True, visible=False)
-    ret.update_yaxes(range=[-0.5, len(data["heatmap_y"])-0.5],
+    ret.update_yaxes(range=[-0.5, len(data["heatmap_y_sample_sizes"])-0.5],
                      fixedrange=True,
                      tickmode="array",
                      tick0=0,
                      dtick=1,
-                     tickvals=list(range(len(data["heatmap_y"]))),
+                     tickvals=list(range(len(data["heatmap_y_sample_sizes"]))),
                      ticktext=data["heatmap_y_sample_sizes"],
                      ticklabelposition="inside")
     return ret
@@ -611,7 +612,7 @@ def get_heatmap_cells_fig(data):
                      showspikes=True,
                      spikecolor="black",
                      side="top")
-    ret.update_yaxes(range=[-0.5, len(data["heatmap_y"])-0.5],
+    ret.update_yaxes(range=[-0.5, len(data["heatmap_y_strains"])-0.5],
                      tickmode="linear",
                      tick0=0.5,
                      dtick=1,
@@ -643,7 +644,7 @@ def get_heatmap_cells_graph_obj(data):
     scatter_text = []
     scatter_line_width = []
     for i, pos in enumerate(data["heatmap_x_nt_pos"]):
-        for j, strain in enumerate(data["heatmap_y"]):
+        for j, strain in enumerate(data["heatmap_y_strains"]):
             freq = data["heatmap_z"][j][i]
             if freq is not None:
                 scatter_x.append(i)

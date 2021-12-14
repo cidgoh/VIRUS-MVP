@@ -369,9 +369,8 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
             get_heatmap_cells_tickvals(max_mutations_per_pos_dict),
         "heatmap_x_nt_pos":
             get_heatmap_x_nt_pos(max_mutations_per_pos_dict),
-        # TODO specify what y here
-        "heatmap_y":
-            get_heatmap_y(visible_parsed_mutations),
+        "heatmap_y_strains":
+            get_heatmap_y_strains(visible_parsed_mutations),
         "heatmap_y_sample_sizes":
             get_heatmap_y_sample_sizes(visible_parsed_mutations, sample_sizes),
         "tables":
@@ -387,7 +386,7 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
         "voi_strains":
             voi_strains,
         "all_strains":
-            get_heatmap_y(parsed_gvf_dirs),
+            get_heatmap_y_strains(parsed_gvf_dirs),
         "mutation_freq_slider_vals":
             mutation_freq_slider_vals,
         "insertions_x":
@@ -420,7 +419,7 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
         get_heatmap_x_tickvals(ret["heatmap_cells_tickvals"])
     ret["heatmap_x_aa_pos"] = \
         get_heatmap_x_aa_pos(ret["heatmap_x_nt_pos"], ret["heatmap_x_genes"])
-    ret["heatmap_cells_fig_height"] = len(ret["heatmap_y"]) * 40
+    ret["heatmap_cells_fig_height"] = len(ret["heatmap_y_strains"]) * 40
     ret["heatmap_cells_container_height"] = \
         min(10*40, ret["heatmap_cells_fig_height"])
     ret["heatmap_cells_fig_width"] = len(ret["heatmap_x_nt_pos"]) * 36
@@ -586,15 +585,13 @@ def get_heatmap_x_aa_pos(heatmap_x_nt_pos, heatmap_x_genes):
     return ret
 
 
-def get_heatmap_y(parsed_mutations):
-    """Get y axis values of heatmap cells.
-
-    These are the VOC strains.
+def get_heatmap_y_strains(parsed_mutations):
+    """Get strain y axis values of heatmap cells.
 
     :param parsed_mutations: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return "mutations" values.
     :type parsed_mutations: dict
-    :return: List of y axis values
+    :return: List of strain y axis values
     :rtype: list[str]
     """
     ret = []
@@ -805,7 +802,7 @@ def get_insertions_y(parsed_mutations):
     """Get y coordinates of insertion markers to overlay in heatmap.
 
     These are the linear y coordinates used in the Plotly graph object.
-    i.e., the indices of data["heatmap_y"]
+    i.e., the indices of data["heatmap_y_strains"]
 
     :param parsed_mutations: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return "mutations" values.
@@ -861,7 +858,7 @@ def get_deletions_y(parsed_mutations):
     """Get y coordinates of deletion markers to overlay in heatmap.
 
     These are the linear y coordinates used in the Plotly graph object.
-    i.e., the indices of data["heatmap_y"]
+    i.e., the indices of data["heatmap_y_strains"]
 
     :param parsed_mutations: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return "mutations" values.
