@@ -55,14 +55,11 @@ def get_heatmap_row(data):
                     # Space for voc and voi legend
                     dbc.Row(
                         dbc.Col(
-                            dcc.Graph(
-                                id="voc-voi-legend-fig",
-                                figure=get_voc_voi_legend_fig(),
-                                config={"displayModeBar": False},
-                                className="pl-3 pl-xl-5 ml-xl-2",
-                                style={"height": 100}
-                            )
+                            "Variants",
+                            className="text-right h5",
+                            style={"padding-top": 75, "padding-right": 15}
                         ),
+                        style={"height": 100},
                         no_gutters=True
                     ),
                     # Space for y-axis fig; hackeyness for scrolling
@@ -203,8 +200,9 @@ def get_heatmap_row(data):
                     # Empty space above sample size axis
                     dbc.Row(
                         dbc.Col(
-                            "Sample size",
-                            style={"padding-top": 75}
+                            "N",
+                            className="h5 font-italic",
+                            style={"padding-top": 75, "padding-left": 15}
                         ),
                         style={"height": 100},
                         no_gutters=True
@@ -789,54 +787,6 @@ def get_heatmap_colorbar_graph_obj():
                 "x": 0
             }
         },
-        hoverinfo="skip"
-    )
-    return ret
-
-
-def get_voc_voi_legend_fig():
-    """Get Plotly figure used as voc and voi legend.
-
-    :return: Plotly figure containing single genome legend
-    :rtype: go.Figure
-    """
-    ret = go.Figure(get_voc_voi_legend_graph_obj())
-    ret.update_layout(
-        font={"size": 16},
-        margin={
-            "l": 0,
-            "r": 0,
-            "t": 0,
-            "b": 0,
-            "pad": 0
-        },
-        plot_bgcolor="white",
-        xaxis={
-            "visible": False,
-            "fixedrange": True
-        },
-        yaxis={
-            "visible": False,
-            "fixedrange": True,
-            "range": [-1, 4]
-        }
-    )
-    return ret
-
-
-def get_voc_voi_legend_graph_obj():
-    """Get Plotly graph obj used as voc voi legend.
-
-    This is really just a scatterplot with a single point.
-
-    :return: Plotly scatterplot obj containing single genome legend
-    :rtype: go.Scattergl
-    """
-    ret = go.Scatter(
-        x=[0, 0],
-        y=[0, 1],
-        mode="text",
-        text=["<b>Variant of concern</b>", "<i>Variant of interest</i>"],
         hoverinfo="skip"
     )
     return ret
