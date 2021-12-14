@@ -30,7 +30,8 @@ from data_parser import get_data, vcf_str_to_gvf_str
 from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR,
                          SURVEILLANCE_DOWNLOAD_PATH)
 from generators import (heatmap_generator, histogram_generator,
-                        table_generator, toolbar_generator, footer_generator)
+                        legend_generator, table_generator, toolbar_generator,
+                        footer_generator)
 
 
 # This is the only global variable Dash plays nice with, and it
@@ -129,6 +130,8 @@ def launch_app(_):
         toolbar_generator.get_toolbar_row(data_),
         # Bootstrap row containing heatmap
         heatmap_generator.get_heatmap_row(data_),
+        # Bootstrap row containing legend row
+        legend_generator.get_legend_row(),
         # Bootstrap row containing histogram
         histogram_generator.get_histogram_row(data_),
         # Bootstrap row containing table
