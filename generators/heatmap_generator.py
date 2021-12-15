@@ -259,13 +259,11 @@ def get_heatmap_row(data):
                     # Space for single genome legend
                     dbc.Row(
                         dbc.Col(
-                            dcc.Graph(
-                                id="single-genome-legend-fig",
-                                figure=get_single_genome_legend_fig(),
-                                config={"displayModeBar": False},
-                                style={"height": 100}
-                            )
+                            "Alt freq",
+                            className="h5",
+                            style={"padding-top": 75}
                         ),
+                        style={"height": 100},
                         no_gutters=True
                     ),
                     # Space for colorbar fig
@@ -787,60 +785,6 @@ def get_heatmap_colorbar_graph_obj():
                 "x": 0
             }
         },
-        hoverinfo="skip"
-    )
-    return ret
-
-
-def get_single_genome_legend_fig():
-    """Get Plotly figure used as single genome legend.
-
-    :return: Plotly figure containing single genome legend
-    :rtype: go.Figure
-    """
-    ret = go.Figure(get_single_genome_legend_graph_obj())
-    ret.update_layout(
-        font={"size": 16},
-        margin={
-            "l": 0,
-            "r": 0,
-            "t": 0,
-            "b": 0,
-            "pad": 0
-        },
-        plot_bgcolor="white",
-        xaxis={
-            "visible": False,
-            "fixedrange": True
-        },
-        yaxis={
-            "visible": False,
-            "fixedrange": True
-        }
-    )
-    return ret
-
-
-def get_single_genome_legend_graph_obj():
-    """Get Plotly graph obj used as single genome legend.
-
-    This is really just a scatterplot with a single point.
-
-    :return: Plotly scatterplot obj containing single genome legend
-    :rtype: go.Scattergl
-    """
-    ret = go.Scattergl(
-        x=[0],
-        y=[0],
-        mode="markers+text",
-        marker={
-            "color": "#ffffff",
-            "symbol": "square",
-            "line": {"width": 2},
-            "size": 30
-        },
-        text=["N==1"],
-        textposition="top center",
         hoverinfo="skip"
     )
     return ret
