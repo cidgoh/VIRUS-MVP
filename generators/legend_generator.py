@@ -21,7 +21,7 @@ def get_legend_row():
                     config={"displayModeBar": False},
                     style={"height": "100%"}
                 ),
-                width={"offset": 2, "size": 1}
+                width={"offset": 1, "size": 1}
             ),
             dbc.Col(
                 dcc.Graph(
