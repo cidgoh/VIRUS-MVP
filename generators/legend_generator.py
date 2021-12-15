@@ -5,6 +5,21 @@ import dash_core_components as dcc
 import plotly.graph_objects as go
 
 
+def get_legend_collapse():
+    """Get Dash Bootstrap Components collapse containing legend row.
+
+    :return: Dash Bootstrap Components collapsable div containing
+        legend view.
+    :rtype: dbc.Collapse
+    """
+    ret = dbc.Collapse(
+        get_legend_row(),
+        id="legend-collapse",
+        is_open=False
+    )
+    return ret
+
+
 def get_legend_row():
     """Get Dash Bootstrap Components row containing legend columns.
 
@@ -21,7 +36,8 @@ def get_legend_row():
                     config={"displayModeBar": False},
                     style={"height": "100%"}
                 ),
-                width={"offset": 1, "size": 1}
+                width={"offset": 1, "size": 1},
+                style={"height": 75}
             ),
             dbc.Col(
                 dcc.Graph(
@@ -30,11 +46,11 @@ def get_legend_row():
                     config={"displayModeBar": False},
                     style={"height": "100%"}
                 ),
-                width=1
-            )
+                width=1,
+                style={"height": 75}
+            ),
         ],
         no_gutters=True,
-        style={"height": 75}
     )
     return ret
 

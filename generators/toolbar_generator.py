@@ -10,10 +10,6 @@ import dash_html_components as html
 def get_toolbar_row(data):
     """Get Dash Bootstrap Components row that sits above heatmap.
 
-    This contains a col with buttons for selecting and uploading
-    strains, a col for displaying dialog to the user, and the clade
-    defining mutations switch.
-
     :param data: ``get_data`` return value
     :type data: dict
     :return: Dash Bootstrap Component row with upload button and clade
@@ -27,7 +23,8 @@ def get_toolbar_row(data):
                     [
                         get_select_lineages_toolbar_btn(),
                         get_file_upload_component(),
-                        get_file_download_component()
+                        get_file_download_component(),
+                        get_legend_toggle_component()
                     ],
                     className="pl-4 pl-xl-5"
                 ),
@@ -65,7 +62,7 @@ def get_select_lineages_toolbar_btn():
     """
     return dbc.Button("Select lineages",
                       id="open-select-lineages-modal-btn",
-                      className="mr-1")
+                      className="mr-2")
 
 
 def get_select_lineages_modal():
@@ -168,8 +165,21 @@ def get_file_download_component():
                    color="primary",
                    outline=True,
                    id="download-file-btn"),
-        dcc.Download(id="download-file-data")
-    ])
+        dcc.Download(id="download-file-data"),
+    ], className="mr-2")
+
+
+def get_legend_toggle_component():
+    """Get dash component for toggling heatmap legend.
+
+    :return: Dash Bootstrap Components button with appropriate label
+    :rtype: dbc.Button
+    """
+    icon = html.I(className="bi-question", style={"font-size": 16})
+    return dbc.Button(icon,
+                      color="info",
+                      outline=True,
+                      id="toggle-legend-btn")
 
 
 def get_mutation_freq_slider(data):
