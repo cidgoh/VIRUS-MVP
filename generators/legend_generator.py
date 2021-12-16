@@ -2,6 +2,7 @@
 
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
+import dash_html_components as html
 import plotly.graph_objects as go
 
 
@@ -30,14 +31,10 @@ def get_legend_row():
     ret = dbc.Row(
         [
             dbc.Col(
-                dcc.Graph(
-                    id="voc-voi-legend-fig",
-                    figure=get_voc_voi_legend_fig(),
-                    config={"displayModeBar": False},
-                ),
-                className="border-left border-right border-top border-bottom "
-                          "border-dark",
-                width={"offset": 1, "size": 1}
+                get_axes_description(),
+                className="border-top border-bottom border-left border-dark "
+                          "p-1",
+                width={"offset": 1, "size": 7}
             ),
             dbc.Col(
                 dcc.Graph(
@@ -45,7 +42,7 @@ def get_legend_row():
                     figure=get_single_genome_legend_fig(),
                     config={"displayModeBar": False},
                 ),
-                className="border-top border-bottom border-dark",
+                className="border-top border-bottom border-left border-dark",
                 width=1
             ),
             dbc.Col(
@@ -63,9 +60,9 @@ def get_legend_row():
                     figure=get_recorded_functions_legend_fig(),
                     config={"displayModeBar": False},
                 ),
-                className="border-top border-bottom border-dark",
+                className="border-top border-bottom border-right border-dark",
                 width=1
-            ),
+            )
         ],
         className="mt-2",
         no_gutters=True
@@ -73,52 +70,51 @@ def get_legend_row():
     return ret
 
 
-def get_voc_voi_legend_fig():
-    """Get Plotly figure used as voc and voi legend.
+def get_axes_description():
+    """Get rows and cols used to describe heatmap axes in legend.
 
-    :return: Plotly figure containing single genome legend
-    :rtype: go.Figure
+    :return: Dash bootstrap components rows and cols used to describe
+        heatmap axes in legend.
+    :rtype: list[dbc.Row[dbc.Col]]
     """
-    ret = go.Figure(get_voc_voi_legend_graph_obj())
-    ret.update_layout(
-        height=75,
-        font={"size": 16},
-        margin={
-            "l": 0,
-            "r": 0,
-            "t": 0,
-            "b": 0,
-            "pad": 0
-        },
-        plot_bgcolor="white",
-        xaxis={
-            "visible": False,
-            "fixedrange": True
-        },
-        yaxis={
-            "visible": False,
-            "fixedrange": True,
-            "range": [-1, 2]
-        }
-    )
-    return ret
-
-
-def get_voc_voi_legend_graph_obj():
-    """Get Plotly graph obj used as voc voi legend.
-
-    This is really just a scatterplot with a single point.
-
-    :return: Plotly scatterplot obj containing single genome legend
-    :rtype: go.Scatter
-    """
-    ret = go.Scatter(
-        x=[0, 0],
-        y=[1, 0],
-        mode="text",
-        text=["<i>VOI</i>", "<b>VOC</b>"],
-        hoverinfo="skip"
-    )
+    ret = [
+        dbc.Row([
+            dbc.Col([
+                html.B("Left axis: "),
+                # "VOC are in bold, and VOI are in italics."
+                "VOC are in ",
+                html.B("bold"),
+                ", and VOI are in ",
+                html.I("italics"),
+                "."
+            ]),
+            dbc.Col([
+                html.B("Top axis: "),
+                "Nucleotide position w.r.t ",
+                html.A(
+                    "reference genome",
+                    href="https://www.ncbi.nlm.nih.gov/nuccore/NC_045512.2",
+                    target="_blank",
+                    # https://bit.ly/3qQjB7Y
+                    rel="noopener noreferrer"
+                ),
+                "."
+            ])
+        ]),
+        dbc.Row([
+            dbc.Col([
+                html.B("Right axis: "),
+                "Number of genomic sequences analysed."
+            ]),
+            dbc.Col([
+                html.B("Bottom axis: "),
+                "{gene}.{amino acid position within gene}. IGRs are in ",
+                html.B("bold"),
+                ", and are {upstream gene}.{1 - nucleotide positions "
+                "downstream}."
+            ])
+        ])
+    ]
     return ret
 
 
