@@ -36,8 +36,9 @@ def get_legend_row():
                     config={"displayModeBar": False},
                     style={"height": "100%"}
                 ),
-                width={"offset": 1, "size": 1},
-                style={"height": 75}
+                className="border-left border-right border-top border-bottom "
+                          "border-dark",
+                width={"offset": 1, "size": 1}
             ),
             dbc.Col(
                 dcc.Graph(
@@ -46,11 +47,12 @@ def get_legend_row():
                     config={"displayModeBar": False},
                     style={"height": "100%"}
                 ),
-                width=1,
-                style={"height": 75}
+                className="border-top border-bottom border-dark",
+                width=1
             ),
         ],
-        no_gutters=True,
+        className="mt-2",
+        no_gutters=True
     )
     return ret
 
@@ -63,6 +65,7 @@ def get_voc_voi_legend_fig():
     """
     ret = go.Figure(get_voc_voi_legend_graph_obj())
     ret.update_layout(
+        height=75,
         font={"size": 16},
         margin={
             "l": 0,
@@ -111,6 +114,7 @@ def get_single_genome_legend_fig():
     """
     ret = go.Figure(get_single_genome_legend_graph_obj())
     ret.update_layout(
+        height=75,
         font={"size": 16},
         margin={
             "l": 0,
