@@ -57,6 +57,15 @@ def get_legend_row():
                 className="border-top border-bottom border-dark",
                 width=1
             ),
+            dbc.Col(
+                dcc.Graph(
+                    id="recorded-functions-legend-fig",
+                    figure=get_recorded_functions_legend_fig(),
+                    config={"displayModeBar": False},
+                ),
+                className="border-top border-bottom border-dark",
+                width=1
+            ),
         ],
         className="mt-2",
         no_gutters=True
@@ -218,6 +227,62 @@ def get_indel_legend_graph_obj():
             "size": [30, 30, 12, 12]
         },
         text=["Ins", "Del", "", ""],
+        textposition="top center",
+        hoverinfo="skip"
+    )
+    return ret
+
+
+def get_recorded_functions_legend_fig():
+    """Get Plotly figure used as recorded functions legend.
+
+    i.e., whether a mutation has recorded functions
+
+    :return: Plotly figure containing indel legend
+    :rtype: go.Figure
+    """
+    ret = go.Figure(get_recorded_functions_legend_graph_obj())
+    ret.update_layout(
+        height=75,
+        font={"size": 16},
+        margin={
+            "l": 0,
+            "r": 0,
+            "t": 0,
+            "b": 0,
+            "pad": 0
+        },
+        plot_bgcolor="white",
+        xaxis={
+            "visible": False,
+            "fixedrange": True
+        },
+        yaxis={
+            "visible": False,
+            "fixedrange": True,
+            "range": [-1, 2]
+        }
+    )
+    return ret
+
+
+def get_recorded_functions_legend_graph_obj():
+    """Get Plotly graph obj used as recorded functions legend.
+
+    :return: Plotly scatterplot obj containing single genome legend
+    :rtype: go.Scatter
+    """
+    ret = go.Scatter(
+        x=[0],
+        y=[0],
+        mode="markers+text",
+        marker={
+            "color": "#ffffbf",
+            "symbol": "square",
+            "line": {"width": 4},
+            "size": 30
+        },
+        text=["Functions"],
         textposition="top center",
         hoverinfo="skip"
     )
