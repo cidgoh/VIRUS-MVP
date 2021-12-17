@@ -89,6 +89,8 @@ def vcf_str_to_gvf_str(vcf_str, strain):
     new_df["#attributes"] += 'function_description="";'
     new_df["#attributes"] += 'source="";'
     new_df["#attributes"] += 'citation="";'
+    new_df["#attributes"] += "sample_size=%s;" % 3
+    new_df["#attributes"] += 'multi_aa_name="";'
 
     # remove starting NaN; leave trailing ";"
     new_df["#attributes"] = new_df["#attributes"].str[3:]
