@@ -90,7 +90,8 @@ def get_select_lineages_modal_body(data):
     :param data: ``get_data`` return value
     :type data: dict
     :return: Checkboxes for each directory containing strains, with
-        only boxes for non-hidden strains checked.
+        only boxes for non-hidden strains checked, and btns for
+        selecting or deselecting all checkboxes.
     :rtype: list[dbc.FormGroup]
     """
     modal_body = []
@@ -105,7 +106,11 @@ def get_select_lineages_modal_body(data):
             if strain not in data["hidden_strains"]:
                 selected_values.append(strain)
         form_group = dbc.FormGroup([
-            dbc.Label(os.path.basename(dir_)),
+            dbc.Row(dbc.Col(os.path.basename(dir_))),
+            dbc.ButtonGroup([
+                dbc.Button("All", size="sm", color="success"),
+                dbc.Button("None", size="sm", color="danger")
+            ]),
             dbc.Checklist(
                 id={"type": "select-lineages-modal-checklist", "index": dir_},
                 options=checklist_options,
