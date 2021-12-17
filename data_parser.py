@@ -682,7 +682,7 @@ def get_heatmap_hover_text(parsed_mutations, max_mutations_per_pos_dict):
 
                     multi_aa_name = mutation["multi_aa_name"]
                     if not multi_aa_name:
-                        multi_aa_name = "No recorded multi aa"
+                        multi_aa_name = "False"
 
                     functions_str = ""
                     for j, fn_category in enumerate(mutation["functions"]):
@@ -694,7 +694,7 @@ def get_heatmap_hover_text(parsed_mutations, max_mutations_per_pos_dict):
                         functions_str = "None recorded so far"
 
                     cell_text_str = "<b>Mutation name:</b> %s<br>" \
-                                    "Multi AA name: %s<br>" \
+                                    "Multiple AA mutations?: %s<br>" \
                                     "<br>" \
                                     "Reference: %s<br>" \
                                     "Alternate: %s<br>" \
