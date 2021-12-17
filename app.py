@@ -30,7 +30,8 @@ from data_parser import get_data, vcf_str_to_gvf_str
 from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR,
                          SURVEILLANCE_DOWNLOAD_PATH)
 from generators import (heatmap_generator, histogram_generator,
-                        table_generator, toolbar_generator, footer_generator)
+                        legend_generator, table_generator, toolbar_generator,
+                        footer_generator)
 
 
 # This is the only global variable Dash plays nice with, and it
@@ -127,6 +128,8 @@ def launch_app(_):
     return [
         # Bootstrap row containing tools at the top of the application
         toolbar_generator.get_toolbar_row(data_),
+        # Bootstrap collapse containing legend
+        legend_generator.get_legend_collapse(),
         # Bootstrap row containing heatmap
         heatmap_generator.get_heatmap_row(data_),
         # Bootstrap row containing histogram
@@ -582,6 +585,23 @@ def update_mutation_freq_slider(get_data_args, old_slider_marks,
         raise PreventUpdate
 
     return toolbar_generator.get_mutation_freq_slider(data)
+
+
+@app.callback(
+    Output("legend-collapse", "is_open"),
+    Input("toggle-legend-btn", "n_clicks"),
+    State("legend-collapse", "is_open"),
+    prevent_initial_call=True
+)
+def toggle_legend_collapse(_, is_open):
+    """Open or close legend view.
+
+    :param _: Toggle legend btn was clicked
+    :param is_open: Current visibility of legend
+    :return: New visbility for legend; opposite of ``is_open``
+    :rtype: bool
+    """
+    return not is_open
 
 
 @app.callback(
