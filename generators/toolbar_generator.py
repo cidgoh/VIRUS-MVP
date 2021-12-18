@@ -108,8 +108,20 @@ def get_select_lineages_modal_body(data):
         form_group = dbc.FormGroup([
             dbc.Row(dbc.Col(os.path.basename(dir_))),
             dbc.ButtonGroup([
-                dbc.Button("All", size="sm", color="success"),
-                dbc.Button("None", size="sm", color="danger")
+                dbc.Button(
+                    "All",
+                    size="sm",
+                    color="success",
+                    id={"type": "select-lineages-modal-all-btn",
+                        "index": dir_}
+                ),
+                dbc.Button(
+                    "None",
+                    size="sm",
+                    color="danger",
+                    id={"type": "select-lineages-modal-none-btn",
+                        "index": dir_}
+                )
             ]),
             dbc.Checklist(
                 id={"type": "select-lineages-modal-checklist", "index": dir_},

@@ -22,7 +22,8 @@ from time import sleep
 import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
-from dash.dependencies import ALL, ClientsideFunction, Input, Output, State
+from dash.dependencies import (ALL, MATCH, ClientsideFunction, Input, Output,
+                               State)
 from dash.exceptions import PreventUpdate
 from flask_caching import Cache
 
@@ -545,6 +546,24 @@ def toggle_select_lineages_modal(_, __, ___, get_data_args, last_data_mtime):
     else:
         # No need to populate modal body if the modal is closed
         return False, None
+
+
+@app.callback(
+    Output({"type": "select-lineages-modal-checklist", "index": MATCH},
+           "value"),
+    Input({"type": "select-lineages-modal-none-btn", "index": MATCH},
+          "n_clicks"),
+    prevent_initial_call=True
+)
+def uncheck_all_strains_in_select_all_lineages_modal(_):
+    """Unselect checkboxes after user clicks "none" btn in modal.
+
+    These are the relevant checkboxes in a specific directory,
+    depending on which "none" btn the user clicked.
+
+    :param: _: "none" btn in select lineages modal was clicked.
+    """
+    return []
 
 
 @app.callback(
