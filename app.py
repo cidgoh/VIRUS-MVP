@@ -16,13 +16,15 @@ I have unparallelized some callbacks, which allows certain callbacks to
 run faster.
 """
 from base64 import b64decode
+from json import loads
 from os import path, walk
 from time import sleep
 
 import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
-from dash.dependencies import ALL, ClientsideFunction, Input, Output, State
+from dash.dependencies import (ALL, MATCH, ClientsideFunction, Input, Output,
+                               State)
 from dash.exceptions import PreventUpdate
 from flask_caching import Cache
 
@@ -545,6 +547,35 @@ def toggle_select_lineages_modal(_, __, ___, get_data_args, last_data_mtime):
     else:
         # No need to populate modal body if the modal is closed
         return False, None
+
+
+@app.callback(
+    Output({"type": "select-lineages-modal-checklist", "index": MATCH},
+           "value"),
+    Input({"type": "select-lineages-modal-all-btn", "index": MATCH},
+          "n_clicks"),
+    Input({"type": "select-lineages-modal-none-btn", "index": MATCH},
+          "n_clicks"),
+    State({"type": "select-lineages-modal-checklist", "index": MATCH},
+          "options"),
+    prevent_initial_call=True
+)
+def toggle_all_strains_in_select_all_lineages_modal(_, __, opts):
+    """Toggle checkboxes after user clicks "all" or "none" modal btns.
+
+    Only the relevant checkboxes are toggled, specific to a directory,
+    depending on which "all" or "none" btn the user clicked.
+
+    :param: _: "all" btn in select lineages modal was clicked.
+    :param: __: "none" btn in select lineages modal was clicked.
+    """
+    ctx = dash.callback_context
+    triggered_prop_id = ctx.triggered[0]["prop_id"]
+    triggered_prop_id_type = loads(triggered_prop_id.split(".")[0])["type"]
+    if triggered_prop_id_type == "select-lineages-modal-all-btn":
+        return [x["value"] for x in opts]
+    else:
+        return []
 
 
 @app.callback(
