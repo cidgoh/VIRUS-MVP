@@ -71,6 +71,8 @@ cache = Cache(server, config={
     # Max number of files app will store before it starts deleting some
     "CACHE_THRESHOLD": 200
 })
+# Cache lasts for a day
+TIMEOUT = 86400
 
 # The ``layout`` attribute determines what HTML ``app`` renders when it
 # is served. We start with an empty bootstrap container, but it will be
@@ -261,7 +263,7 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     return args, last_data_mtime
 
 
-@cache.memoize()
+@cache.memoize(timeout=TIMEOUT)
 def read_data(get_data_args, last_data_mtime):
     """Returns and caches return value of ``get_data``.
 
