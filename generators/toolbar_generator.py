@@ -36,6 +36,16 @@ def get_toolbar_row(data):
                 id="dialog-col"
             ),
             dbc.Col(
+                dcc.Loading(
+                    None,
+                    id="empty-loading",
+                    style={"height": "100%", "width": "100%", "margin": 0},
+                    type="dot"
+                ),
+                id="empty-loading-col",
+                width=1
+            ),
+            dbc.Col(
                 get_mutation_freq_slider(data),
                 className="my-auto",
                 id="mutation-freq-slider-col",
