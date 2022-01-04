@@ -133,7 +133,7 @@ def launch_app(_):
         # Bootstrap collapse containing legend
         legend_generator.get_legend_collapse(),
         # Bootstrap row containing heatmap
-        heatmap_generator.get_heatmap_row(data_),
+        dcc.Loading(heatmap_generator.get_heatmap_row(data_)),
         # Bootstrap row containing histogram
         histogram_generator.get_histogram_row(data_),
         # Bootstrap row containing table
@@ -178,7 +178,8 @@ def launch_app(_):
 @app.callback(
     output=[
         Output("get-data-args", "data"),
-        Output("last-data-mtime", "data")
+        Output("last-data-mtime", "data"),
+        Output("empty-loading", "data")
     ],
     inputs=[
         Input("show-clade-defining", "data"),
@@ -200,7 +201,10 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     ret val. This fn calls ``read_data`` first, so it is already cached
     before those callbacks need it.
 
-    We also update ``last-data-mtime`` here.
+    We also update ``last-data-mtime`` here, and ``empty-loading``. In
+    the case of ``empty-loading``, we keep the value as ``None``, but
+    returning it in this fn provides a spinner while this fn is being
+    run.
 
     :param show_clade_defining: ``update_show_clade-defining`` return
         value.
@@ -258,7 +262,7 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     # multiple processes.
     read_data(args, last_data_mtime)
 
-    return args, last_data_mtime
+    return args, last_data_mtime, None
 
 
 @cache.memoize()
