@@ -135,7 +135,7 @@ def launch_app(_):
         # Bootstrap collapse containing legend
         legend_generator.get_legend_collapse(),
         # Bootstrap row containing heatmap
-        dcc.Loading(heatmap_generator.get_heatmap_row(data_)),
+        heatmap_generator.get_heatmap_row(data_),
         # Bootstrap row containing histogram
         histogram_generator.get_histogram_row(data_),
         # Bootstrap row containing table
@@ -223,9 +223,9 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     :type mutation_freq_vals: list[int|float]
     :param gff3_annotations: ``parse_gff3_file`` return value
     :type gff3_annotations: dict
-    :return: ``get_data`` return value, and last mtime across all data
-        files.
-    :rtype: tuple[dict, float]
+    :return: ``get_data`` return value, last mtime across all data
+        files, and ``empty-loading`` children.
+    :rtype: tuple[dict, float, None]
     :raise PreventUpdate: New upload triggered this function, and that
         new upload failed.
     """
@@ -923,11 +923,13 @@ def update_histogram(get_data_args, last_data_mtime):
     data = read_data(get_data_args, last_data_mtime)
     return histogram_generator.get_histogram_top_row(data)
 
+
 @app.callback(
     Output("heatmap-cells-fig", "figure"),
     Output("heatmap-cells-fig", "style"),
     Output("heatmap-cells-inner-container", "style"),
     Output("heatmap-cells-outer-container", "style"),
+    Output("empty-loading", "children"),
     Input("get-data-args", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
@@ -938,12 +940,17 @@ def update_heatmap_cells_fig(get_data_args, last_data_mtime):
     This is the fig with the heatmap cells and x axis. We return style
     because attributes may need to change due to changes in data.
 
+    We also update ``empty-loading``. We keep the value as ``None``,
+    but returning it in this fn provides a spinner while this fn is
+    being run.
+
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
     :param last_data_mtime: Last mtime across all data files
     :type last_data_mtime: float
-    :return: New heatmap cells fig
-    :rtype: plotly.graph_objects.Figure
+    :return: New heatmap cells fig, associated styles, and
+        ``empty-loading`` children.
+    :rtype: Tuple(plotly.graph_objects.Figure, dict, dict, dict, None)
     """
     # Current ``get_data`` return val
     data = read_data(get_data_args, last_data_mtime)
@@ -974,7 +981,7 @@ def update_heatmap_cells_fig(get_data_args, last_data_mtime):
         "overflow": "hidden"
     }
     return (cells_fig, cells_fig_style, inner_container_style,
-            outer_container_style)
+            outer_container_style, None)
 
 
 @app.callback(
