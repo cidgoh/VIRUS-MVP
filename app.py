@@ -233,6 +233,9 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     if "new-upload.data" in triggers:
         if new_upload["status"] == "error":
             raise PreventUpdate
+        if strain_order:
+            # Strain order not updated after new upload
+            strain_order.append(new_upload["strain"])
 
     # Do not use the current position of the mutation frequency slider
     # if this function was triggered by an input that will modify the
@@ -380,7 +383,8 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
             fp.write("\n\n\n" + gvf_str)
         status = "ok"
         msg = ""
-    return {"filename": filename, "msg": msg, "status": status}
+    return {"filename": filename, "msg": msg, "status": status,
+            "strain": new_strain}
 
 
 @app.callback(
