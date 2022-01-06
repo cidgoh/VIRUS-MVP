@@ -83,8 +83,14 @@ app.layout = dbc.Container(
     # triggers the ``launch_app`` callback, which populates this
     # container with the appropriate content when the page is first
     # loaded. More detail on why this is necessary is in the callback
-    # docstring.
-    dcc.Store("first-launch"),
+    # docstring. ``first-launch-loader`` is also only used when the
+    # page is first loaded, but ultimately excised from the page.
+    [
+        dcc.Loading(None,
+                    id="first-launch-loader",
+                    style={"height": "100%", "width": "100%", "margin": 0}),
+        dcc.Store("first-launch"),
+    ],
     fluid=True,
     id="main-container",
     className="px-0"
@@ -93,6 +99,7 @@ app.layout = dbc.Container(
 
 @app.callback(
     Output("main-container", "children"),
+    Output("first-launch-loader", "children"),
     Input("first-launch", "data")
 )
 def launch_app(_):
@@ -114,6 +121,13 @@ def launch_app(_):
     to a server. So new data between page reloads may not be displayed
     if you do the following in the global scope--which you may be
     tempted to do because we are only doing it once!
+
+    We also technically return the children for
+    ``first-launch-loader``, but the return value is the same as its
+    current value (``None``), and since ``first-launch-loader`` is in
+    ``main-container``, its immediately excised from the page after
+    this callback. The ultimate purpose of this is to replace the blank
+    loading screen when the app is first loaded.
     """
     # Some default vals
     get_data_args = {
@@ -174,7 +188,7 @@ def launch_app(_):
         dcc.Store(id="make-select-lineages-modal-checkboxes-draggable"),
         dcc.Store(id="make-histogram-rel-pos-bar-dynamic"),
         dcc.Store(id="link-heatmap-cells-y-scrolling")
-    ]
+    ], None
 
 
 @app.callback(
