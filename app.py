@@ -379,7 +379,7 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
     if ext != "vcf":
         status = "error"
         msg = "Filename must end in \".vcf\"."
-    elif new_strain in old_data["heatmap_y_strains"]:
+    elif new_strain in old_data["all_strains"]:
         status = "error"
         msg = "Filename must not conflict with existing variant."
     else:

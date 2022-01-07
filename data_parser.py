@@ -389,7 +389,7 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
         "voi_strains":
             voi_strains,
         "all_strains":
-            get_heatmap_y_strains(parsed_gvf_dirs),
+            get_heatmap_y_strains(parsed_mutations),
         "mutation_freq_slider_vals":
             mutation_freq_slider_vals,
         "insertions_x":
