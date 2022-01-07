@@ -35,16 +35,29 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
     },
     /**
      * Get the order of the strains in the select lineage modal after the user
-     * clicks the OK button.
+     * clicks the OK button. We also update the strain order if the user uploads
+     * a new file.
      * @param _ OK button in select lineages modal was clicked
+     * @param {Object} newUpload ``update_new_upload`` return value
      * @param {Array<Object>} idArray Dash pattern matching id values for
      *  checkboxes in select lineages modal.
-     * @param {Object} data ``data_parser.get_data`` return value
+     * @param {Object} strainOrder Previous strain order
      * @return {Array<string>} The strains corresponding the checkboxes in the
      *  select lineages modal, in the final order they were in when the OK
      *  button was clicked.
      */
-    getStrainOrder: (_, idArray, data) => {
+    getStrainOrder: (_, newUpload, idArray, strainOrder) => {
+      const trigger = dash_clientside.callback_context.triggered[0].prop_id
+      if (trigger === 'new-upload.data') {
+        if (newUpload['status'] === 'error') {
+          return window.dash_clientside.no_update
+        }
+        if (strainOrder.length) {
+          strainOrder.push(newUpload['strain'])
+          return strainOrder
+        }
+      }
+
       let ret = []
       for (const id of idArray) {
         // There are two elements in each id, and we do not know which order
@@ -67,8 +80,8 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
       }
       // Heatmap displays rows in reverse
       ret = ret.reverse()
-      // Do not update if strain order reflects current heatmap strains axis
-      if (JSON.stringify(ret) === JSON.stringify(data.heatmap_y_strains)) {
+      // Do not update if strain order reflects current strain order
+      if (JSON.stringify(ret) === JSON.stringify(strainOrder)) {
         return window.dash_clientside.no_update
       } else {
         return ret

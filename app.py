@@ -247,9 +247,6 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     if "new-upload.data" in triggers:
         if new_upload["status"] == "error":
             raise PreventUpdate
-        if strain_order:
-            # Strain order not updated after new upload
-            strain_order.append(new_upload["strain"])
 
     # Do not use the current position of the mutation frequency slider
     # if this function was triggered by an input that will modify the
@@ -359,7 +356,7 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
     If a valid file is uploaded, it will be written to ``user_data``.
     But regardless of whether a valid file is uploaded, this function
     will return a dict describing the name of the file the user
-    attempted to upload, and status of upload.
+    attempted to upload, status of upload, and name of uploaded strain.
 
     :param file_contents: Contents of uploaded file, formatted by Dash
         into a base64 string.
@@ -1181,8 +1178,9 @@ app.clientside_callback(
     ),
     Output("strain-order", "data"),
     Input("select-lineages-ok-btn", "n_clicks"),
+    Input("new-upload", "data"),
     State({"type": "select-lineages-modal-checklist", "index": ALL}, "id"),
-    State("data", "data"),
+    State("strain-order", "data"),
     prevent_initial_call=True
 )
 app.clientside_callback(
