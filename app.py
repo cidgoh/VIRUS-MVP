@@ -1181,6 +1181,7 @@ app.clientside_callback(
     Input("new-upload", "data"),
     State({"type": "select-lineages-modal-checklist", "index": ALL}, "id"),
     State("strain-order", "data"),
+    State("data", "data"),
     prevent_initial_call=True
 )
 app.clientside_callback(

@@ -42,11 +42,12 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
      * @param {Array<Object>} idArray Dash pattern matching id values for
      *  checkboxes in select lineages modal.
      * @param {Object} strainOrder Previous strain order
+     * @param {Object} data ``data_parser.get_data`` return value
      * @return {Array<string>} The strains corresponding the checkboxes in the
      *  select lineages modal, in the final order they were in when the OK
      *  button was clicked.
      */
-    getStrainOrder: (_, newUpload, idArray, strainOrder) => {
+    getStrainOrder: (_, newUpload, idArray, strainOrder, data) => {
       const trigger = dash_clientside.callback_context.triggered[0].prop_id
       if (trigger === 'new-upload.data') {
         if (newUpload['status'] === 'error') {
@@ -80,8 +81,10 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
       }
       // Heatmap displays rows in reverse
       ret = ret.reverse()
-      // Do not update if strain order reflects current strain order
-      if (JSON.stringify(ret) === JSON.stringify(strainOrder)) {
+      // Do not update if strain order reflects current strain order. We check
+      // against the implicit strain order because it may not have been
+      // explicitly specified.
+      if (JSON.stringify(ret) === JSON.stringify(data['all_strains'])) {
         return window.dash_clientside.no_update
       } else {
         return ret
