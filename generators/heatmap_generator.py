@@ -52,12 +52,14 @@ def get_heatmap_row(data):
         [
             dbc.Col(
                 [
-                    # Empty space above y axis fig
+                    # Space for voc and voi legend
                     dbc.Row(
                         dbc.Col(
-                            None,
-                            style={"height": 100}
+                            "Variants",
+                            className="text-right h5",
+                            style={"padding-top": 75, "padding-right": 15}
                         ),
+                        style={"height": 100},
                         no_gutters=True
                     ),
                     # Space for y-axis fig; hackeyness for scrolling
@@ -67,8 +69,9 @@ def get_heatmap_row(data):
                             html.Div(
                                 html.Div(
                                     dcc.Graph(
-                                        id="heatmap-y-axis-fig",
-                                        figure=get_heatmap_y_axis_fig(data),
+                                        id="heatmap-strains-axis-fig",
+                                        figure=
+                                        get_heatmap_strains_axis_fig(data),
                                         config={"displayModeBar": False},
                                         style={
                                             "height": heatmap_cells_fig_height,
@@ -79,7 +82,7 @@ def get_heatmap_row(data):
                                                 -heatmap_cells_container_height
                                         }
                                     ),
-                                    id="heatmap-y-axis-inner-container",
+                                    id="heatmap-strains-axis-inner-container",
                                     style={
                                         "height": "100%",
                                         "overflowY": "scroll",
@@ -89,7 +92,7 @@ def get_heatmap_row(data):
                                             heatmap_cells_container_height+50
                                     }
                                 ),
-                                id="heatmap-y-axis-outer-container",
+                                id="heatmap-strains-axis-outer-container",
                                 style={
                                     "height": heatmap_cells_container_height,
                                     "overflow": "hidden"
@@ -194,16 +197,73 @@ def get_heatmap_row(data):
             ),
             dbc.Col(
                 [
-                    # Empty space above colorbar fig
+                    # Empty space above sample size axis
                     dbc.Row(
                         dbc.Col(
-                            dcc.Graph(
-                                id="single-genome-legend-fig",
-                                figure=get_single_genome_legend_fig(),
-                                config={"displayModeBar": False},
-                                style={"height": 100}
+                            "N",
+                            className="h5 font-italic",
+                            style={"padding-top": 75, "padding-left": 15}
+                        ),
+                        style={"height": 100},
+                        no_gutters=True
+                    ),
+                    # Space for sample size axis; some hackeyness for
+                    # scrolling
+                    # https://stackoverflow.com/a/49278385/11472358
+                    dbc.Row(
+                        dbc.Col(
+                            html.Div(
+                                html.Div(
+                                    dcc.Graph(
+                                        id="heatmap-sample-size-axis-fig",
+                                        figure=
+                                        get_heatmap_sample_size_axis_fig(data),
+                                        config={"displayModeBar": False},
+                                        style={
+                                            "height": heatmap_cells_fig_height,
+                                            # Need a scrollbar to match
+                                            # cells fig.
+                                            "width": "125%",
+                                            "marginBottom":
+                                                -heatmap_cells_container_height
+                                        }
+                                    ),
+                                    id="heatmap-sample-size-axis-inner-"
+                                       "container",
+                                    style={
+                                        "height": "100%",
+                                        "overflowX": "scroll",
+                                        "overflowY": "scroll",
+                                        "marginRight": -50,
+                                        "paddingRight": 50,
+                                        "marginBottom":
+                                            -heatmap_cells_container_height-50,
+                                        "paddingBottom":
+                                            heatmap_cells_container_height+50
+                                    }
+                                ),
+                                id="heatmap-sample-size-axis-outer-container",
+                                style={
+                                    "height": heatmap_cells_container_height,
+                                    "overflow": "hidden"
+                                }
                             )
                         ),
+                        no_gutters=True
+                    )
+                ],
+                width=1
+            ),
+            dbc.Col(
+                [
+                    # Space for single genome legend
+                    dbc.Row(
+                        dbc.Col(
+                            "Alt freq",
+                            className="h5",
+                            style={"padding-top": 75}
+                        ),
+                        style={"height": 100},
                         no_gutters=True
                     ),
                     # Space for colorbar fig
@@ -218,7 +278,7 @@ def get_heatmap_row(data):
                         no_gutters=True
                     )
                 ],
-                width=2,
+                width=1,
                 style={"overflowX": "hidden"}
             ),
             get_mutation_details_modal()
@@ -229,8 +289,8 @@ def get_heatmap_row(data):
     return ret
 
 
-def get_heatmap_y_axis_fig(data):
-    """Get Plotly figure used as a mock y-axis for the heatmap.
+def get_heatmap_strains_axis_fig(data):
+    """Get Plotly figure used as a strains y-axis for the heatmap.
 
     The reason we have a separate figure for the y axis view is that
     there is no native way to have a fixed y axis as you scroll the
@@ -238,7 +298,7 @@ def get_heatmap_y_axis_fig(data):
 
     :param data: ``data_parser.get_data`` return value
     :type data: dict
-    :return: Plotly figure containing heatmap y axis
+    :return: Plotly figure containing heatmap strains axis
     :rtype: go.Figure
     """
     ret = go.Figure({})
@@ -247,7 +307,7 @@ def get_heatmap_y_axis_fig(data):
         yaxis_type="linear",
         plot_bgcolor="white",
         font={
-            "size": 18
+            "size": 16
         },
         margin={
             "l": 300,
@@ -258,14 +318,62 @@ def get_heatmap_y_axis_fig(data):
     )
     ret.update_xaxes(fixedrange=True,
                      visible=False)
-    ret.update_yaxes(range=[-0.5, len(data["heatmap_y"])-0.5],
+
+    tick_text = []
+    for strain in data["heatmap_y_strains"]:
+        if strain in data["voc_strains"]:
+            tick_text.append("<b>%s</b>" % strain)
+        elif strain in data["voi_strains"]:
+            tick_text.append("<i>%s</i>" % strain)
+        else:
+            tick_text.append(strain)
+    ret.update_yaxes(range=[-0.5, len(data["heatmap_y_strains"])-0.5],
                      fixedrange=True,
                      tickmode="array",
                      tick0=0,
                      dtick=1,
-                     tickvals=list(range(len(data["heatmap_y"]))),
-                     ticktext=data["heatmap_y"],
+                     tickvals=list(range(len(data["heatmap_y_strains"]))),
+                     ticktext=tick_text,
                      ticklabelposition="outside")
+    return ret
+
+
+def get_heatmap_sample_size_axis_fig(data):
+    """Get Plotly figure used as a sample size y-axis for the heatmap.
+
+    The reason we have a separate figure for the y axis view is that
+    there is no native way to have a fixed y axis as you scroll the
+    heatmap cells.
+
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
+    :return: Plotly figure containing heatmap sample size y axis
+    :rtype: go.Figure
+    """
+    ret = go.Figure({})
+    ret.update_layout(
+        xaxis_type="linear",
+        yaxis_type="linear",
+        plot_bgcolor="white",
+        font={
+            "size": 16
+        },
+        margin={
+            "l": 0,
+            "r": 0,
+            "t": 0,
+            "b": 0
+        }
+    )
+    ret.update_xaxes(fixedrange=True, visible=False)
+    ret.update_yaxes(range=[-0.5, len(data["heatmap_y_sample_sizes"])-0.5],
+                     fixedrange=True,
+                     tickmode="array",
+                     tick0=0,
+                     dtick=1,
+                     tickvals=list(range(len(data["heatmap_y_sample_sizes"]))),
+                     ticktext=data["heatmap_y_sample_sizes"],
+                     ticklabelposition="inside")
     return ret
 
 
@@ -315,7 +423,7 @@ def get_heatmap_gene_bar_fig(data):
             y=heatmap_gene_bar_obj["y"][0],
             text=gene_label,
             showarrow=False,
-            font={"color": "white", "size": 18}
+            font={"color": "white", "size": 16}
         )
     return ret
 
@@ -396,7 +504,7 @@ def get_heatmap_aa_pos_axis_fig(data):
         yaxis_type="linear",
         plot_bgcolor="white",
         font={
-            "size": 18
+            "size": 16
         },
         margin={
             "l": 0,
@@ -439,7 +547,7 @@ def get_heatmap_nt_pos_axis_fig(data):
         yaxis_type="linear",
         plot_bgcolor="white",
         font={
-            "size": 18
+            "size": 16
         },
         margin={
             "l": 0,
@@ -479,7 +587,7 @@ def get_heatmap_cells_fig(data):
         yaxis_type="linear",
         plot_bgcolor="white",
         font={
-            "size": 18
+            "size": 16
         },
         margin={
             "l": 0,
@@ -500,7 +608,7 @@ def get_heatmap_cells_fig(data):
                      showspikes=True,
                      spikecolor="black",
                      side="top")
-    ret.update_yaxes(range=[-0.5, len(data["heatmap_y"])-0.5],
+    ret.update_yaxes(range=[-0.5, len(data["heatmap_y_strains"])-0.5],
                      tickmode="linear",
                      tick0=0.5,
                      dtick=1,
@@ -530,14 +638,18 @@ def get_heatmap_cells_graph_obj(data):
     scatter_x = []
     scatter_marker_color = []
     scatter_text = []
+    scatter_line_width = []
     for i, pos in enumerate(data["heatmap_x_nt_pos"]):
-        for j, strain in enumerate(data["heatmap_y"]):
+        for j, strain in enumerate(data["heatmap_y_strains"]):
             freq = data["heatmap_z"][j][i]
             if freq is not None:
                 scatter_x.append(i)
                 scatter_y.append(j)
                 scatter_marker_color.append(float(freq))
                 scatter_text.append(data["heatmap_hover_text"][j][i])
+
+                mutation_fns = data["heatmap_mutation_fns"][j][i]
+                scatter_line_width.append(2 if mutation_fns is None else 4)
     ret = go.Scatter(
         x=scatter_x,
         y=scatter_y,
@@ -548,12 +660,12 @@ def get_heatmap_cells_graph_obj(data):
             "cmin": 0,
             "cmax": 1,
             "symbol": "square",
-            "line": {"width": 2},
+            "line": {"width": scatter_line_width},
             "size": 30
         },
         hoverlabel={
             "bgcolor": "#000000",
-            "font_size": 18
+            "font_size": 16
         },
         hovertemplate="%{text}<extra></extra>",
         text=scatter_text,
@@ -579,7 +691,7 @@ def get_heatmap_main_insertions_graph_obj(data):
         mode="markers",
         marker={
             "color": "lime",
-            "size": 18,
+            "size": 12,
             "symbol": "cross",
             "line": {"width": 2}
         },
@@ -605,7 +717,7 @@ def get_heatmap_main_deletions_graph_obj(data):
         mode="markers",
         marker={
             "color": "red",
-            "size": 18,
+            "size": 12,
             "symbol": "x",
             "line": {"width": 2}
         },
@@ -627,7 +739,7 @@ def get_heatmap_colorbar_fig():
     """
     ret = go.Figure(get_heatmap_colorbar_graph_obj())
     ret.update_layout(
-        font={"size": 18},
+        font={"size": 16},
         margin={
             "l": 0,
             "r": 0,
@@ -670,53 +782,9 @@ def get_heatmap_colorbar_graph_obj():
             "cmax": 1,
             "showscale": True,
             "colorbar": {
-                "x": 0.5
+                "x": 0
             }
         },
-        hoverinfo="skip"
-    )
-    return ret
-
-
-def get_single_genome_legend_fig():
-    """TODO"""
-    ret = go.Figure(get_single_genome_legend_graph_obj())
-    ret.update_layout(
-        font={"size": 18},
-        margin={
-            "l": 0,
-            "r": 0,
-            "t": 0,
-            "b": 0,
-            "pad": 0
-        },
-        plot_bgcolor="white",
-        xaxis={
-            "visible": False,
-            "fixedrange": True
-        },
-        yaxis={
-            "visible": False,
-            "fixedrange": True
-        }
-    )
-    return ret
-
-
-def get_single_genome_legend_graph_obj():
-    """TODO"""
-    ret = go.Scattergl(
-        x=[0],
-        y=[0],
-        mode="markers+text",
-        marker={
-            "color": "#ffffff",
-            "symbol": "square",
-            "line": {"width": 2},
-            "size": 30
-        },
-        text=["N==1"],
-        textposition="middle right",
         hoverinfo="skip"
     )
     return ret

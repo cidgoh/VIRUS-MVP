@@ -10,10 +10,6 @@ import dash_html_components as html
 def get_toolbar_row(data):
     """Get Dash Bootstrap Components row that sits above heatmap.
 
-    This contains a col with buttons for selecting and uploading
-    strains, a col for displaying dialog to the user, and the clade
-    defining mutations switch.
-
     :param data: ``get_data`` return value
     :type data: dict
     :return: Dash Bootstrap Component row with upload button and clade
@@ -27,7 +23,8 @@ def get_toolbar_row(data):
                     [
                         get_select_lineages_toolbar_btn(),
                         get_file_upload_component(),
-                        get_file_download_component()
+                        get_file_download_component(),
+                        get_legend_toggle_component()
                     ],
                     className="pl-4 pl-xl-5"
                 ),
@@ -37,6 +34,16 @@ def get_toolbar_row(data):
                 # Empty on launch
                 className="my-auto",
                 id="dialog-col"
+            ),
+            dbc.Col(
+                dcc.Loading(
+                    None,
+                    id="empty-loading",
+                    style={"height": "100%", "width": "100%", "margin": 0},
+                    type="dot"
+                ),
+                id="empty-loading-col",
+                width=1
             ),
             dbc.Col(
                 get_mutation_freq_slider(data),
@@ -65,7 +72,7 @@ def get_select_lineages_toolbar_btn():
     """
     return dbc.Button("Select lineages",
                       id="open-select-lineages-modal-btn",
-                      className="mr-1")
+                      className="mr-2")
 
 
 def get_select_lineages_modal():
@@ -93,7 +100,8 @@ def get_select_lineages_modal_body(data):
     :param data: ``get_data`` return value
     :type data: dict
     :return: Checkboxes for each directory containing strains, with
-        only boxes for non-hidden strains checked.
+        only boxes for non-hidden strains checked, and btns for
+        selecting or deselecting all checkboxes.
     :rtype: list[dbc.FormGroup]
     """
     modal_body = []
@@ -108,7 +116,23 @@ def get_select_lineages_modal_body(data):
             if strain not in data["hidden_strains"]:
                 selected_values.append(strain)
         form_group = dbc.FormGroup([
-            dbc.Label(os.path.basename(dir_)),
+            dbc.Row(dbc.Col(os.path.basename(dir_))),
+            dbc.ButtonGroup([
+                dbc.Button(
+                    "All",
+                    size="sm",
+                    color="success",
+                    id={"type": "select-lineages-modal-all-btn",
+                        "index": dir_}
+                ),
+                dbc.Button(
+                    "None",
+                    size="sm",
+                    color="danger",
+                    id={"type": "select-lineages-modal-none-btn",
+                        "index": dir_}
+                )
+            ]),
             dbc.Checklist(
                 id={"type": "select-lineages-modal-checklist", "index": dir_},
                 options=checklist_options,
@@ -148,7 +172,7 @@ def get_file_upload_component():
         component inside.
     :rtype: dcc.Upload
     """
-    icon = html.I(className="bi-cloud-upload-fill", style={"font-size": 18})
+    icon = html.I(className="bi-cloud-upload-fill", style={"font-size": 16})
     return dcc.Upload(
         dbc.Button(icon, color="success", outline=True),
         id="upload-file",
@@ -162,14 +186,27 @@ def get_file_download_component():
     :return: Dash html div with button and download component inside.
     :rtype: html.Div
     """
-    icon = html.I(className="bi-cloud-download-fill", style={"font-size": 18})
+    icon = html.I(className="bi-cloud-download-fill", style={"font-size": 16})
     return html.Div([
         dbc.Button(icon,
                    color="primary",
                    outline=True,
                    id="download-file-btn"),
-        dcc.Download(id="download-file-data")
-    ])
+        dcc.Download(id="download-file-data"),
+    ], className="mr-2")
+
+
+def get_legend_toggle_component():
+    """Get dash component for toggling heatmap legend.
+
+    :return: Dash Bootstrap Components button with appropriate label
+    :rtype: dbc.Button
+    """
+    icon = html.I(className="bi-question", style={"font-size": 16})
+    return dbc.Button(icon,
+                      color="info",
+                      outline=True,
+                      id="toggle-legend-btn")
 
 
 def get_mutation_freq_slider(data):

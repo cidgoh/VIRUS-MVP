@@ -89,6 +89,8 @@ def vcf_str_to_gvf_str(vcf_str, strain):
     new_df["#attributes"] += 'function_description="";'
     new_df["#attributes"] += 'source="";'
     new_df["#attributes"] += 'citation="";'
+    new_df["#attributes"] += "sample_size=%s;" % 3
+    new_df["#attributes"] += 'multi_aa_name="";'
 
     # remove starting NaN; leave trailing ";"
     new_df["#attributes"] = new_df["#attributes"].str[3:]
@@ -161,7 +163,7 @@ def parse_gvf_dir(dir_):
                     strain = filename
                     who_variant = None
                     status = None
-                    single_genome = False
+                    sample_size = attrs["sample_size"]
 
                     if "viral_lineage" in attrs:
                         strain = attrs["viral_lineage"]
@@ -170,14 +172,12 @@ def parse_gvf_dir(dir_):
                         who_variant = attrs["who_variant"]
                     if "status" in attrs:
                         status = attrs["status"]
-                    if "sample_size" in attrs and attrs["sample_size"] == "1":
-                        single_genome = True
 
                     ret[strain] = {
                         "mutations": {},
                         "who_variant": who_variant,
                         "status": status,
-                        "single_genome": single_genome
+                        "sample_size": sample_size
                     }
 
                     parsing_first_row = False
@@ -194,6 +194,7 @@ def parse_gvf_dir(dir_):
                             "gene": attrs["vcf_gene"],
                             "ao": float(attrs["ao"].split(",")[i]),
                             "dp": float(attrs["dp"]),
+                            "multi_aa_name": attrs["multi_aa_name"],
                             "clade_defining":
                                 attrs["clade_defining"] == "True",
                             "hidden_cell": False,
@@ -340,8 +341,15 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
 
     parsed_mutations = \
         {k: v["mutations"] for k, v in parsed_gvf_dirs.items()}
-    single_genomes = \
-        {k for k in parsed_gvf_dirs if parsed_gvf_dirs[k]["single_genome"]}
+    sample_sizes = {k: v["sample_size"] for k, v in parsed_gvf_dirs.items()}
+
+    # These are dictionary because they are in the return val, which
+    # needs to be json compatible (how Dash moves content across
+    # network).
+    voc_strains = {k: None for k in parsed_gvf_dirs
+                   if parsed_gvf_dirs[k]["status"] == "VOC"}
+    voi_strains = {k: None for k in parsed_gvf_dirs
+                   if parsed_gvf_dirs[k]["status"] == "VOI"}
 
     visible_parsed_mutations = \
         {k: v for k, v in parsed_mutations.items() if k not in hidden_strains}
@@ -364,8 +372,10 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
             get_heatmap_cells_tickvals(max_mutations_per_pos_dict),
         "heatmap_x_nt_pos":
             get_heatmap_x_nt_pos(max_mutations_per_pos_dict),
-        "heatmap_y":
-            get_heatmap_y(visible_parsed_mutations),
+        "heatmap_y_strains":
+            get_heatmap_y_strains(visible_parsed_mutations),
+        "heatmap_y_sample_sizes":
+            get_heatmap_y_sample_sizes(visible_parsed_mutations, sample_sizes),
         "tables":
             get_tables(visible_parsed_mutations),
         "histogram_x":
@@ -374,8 +384,12 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
             dir_strains,
         "hidden_strains":
             hidden_strains,
+        "voc_strains":
+            voc_strains,
+        "voi_strains":
+            voi_strains,
         "all_strains":
-            get_heatmap_y(parsed_gvf_dirs),
+            get_heatmap_y_strains(parsed_mutations),
         "mutation_freq_slider_vals":
             mutation_freq_slider_vals,
         "insertions_x":
@@ -391,7 +405,7 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
         "heatmap_z":
             get_heatmap_z(visible_parsed_mutations,
                           max_mutations_per_pos_dict,
-                          single_genomes),
+                          sample_sizes),
         "heatmap_hover_text":
             get_heatmap_hover_text(visible_parsed_mutations,
                                    max_mutations_per_pos_dict),
@@ -408,7 +422,7 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
         get_heatmap_x_tickvals(ret["heatmap_cells_tickvals"])
     ret["heatmap_x_aa_pos"] = \
         get_heatmap_x_aa_pos(ret["heatmap_x_nt_pos"], ret["heatmap_x_genes"])
-    ret["heatmap_cells_fig_height"] = len(ret["heatmap_y"]) * 40
+    ret["heatmap_cells_fig_height"] = len(ret["heatmap_y_strains"]) * 40
     ret["heatmap_cells_container_height"] = \
         min(10*40, ret["heatmap_cells_fig_height"])
     ret["heatmap_cells_fig_width"] = len(ret["heatmap_x_nt_pos"]) * 36
@@ -574,15 +588,13 @@ def get_heatmap_x_aa_pos(heatmap_x_nt_pos, heatmap_x_genes):
     return ret
 
 
-def get_heatmap_y(parsed_mutations):
-    """Get y axis values of heatmap cells.
-
-    These are the VOC strains.
+def get_heatmap_y_strains(parsed_mutations):
+    """Get strain y axis values of heatmap cells.
 
     :param parsed_mutations: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return "mutations" values.
     :type parsed_mutations: dict
-    :return: List of y axis values
+    :return: List of strain y axis values
     :rtype: list[str]
     """
     ret = []
@@ -591,8 +603,25 @@ def get_heatmap_y(parsed_mutations):
     return ret
 
 
-def get_heatmap_z(parsed_mutations, max_mutations_per_pos_dict,
-                  single_genomes):
+def get_heatmap_y_sample_sizes(parsed_mutations, sample_sizes):
+    """Get sample size y axis values of heatmap cells.
+
+    :param parsed_mutations: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return "mutations" values.
+    :type parsed_mutations: dict
+    :param sample_sizes: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return "sample_size" values.
+    :type sample_sizes: dict
+    :return: List of sample size y axis values
+    :rtype: list[str]
+    """
+    ret = []
+    for strain in parsed_mutations:
+        ret.append(sample_sizes[strain])
+    return ret
+
+
+def get_heatmap_z(parsed_mutations, max_mutations_per_pos_dict, sample_sizes):
     """Get z values of heatmap cells.
 
     These are the mutation frequencies, and the z values dictate the
@@ -604,9 +633,9 @@ def get_heatmap_z(parsed_mutations, max_mutations_per_pos_dict,
     :param max_mutations_per_pos_dict: See
         ``get_max_mutations_per_pos`` return value.
     :type max_mutations_per_pos_dict: dict
-    :param single_genomes: Set of strains with single genome sample
-        size.
-    :type single_genomes: set[str]
+    :param sample_sizes: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return "sample_size" values.
+    :type sample_sizes: dict
     :return: List of z values
     :rtype: list[list[str]]
     """
@@ -620,7 +649,7 @@ def get_heatmap_z(parsed_mutations, max_mutations_per_pos_dict,
                     if not mutation["hidden_cell"]:
                         # Set to 0 if sample size == 1, which allows it
                         # to be displayed as white with our colorscale.
-                        if strain in single_genomes:
+                        if sample_sizes[strain] == "1":
                             cols[i] = 0
                         else:
                             cols[i] = mutation["alt_freq"]
@@ -653,6 +682,10 @@ def get_heatmap_hover_text(parsed_mutations, max_mutations_per_pos_dict):
                     if not mutation_name:
                         mutation_name = "No recorded name"
 
+                    multi_aa_name = mutation["multi_aa_name"]
+                    if not multi_aa_name:
+                        multi_aa_name = "False"
+
                     functions_str = ""
                     for j, fn_category in enumerate(mutation["functions"]):
                         if j == 7:
@@ -662,7 +695,8 @@ def get_heatmap_hover_text(parsed_mutations, max_mutations_per_pos_dict):
                     if not functions_str:
                         functions_str = "None recorded so far"
 
-                    cell_text_str = "<b>Mutation name: %s</b><br>" \
+                    cell_text_str = "<b>Mutation name:</b> %s<br>" \
+                                    "Multiple AA mutations?: %s<br>" \
                                     "<br>" \
                                     "Reference: %s<br>" \
                                     "Alternate: %s<br>" \
@@ -670,6 +704,7 @@ def get_heatmap_hover_text(parsed_mutations, max_mutations_per_pos_dict):
                                     "<br>" \
                                     "<b>Functions:</b> <br>%s"
                     cell_text_params = (mutation_name,
+                                        multi_aa_name,
                                         mutation["ref"],
                                         mutation["alt"],
                                         mutation["alt_freq"],
@@ -776,7 +811,7 @@ def get_insertions_y(parsed_mutations):
     """Get y coordinates of insertion markers to overlay in heatmap.
 
     These are the linear y coordinates used in the Plotly graph object.
-    i.e., the indices of data["heatmap_y"]
+    i.e., the indices of data["heatmap_y_strains"]
 
     :param parsed_mutations: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return "mutations" values.
@@ -832,7 +867,7 @@ def get_deletions_y(parsed_mutations):
     """Get y coordinates of deletion markers to overlay in heatmap.
 
     These are the linear y coordinates used in the Plotly graph object.
-    i.e., the indices of data["heatmap_y"]
+    i.e., the indices of data["heatmap_y_strains"]
 
     :param parsed_mutations: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return "mutations" values.

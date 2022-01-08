@@ -35,16 +35,30 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
     },
     /**
      * Get the order of the strains in the select lineage modal after the user
-     * clicks the OK button.
+     * clicks the OK button. We also update the strain order if the user uploads
+     * a new file.
      * @param _ OK button in select lineages modal was clicked
+     * @param {Object} newUpload ``update_new_upload`` return value
      * @param {Array<Object>} idArray Dash pattern matching id values for
      *  checkboxes in select lineages modal.
+     * @param {Object} strainOrder Previous strain order
      * @param {Object} data ``data_parser.get_data`` return value
      * @return {Array<string>} The strains corresponding the checkboxes in the
      *  select lineages modal, in the final order they were in when the OK
      *  button was clicked.
      */
-    getStrainOrder: (_, idArray, data) => {
+    getStrainOrder: (_, newUpload, idArray, strainOrder, data) => {
+      const trigger = dash_clientside.callback_context.triggered[0].prop_id
+      if (trigger === 'new-upload.data') {
+        if (newUpload['status'] === 'error') {
+          return window.dash_clientside.no_update
+        }
+        if (strainOrder.length) {
+          strainOrder.push(newUpload['strain'])
+          return strainOrder
+        }
+      }
+
       let ret = []
       for (const id of idArray) {
         // There are two elements in each id, and we do not know which order
@@ -67,8 +81,10 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
       }
       // Heatmap displays rows in reverse
       ret = ret.reverse()
-      // Do not update if strain order reflects current heatmap y axis
-      if (JSON.stringify(ret) === JSON.stringify(data.heatmap_y)) {
+      // Do not update if strain order reflects current strain order. We check
+      // against the implicit strain order because it may not have been
+      // explicitly specified.
+      if (JSON.stringify(ret) === JSON.stringify(data['all_strains'])) {
         return window.dash_clientside.no_update
       } else {
         return ret
@@ -150,27 +166,46 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
      * containers.
      * Lifted from https://stackoverflow.com/a/41998497/11472358
      * Seems to work smoothly.
-     * @param _ Heatmap y-axis fig generated
-     * @param __ Heatmap cells fig generated
+     * @param _ Heatmap strains-axis fig generated
+     * @param __ Heatmap sample size axis fig generated
+     * @param ___ Heatmap cells fig generated
      */
-    linkHeatmapCellsYScrolling: (_, __) => {
+    linkHeatmapCellsYScrolling: (_, __, ___) => {
       let isSyncingLeftScroll = false;
+      let isSyncingMidScroll = false;
       let isSyncingRightScroll = false;
-      const leftDiv = document.getElementById('heatmap-y-axis-inner-container');
-      const rightDiv = document.getElementById('heatmap-cells-inner-container');
+      const leftDiv =
+          document.getElementById('heatmap-strains-axis-inner-container');
+      const midDiv = document.getElementById('heatmap-cells-inner-container');
+      const rightDiv =
+          document.getElementById('heatmap-sample-size-axis-inner-container');
 
       leftDiv.onscroll = function() {
         if (!isSyncingLeftScroll) {
+          isSyncingMidScroll = true;
+          midDiv.scrollTop = this.scrollTop;
           isSyncingRightScroll = true;
           rightDiv.scrollTop = this.scrollTop;
         }
         isSyncingLeftScroll = false;
       }
 
+      midDiv.onscroll = function() {
+        if (!isSyncingMidScroll) {
+          isSyncingLeftScroll = true;
+          leftDiv.scrollTop = this.scrollTop;
+          isSyncingRightScroll = true;
+          rightDiv.scrollTop = this.scrollTop;
+        }
+        isSyncingMidScroll = false;
+      }
+
       rightDiv.onscroll = function() {
         if (!isSyncingRightScroll) {
           isSyncingLeftScroll = true;
           leftDiv.scrollTop = this.scrollTop;
+          isSyncingMidScroll = true;
+          midDiv.scrollTop = this.scrollTop;
         }
         isSyncingRightScroll = false;
       }
