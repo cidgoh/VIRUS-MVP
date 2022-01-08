@@ -15,13 +15,15 @@ benefits. However, due to what I assume is a limited number of workers,
 I have unparallelized some callbacks, which allows certain callbacks to
 run faster.
 """
+from json import loads
 from os import path, walk
 from time import sleep
 
 import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
-from dash.dependencies import ALL, ClientsideFunction, Input, Output, State
+from dash.dependencies import (ALL, MATCH, ClientsideFunction, Input, Output,
+                               State)
 from dash.exceptions import PreventUpdate
 from flask_caching import Cache
 
@@ -29,7 +31,8 @@ from data_parser import get_data
 from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR,
                          SURVEILLANCE_DOWNLOAD_PATH)
 from generators import (heatmap_generator, histogram_generator,
-                        table_generator, toolbar_generator, footer_generator)
+                        legend_generator, table_generator, toolbar_generator,
+                        footer_generator)
 
 
 # This is the only global variable Dash plays nice with, and it
@@ -37,6 +40,7 @@ from generators import (heatmap_generator, histogram_generator,
 # ``app`` is served.
 app = dash.Dash(
     name="COVID-MVP",
+    title="COVID-MVP",
     assets_folder=ASSETS_DIR,
     # We bring in jQuery for some of the JavaScript
     # callbacks.
@@ -66,6 +70,8 @@ cache = Cache(server, config={
     # Max number of files app will store before it starts deleting some
     "CACHE_THRESHOLD": 200
 })
+# Cache lasts for a day
+TIMEOUT = 86400
 
 # The ``layout`` attribute determines what HTML ``app`` renders when it
 # is served. We start with an empty bootstrap container, but it will be
@@ -76,8 +82,14 @@ app.layout = dbc.Container(
     # triggers the ``launch_app`` callback, which populates this
     # container with the appropriate content when the page is first
     # loaded. More detail on why this is necessary is in the callback
-    # docstring.
-    dcc.Store("first-launch"),
+    # docstring. ``first-launch-loader`` is also only used when the
+    # page is first loaded, but ultimately excised from the page.
+    [
+        dcc.Loading(None,
+                    id="first-launch-loader",
+                    style={"height": "100%", "width": "100%", "margin": 0}),
+        dcc.Store("first-launch"),
+    ],
     fluid=True,
     id="main-container",
     className="px-0"
@@ -86,6 +98,7 @@ app.layout = dbc.Container(
 
 @app.callback(
     Output("main-container", "children"),
+    Output("first-launch-loader", "children"),
     Input("first-launch", "data")
 )
 def launch_app(_):
@@ -107,6 +120,13 @@ def launch_app(_):
     to a server. So new data between page reloads may not be displayed
     if you do the following in the global scope--which you may be
     tempted to do because we are only doing it once!
+
+    We also technically return the children for
+    ``first-launch-loader``, but the return value is the same as its
+    current value (``None``), and since ``first-launch-loader`` is in
+    ``main-container``, its immediately excised from the page after
+    this callback. The ultimate purpose of this is to replace the blank
+    loading screen when the app is first loaded.
     """
     # Some default vals
     get_data_args = {
@@ -123,6 +143,8 @@ def launch_app(_):
     return [
         # Bootstrap row containing tools at the top of the application
         toolbar_generator.get_toolbar_row(data_),
+        # Bootstrap collapse containing legend
+        legend_generator.get_legend_collapse(),
         # Bootstrap row containing heatmap
         heatmap_generator.get_heatmap_row(data_),
         # Bootstrap row containing histogram
@@ -154,20 +176,22 @@ def launch_app(_):
         dcc.Store(id="last-heatmap-cell-clicked"),
         # Used to update certain figures only when necessary
         dcc.Store(id="heatmap-x-len", data=len(data_["heatmap_x_nt_pos"])),
-        dcc.Store(id="heatmap-y", data=len(data_["heatmap_y"])),
+        dcc.Store(id="heatmap-y-strains",
+                  data=len(data_["heatmap_y_strains"])),
         # Used to integrate some JS callbacks. The data values are
         # meaningless, we just need outputs to perform all clientside
         # functions.
         dcc.Store(id="make-select-lineages-modal-checkboxes-draggable"),
         dcc.Store(id="make-histogram-rel-pos-bar-dynamic"),
         dcc.Store(id="link-heatmap-cells-y-scrolling")
-    ]
+    ], None
 
 
 @app.callback(
     output=[
         Output("get-data-args", "data"),
-        Output("last-data-mtime", "data")
+        Output("last-data-mtime", "data"),
+        Output("empty-loading", "data")
     ],
     inputs=[
         Input("show-clade-defining", "data"),
@@ -188,7 +212,10 @@ def update_get_data_args(show_clade_defining, hidden_strains, strain_order,
     ret val. This fn calls ``read_data`` first, so it is already cached
     before those callbacks need it.
 
-    We also update ``last-data-mtime`` here.
+    We also update ``last-data-mtime`` here, and ``empty-loading``. In
+    the case of ``empty-loading``, we keep the value as ``None``, but
+    returning it in this fn provides a spinner while this fn is being
+    run.
 
     :param show_clade_defining: ``update_show_clade-defining`` return
         value.
@@ -203,9 +230,9 @@ def update_get_data_args(show_clade_defining, hidden_strains, strain_order,
     :type mutation_freq_vals: list[int|float]
     :param gff3_annotations: ``parse_gff3_file`` return value
     :type gff3_annotations: dict
-    :return: ``get_data`` return value, and last mtime across all data
-        files.
-    :rtype: tuple[dict, float]
+    :return: ``get_data`` return value, last mtime across all data
+        files, and ``empty-loading`` children.
+    :rtype: tuple[dict, float, None]
     :raise PreventUpdate: New upload triggered this function, and that
         new upload failed.
     """
@@ -239,10 +266,10 @@ def update_get_data_args(show_clade_defining, hidden_strains, strain_order,
     # multiple processes.
     read_data(args, last_data_mtime)
 
-    return args, last_data_mtime
+    return args, last_data_mtime, None
 
 
-@cache.memoize()
+@cache.memoize(timeout=TIMEOUT)
 def read_data(get_data_args, last_data_mtime):
     """Returns and caches return value of ``get_data``.
 
@@ -465,6 +492,35 @@ def toggle_select_lineages_modal(_, __, ___, get_data_args, last_data_mtime):
 
 
 @app.callback(
+    Output({"type": "select-lineages-modal-checklist", "index": MATCH},
+           "value"),
+    Input({"type": "select-lineages-modal-all-btn", "index": MATCH},
+          "n_clicks"),
+    Input({"type": "select-lineages-modal-none-btn", "index": MATCH},
+          "n_clicks"),
+    State({"type": "select-lineages-modal-checklist", "index": MATCH},
+          "options"),
+    prevent_initial_call=True
+)
+def toggle_all_strains_in_select_all_lineages_modal(_, __, opts):
+    """Toggle checkboxes after user clicks "all" or "none" modal btns.
+
+    Only the relevant checkboxes are toggled, specific to a directory,
+    depending on which "all" or "none" btn the user clicked.
+
+    :param: _: "all" btn in select lineages modal was clicked.
+    :param: __: "none" btn in select lineages modal was clicked.
+    """
+    ctx = dash.callback_context
+    triggered_prop_id = ctx.triggered[0]["prop_id"]
+    triggered_prop_id_type = loads(triggered_prop_id.split(".")[0])["type"]
+    if triggered_prop_id_type == "select-lineages-modal-all-btn":
+        return [x["value"] for x in opts]
+    else:
+        return []
+
+
+@app.callback(
     Output("mutation-freq-slider-col", "children"),
     Input("get-data-args", "data"),
     State("mutation-freq-slider", "marks"),
@@ -505,6 +561,23 @@ def update_mutation_freq_slider(get_data_args, old_slider_marks,
 
 
 @app.callback(
+    Output("legend-collapse", "is_open"),
+    Input("toggle-legend-btn", "n_clicks"),
+    State("legend-collapse", "is_open"),
+    prevent_initial_call=True
+)
+def toggle_legend_collapse(_, is_open):
+    """Open or close legend view.
+
+    :param _: Toggle legend btn was clicked
+    :param is_open: Current visibility of legend
+    :return: New visbility for legend; opposite of ``is_open``
+    :rtype: bool
+    """
+    return not is_open
+
+
+@app.callback(
     Output("heatmap-x-len", "data"),
     Input("get-data-args", "data"),
     State("heatmap-x-len", "data"),
@@ -541,67 +614,70 @@ def route_data_heatmap_x_update(get_data_args, old_heatmap_x_len,
 
 
 @app.callback(
-    Output("heatmap-y", "data"),
+    Output("heatmap-y-strains", "data"),
     Input("get-data-args", "data"),
-    State("heatmap-y", "data"),
+    State("heatmap-y-strains", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def route_data_heatmap_y_update(get_data_args, old_heatmap_y, last_data_mtime):
-    """Update ``heatmap-y`` dcc variable when needed.
+def route_data_heatmap_y_strains_update(get_data_args, old_heatmap_y_strains,
+                                        last_data_mtime):
+    """Update ``heatmap-y-strains`` dcc variable when needed.
 
     This serves as a useful trigger for figs that only need to be
-    updated when heatmap y changes.
+    updated when heatmap strains change.
 
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
-    :param old_heatmap_y: ``heatmap-y.data`` value
-    :type old_heatmap_y: dict
+    :param old_heatmap_y_strains: ``heatmap-y-strains.data`` value
+    :type old_heatmap_y_strains: dict
     :param last_data_mtime: Last mtime across all data files
     :type last_data_mtime: float
-    :return: New len of data["heatmap_y"]
+    :return: New len of data["heatmap_y_strains"]
     :rtype: int
-    :raise PreventUpdate: If data["heatmap_y"] len did not change
+    :raise PreventUpdate: If data["heatmap_y_strains"] len did not
+        change.
     """
     # Current ``get_data`` return val
     data = read_data(get_data_args, last_data_mtime)
 
-    if old_heatmap_y == data["heatmap_y"]:
+    if old_heatmap_y_strains == data["heatmap_y_strains"]:
         raise PreventUpdate
-    return data["heatmap_y"]
+    return data["heatmap_y_strains"]
 
 
 @app.callback(
-    Output("heatmap-y-axis-fig", "figure"),
-    Output("heatmap-y-axis-fig", "style"),
-    Output("heatmap-y-axis-inner-container", "style"),
-    Output("heatmap-y-axis-outer-container", "style"),
-    Input("heatmap-y", "data"),
+    Output("heatmap-strains-axis-fig", "figure"),
+    Output("heatmap-strains-axis-fig", "style"),
+    Output("heatmap-strains-axis-inner-container", "style"),
+    Output("heatmap-strains-axis-outer-container", "style"),
+    Input("heatmap-y-strains", "data"),
     State("get-data-args", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def update_heatmap_y_axis_fig(_, get_data_args, last_data_mtime):
-    """Update heatmap y axis fig and containers.
+def update_heatmap_strains_axis_fig(_, get_data_args, last_data_mtime):
+    """Update heatmap strains axis fig and containers.
 
     We need to update style because attributes may change due to
     uploaded strains.
 
-    :param _: Heatmap cells fig updated
+    :param _: Heatmap strains updated
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
     :param last_data_mtime: Last mtime across all data files
     :type last_data_mtime: float
-    :return: New heatmap y axis fig and style
+    :return: New heatmap strains axis fig and style
     :rtype: (plotly.graph_objects.Figure, dict)
     """
     # Current ``get_data`` return val
     data = read_data(get_data_args, last_data_mtime)
 
-    y_axis_fig = heatmap_generator.get_heatmap_y_axis_fig(data)
-    y_axis_style = {"height": data["heatmap_cells_fig_height"],
-                    "width": "101%",
-                    "marginBottom": -data["heatmap_cells_container_height"]}
+    strain_axis_fig = heatmap_generator.get_heatmap_strains_axis_fig(data)
+    strain_axis_style = \
+        {"height": data["heatmap_cells_fig_height"],
+         "width": "101%",
+         "marginBottom": -data["heatmap_cells_container_height"]}
     inner_container_style = {
         "height": "100%",
         "overflowY": "scroll",
@@ -614,8 +690,60 @@ def update_heatmap_y_axis_fig(_, get_data_args, last_data_mtime):
         "height": data["heatmap_cells_container_height"],
         "overflow": "hidden"
     }
-    return (y_axis_fig, y_axis_style, inner_container_style,
+    return (strain_axis_fig, strain_axis_style, inner_container_style,
             outer_container_style)
+
+
+@app.callback(
+    Output("heatmap-sample-size-axis-fig", "figure"),
+    Output("heatmap-sample-size-axis-fig", "style"),
+    Output("heatmap-sample-size-axis-inner-container", "style"),
+    Output("heatmap-sample-size-axis-outer-container", "style"),
+    Input("heatmap-y-strains", "data"),
+    State("get-data-args", "data"),
+    State("last-data-mtime", "data"),
+    prevent_initial_call=True
+)
+def update_heatmap_sample_size_axis_fig(_, get_data_args, last_data_mtime):
+    """Update heatmap sample size axis fig and containers.
+
+    We need to update style because attributes may change due to
+    uploaded strains.
+
+    :param _: Heatmap strains updated
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
+    :return: New heatmap sample size axis fig and style
+    :rtype: (plotly.graph_objects.Figure, dict)
+    """
+    # Current ``get_data`` return val
+    data = read_data(get_data_args, last_data_mtime)
+
+    sample_size_axis_fig = \
+        heatmap_generator.get_heatmap_sample_size_axis_fig(data)
+    sample_size_axis_style = \
+        {"height": data["heatmap_cells_fig_height"],
+         "width": "101%",
+         "marginBottom": -data["heatmap_cells_container_height"]}
+    inner_container_style = {
+        "height": "100%",
+        "overflowX": "scroll",
+        "overflowY": "scroll",
+        "marginRight": -50,
+        "paddingRight": 50,
+        "marginBottom":
+            -data["heatmap_cells_container_height"]-50,
+        "paddingBottom":
+            data["heatmap_cells_container_height"]+50
+    }
+    outer_container_style = {
+        "height": data["heatmap_cells_container_height"],
+        "overflow": "hidden"
+    }
+    return (sample_size_axis_fig, sample_size_axis_style,
+            inner_container_style, outer_container_style)
 
 
 @app.callback(
@@ -731,11 +859,13 @@ def update_histogram(get_data_args, last_data_mtime):
     data = read_data(get_data_args, last_data_mtime)
     return histogram_generator.get_histogram_top_row(data)
 
+
 @app.callback(
     Output("heatmap-cells-fig", "figure"),
     Output("heatmap-cells-fig", "style"),
     Output("heatmap-cells-inner-container", "style"),
     Output("heatmap-cells-outer-container", "style"),
+    Output("empty-loading", "children"),
     Input("get-data-args", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
@@ -746,12 +876,17 @@ def update_heatmap_cells_fig(get_data_args, last_data_mtime):
     This is the fig with the heatmap cells and x axis. We return style
     because attributes may need to change due to changes in data.
 
+    We also update ``empty-loading``. We keep the value as ``None``,
+    but returning it in this fn provides a spinner while this fn is
+    being run.
+
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
     :param last_data_mtime: Last mtime across all data files
     :type last_data_mtime: float
-    :return: New heatmap cells fig
-    :rtype: plotly.graph_objects.Figure
+    :return: New heatmap cells fig, associated styles, and
+        ``empty-loading`` children.
+    :rtype: Tuple(plotly.graph_objects.Figure, dict, dict, dict, None)
     """
     # Current ``get_data`` return val
     data = read_data(get_data_args, last_data_mtime)
@@ -782,7 +917,7 @@ def update_heatmap_cells_fig(get_data_args, last_data_mtime):
         "overflow": "hidden"
     }
     return (cells_fig, cells_fig_style, inner_container_style,
-            outer_container_style)
+            outer_container_style, None)
 
 
 @app.callback(
@@ -911,14 +1046,14 @@ def update_table(get_data_args, click_data, last_data_mtime):
     ctx = dash.callback_context
     triggered_prop_id = ctx.triggered[0]["prop_id"]
     if triggered_prop_id == "get-data-args.data":
-        table_strain = data["heatmap_y"][0]
+        table_strain = data["heatmap_y_strains"][0]
     else:
-        table_strain = data["heatmap_y"][click_data["points"][0]["y"]]
+        table_strain = data["heatmap_y_strains"][click_data["points"][0]["y"]]
 
     # If you click a strain, but then hide it, this condition stops
     # things from breaking.
     if table_strain in data["hidden_strains"]:
-        table_strain = data["heatmap_y"][0]
+        table_strain = data["heatmap_y_strains"][0]
 
     return table_generator.get_table_fig(data, table_strain)
 
@@ -983,7 +1118,8 @@ app.clientside_callback(
         function_name="linkHeatmapCellsYScrolling"
     ),
     Output("link-heatmap-cells-y-scrolling", "data"),
-    Input("heatmap-y-axis-fig", "figure"),
+    Input("heatmap-strains-axis-fig", "figure"),
+    Input("heatmap-sample-size-axis-fig", "figure"),
     Input("heatmap-cells-fig", "figure")
 )
 
