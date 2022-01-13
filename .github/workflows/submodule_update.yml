@@ -1,4 +1,4 @@
-name: deployment
+name: submodule update
 on:
   workflow_dispatch:
 
