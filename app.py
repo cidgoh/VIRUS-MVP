@@ -18,7 +18,11 @@ run faster.
 from base64 import b64decode
 from json import loads
 from os import path, walk
+from shutil import copyfile
+from subprocess import run
+from tempfile import TemporaryDirectory
 from time import sleep
+from uuid import uuid4
 
 import dash
 import dash_bootstrap_components as dbc
@@ -28,9 +32,9 @@ from dash.dependencies import (ALL, MATCH, ClientsideFunction, Input, Output,
 from dash.exceptions import PreventUpdate
 from flask_caching import Cache
 
-from data_parser import get_data, vcf_str_to_gvf_str
+from data_parser import get_data
 from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR,
-                         SURVEILLANCE_DOWNLOAD_PATH)
+                         NF_NCOV_VOC_DIR, SURVEILLANCE_DOWNLOAD_PATH)
 from generators import (heatmap_generator, histogram_generator,
                         legend_generator, table_generator, toolbar_generator,
                         footer_generator)
@@ -376,22 +380,31 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
     # TODO more thorough validation, maybe once we finalize data
     #  standards.
     new_strain, ext = filename.rsplit(".", 1)
-    if ext != "vcf":
+    if ext not in {"vcf", "fasta"}:
         status = "error"
-        msg = "Filename must end in \".vcf\"."
+        msg = "Filename must end in \".vcf\" or \".fasta\"."
     elif new_strain in old_data["all_strains"]:
         status = "error"
         msg = "Filename must not conflict with existing variant."
     else:
-        # Dash splits MIME type and the actual str with a comma
+        # # Dash splits MIME type and the actual str with a comma
         _, base64_str = file_contents.split(",")
-        # File gets written to ``user_data`` folder
-        # TODO: eventually replace with database
-        vcf_str_bytes = b64decode(base64_str)
-        vcf_str_utf8 = vcf_str_bytes.decode("utf-8")
-        gvf_str = vcf_str_to_gvf_str(vcf_str_utf8, new_strain)
-        with open(path.join(USER_DATA_DIR, new_strain + ".gvf"), "w") as fp:
-            fp.write("\n\n\n" + gvf_str)
+        # Run pipeline, but output contents into temporary dir. Then
+        # copy appropriate output file to relevant dir.
+        with TemporaryDirectory() as dir_name:
+            user_file = path.join(dir_name, filename)
+            rand_prefix = "u" + str(uuid4())
+            with open(user_file, "w") as fp:
+                fp.write(b64decode(base64_str).decode("utf-8"))
+            run(["nextflow", "run", "main.nf", "-profile", "conda",
+                 "--prefix", rand_prefix, "--mode", "user",
+                 "--userfile", user_file, "--outdir", dir_name],
+                cwd=NF_NCOV_VOC_DIR)
+            gvf_file = \
+                path.join(dir_name, rand_prefix, "annotation_vcfTogvf",
+                          "%s.filtered.SNPEFF.annotated.gvf" % new_strain)
+            # TODO: eventually replace with database
+            copyfile(gvf_file, path.join(USER_DATA_DIR, new_strain + ".gvf"))
         status = "ok"
         msg = ""
     return {"filename": filename, "msg": msg, "status": status,
