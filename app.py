@@ -348,6 +348,7 @@ def update_show_clade_defining(switches_value):
 
 @app.callback(
     Output("new-upload", "data"),
+    Output("upload-loading", "children"),
     Input("upload-file", "contents"),
     Input("upload-file", "filename"),
     State("get-data-args", "data"),
@@ -361,6 +362,12 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
     But regardless of whether a valid file is uploaded, this function
     will return a dict describing the name of the file the user
     attempted to upload, status of upload, and name of uploaded strain.
+
+    We also re-render the uploading btn after the file is processed. We
+    do this because the btn is in a loading container, so a spinner
+    will display in place of the button while the file is being
+    processed. Which is useful feedback, and keeps uploads linear at a
+    single endpoint.
 
     :param file_contents: Contents of uploaded file, formatted by Dash
         into a base64 string.
@@ -407,8 +414,12 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
             copyfile(gvf_file, path.join(USER_DATA_DIR, new_strain + ".gvf"))
         status = "ok"
         msg = ""
-    return {"filename": filename, "msg": msg, "status": status,
-            "strain": new_strain}
+    new_upload_data = {"filename": filename,
+                       "msg": msg,
+                       "status": status,
+                       "strain": new_strain}
+    upload_component = toolbar_generator.get_file_upload_component()
+    return new_upload_data, upload_component
 
 
 @app.callback(
