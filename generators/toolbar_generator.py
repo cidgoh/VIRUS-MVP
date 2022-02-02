@@ -22,7 +22,12 @@ def get_toolbar_row(data):
                 dbc.ButtonGroup(
                     [
                         get_select_lineages_toolbar_btn(),
-                        get_file_upload_component(),
+                        # This loading displays during user uploads
+                        dcc.Loading(
+                            get_file_upload_component(),
+                            id="upload-loading",
+                            type="circle"
+                        ),
                         get_file_download_component(),
                         get_legend_toggle_component()
                     ],
