@@ -413,7 +413,7 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
             # TODO: eventually replace with database
             copyfile(gvf_file, path.join(USER_DATA_DIR, new_strain + ".gvf"))
         status = "ok"
-        msg = ""
+        msg = "%s uploaded successfully." % filename
     new_upload_data = {"filename": filename,
                        "msg": msg,
                        "status": status,
@@ -463,14 +463,23 @@ def update_dialog_col(new_upload, _):
     """
     triggers = [x["prop_id"] for x in dash.callback_context.triggered]
 
-    if "new-upload.data" in triggers and new_upload["status"] == "error":
-        return dbc.Fade(
-            dbc.Alert(new_upload["msg"],
-                      color="danger",
-                      className="mb-0 p-1 d-inline-block"),
-            id="temp-dialog-col",
-            style={"transition": "all 500ms linear 0s"}
-        )
+    if "new-upload.data" in triggers:
+        if new_upload["status"] == "ok":
+            return dbc.Fade(
+                dbc.Alert(new_upload["msg"],
+                          color="success",
+                          className="mb-0 p-1 d-inline-block"),
+                id="temp-dialog-col",
+                style={"transition": "all 500ms linear 0s"}
+            )
+        if new_upload["status"] == "error":
+            return dbc.Fade(
+                dbc.Alert(new_upload["msg"],
+                          color="danger",
+                          className="mb-0 p-1 d-inline-block"),
+                id="temp-dialog-col",
+                style={"transition": "all 500ms linear 0s"}
+            )
     elif "mutation-freq-slider.marks" in triggers:
         return dbc.Fade(
             dbc.Alert("Mutation frequency slider values reset.",
