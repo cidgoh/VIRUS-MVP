@@ -439,8 +439,8 @@ def trigger_download(_):
     """
     with TemporaryDirectory() as dir_name:
         reports_path = path.join(dir_name, "surveillance_reports")
-        shutil.copytree(SURVEILLANCE_REPORTS_DIR, reports_path)
-        shutil.make_archive(reports_path, "zip", reports_path)
+        copytree(SURVEILLANCE_REPORTS_DIR, reports_path)
+        make_archive(reports_path, "zip", reports_path)
         return dcc.send_file(reports_path + ".zip")
 
 
