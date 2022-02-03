@@ -15,7 +15,6 @@ benefits. However, due to what I assume is a limited number of workers,
 I have unparallelized some callbacks, which allows certain callbacks to
 run faster.
 """
-import shutil
 from base64 import b64decode
 from json import loads
 from os import path, walk
