@@ -15,10 +15,11 @@ benefits. However, due to what I assume is a limited number of workers,
 I have unparallelized some callbacks, which allows certain callbacks to
 run faster.
 """
+import shutil
 from base64 import b64decode
 from json import loads
 from os import path, walk
-from shutil import copyfile
+from shutil import copyfile, copytree, make_archive
 from subprocess import run
 from tempfile import TemporaryDirectory
 from time import sleep
@@ -34,7 +35,7 @@ from flask_caching import Cache
 
 from data_parser import get_data
 from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR,
-                         NF_NCOV_VOC_DIR, SURVEILLANCE_DOWNLOAD_PATH)
+                         NF_NCOV_VOC_DIR, SURVEILLANCE_REPORTS_DIR)
 from generators import (heatmap_generator, histogram_generator,
                         legend_generator, table_generator, toolbar_generator,
                         footer_generator)
@@ -436,7 +437,11 @@ def trigger_download(_):
         clicked.
     :return: Fires dash function that triggers file download
     """
-    return dcc.send_file(SURVEILLANCE_DOWNLOAD_PATH)
+    with TemporaryDirectory() as dir_name:
+        reports_path = path.join(dir_name, "surveillance_reports")
+        shutil.copytree(SURVEILLANCE_REPORTS_DIR, reports_path)
+        shutil.make_archive(reports_path, "zip", reports_path)
+        return dcc.send_file(reports_path + ".zip")
 
 
 @app.callback(
