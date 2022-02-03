@@ -17,7 +17,7 @@ run faster.
 """
 from base64 import b64decode
 from json import loads
-from os import path, walk
+from os import mkdir, path, walk
 from shutil import copyfile, copytree, make_archive
 from subprocess import run
 from tempfile import TemporaryDirectory
@@ -34,7 +34,8 @@ from flask_caching import Cache
 
 from data_parser import get_data
 from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR,
-                         NF_NCOV_VOC_DIR, SURVEILLANCE_REPORTS_DIR)
+                         NF_NCOV_VOC_DIR, SURVEILLANCE_REPORTS_DIR,
+                         USER_SURVEILLANCE_REPORTS_DIR)
 from generators import (heatmap_generator, histogram_generator,
                         legend_generator, table_generator, toolbar_generator,
                         footer_generator)
@@ -369,6 +370,8 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
     processed. Which is useful feedback, and keeps uploads linear at a
     single endpoint.
 
+    TODO eventually write to database instead of disk
+
     :param file_contents: Contents of uploaded file, formatted by Dash
         into a base64 string.
     :type file_contents: str
@@ -407,11 +410,20 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
                  "--prefix", rand_prefix, "--mode", "user",
                  "--userfile", user_file, "--outdir", dir_name],
                 cwd=NF_NCOV_VOC_DIR)
+            results_path = path.join(dir_name, rand_prefix)
+
             gvf_file = \
-                path.join(dir_name, rand_prefix, "annotation_vcfTogvf",
+                path.join(results_path, "annotation_vcfTogvf",
                           "%s.filtered.SNPEFF.annotated.gvf" % new_strain)
-            # TODO: eventually replace with database
             copyfile(gvf_file, path.join(USER_DATA_DIR, new_strain + ".gvf"))
+
+            reports_dir = path.join(USER_SURVEILLANCE_REPORTS_DIR, new_strain)
+            os.mkdir(reports_dir)
+            copytree(path.join(results_path, "surveillance_surveillancePDF"),
+                     path.join(reports_dir, "PDF"))
+            copytree(path.join(results_path,
+                               "surveillance_surveillanceRawTsv"),
+                     path.join(reports_dir, "TSV"))
         status = "ok"
         msg = "%s uploaded successfully." % filename
     new_upload_data = {"filename": filename,
