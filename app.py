@@ -418,7 +418,7 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
             copyfile(gvf_file, path.join(USER_DATA_DIR, new_strain + ".gvf"))
 
             reports_dir = path.join(USER_SURVEILLANCE_REPORTS_DIR, new_strain)
-            os.mkdir(reports_dir)
+            mkdir(reports_dir)
             copytree(path.join(results_path, "surveillance_surveillancePDF"),
                      path.join(reports_dir, "PDF"))
             copytree(path.join(results_path,
