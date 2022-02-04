@@ -18,7 +18,7 @@ run faster.
 from base64 import b64decode
 from json import loads
 from os import mkdir, path, walk
-from shutil import copyfile, copytree, make_archive
+from shutil import copyfile, copytree, make_archive, rmtree
 from subprocess import run
 from tempfile import TemporaryDirectory
 from time import sleep
@@ -370,6 +370,8 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
     processed. Which is useful feedback, and keeps uploads linear at a
     single endpoint.
 
+    We also write the surveillance reports to disk.
+
     TODO eventually write to database instead of disk
 
     :param file_contents: Contents of uploaded file, formatted by Dash
@@ -418,6 +420,8 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
             copyfile(gvf_file, path.join(USER_DATA_DIR, new_strain + ".gvf"))
 
             reports_dir = path.join(USER_SURVEILLANCE_REPORTS_DIR, new_strain)
+            if path.exists(reports_dir):
+                rmtree(reports_dir)
             mkdir(reports_dir)
             copytree(path.join(results_path, "surveillance_surveillancePDF"),
                      path.join(reports_dir, "PDF"))
