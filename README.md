@@ -195,10 +195,13 @@ contact@cidgoh.ca.
 
 [@miseminger][madeline]: Functional annotation and data standardization
 
+[@despean][kenyi]: Application deployment
+
 [ivan]: https://github.com/ivansg44
 [anoosha]: https://github.com/Anoosha-Sehar
 [zohaib]: https://github.com/anwarMZ
 [madeline]: https://github.com/miseminger
+[kenyi]: https://github.com/despean
 
 William Hsiao, Gary Van Domselaar, and Paul Gordon
 
