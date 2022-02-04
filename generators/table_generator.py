@@ -17,7 +17,7 @@ def get_table_row_div(data):
         dbc.Col(
             dcc.Graph(
                 id="table",
-                figure=get_table_fig(data, data["heatmap_y"][0]),
+                figure=get_table_fig(data, data["heatmap_y_strains"][0]),
                 config={"displayModeBar": False}
             )
         ),
@@ -39,7 +39,7 @@ def get_table_fig(data, strain):
     ret = go.Figure(table_obj)
     ret.update_layout(title={
         "text": strain,
-        "font": {"size": 24}
+        "font": {"size": 16}
     })
     return ret
 
@@ -64,14 +64,14 @@ def get_table_obj(data, strain):
             "line_color": "black",
             "fill_color": "white",
             "height": 32,
-            "font": {"size": 18}
+            "font": {"size": 16}
         },
         cells={
             "values": data["tables"][strain],
             "line_color": "black",
             "fill_color": "white",
             "height": 32,
-            "font": {"size": 18}
+            "font": {"size": 16}
         }
     )
     return ret
