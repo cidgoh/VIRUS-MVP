@@ -449,8 +449,11 @@ def trigger_download(_):
     :return: Fires dash function that triggers file download
     """
     with TemporaryDirectory() as dir_name:
-        reports_path = path.join(dir_name, "reference_surveillance_reports")
-        copytree(REFERENCE_SURVEILLANCE_REPORTS_DIR, reports_path)
+        reports_path = path.join(dir_name, "surveillance_reports")
+        copytree(REFERENCE_SURVEILLANCE_REPORTS_DIR,
+                 path.join(reports_path, "reference_surveillance_reports"))
+        copytree(USER_SURVEILLANCE_REPORTS_DIR,
+                 path.join(reports_path, "user_surveillance_reports"))
         make_archive(reports_path, "zip", reports_path)
         return dcc.send_file(reports_path + ".zip")
 
