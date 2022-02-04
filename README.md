@@ -9,11 +9,20 @@ in genomic data; a Python module that integrates functional annotations from the
 visualization for prevalence of mutations in variants and their functional
 impact, based on Dash & Plotly frameworks.
 
+You can find a deployed version of this application (without user upload
+functionality) at [https://covidmvp.cidgoh.ca/][deployed].
+
+[deployed]: https://covidmvp.cidgoh.ca/
+
 ![app_interface]
 
 [app_interface]: screenshots/app_interface.png
 
 ## Installation
+
+###_0. (For users that plan to upload their own data)_ [Install Nextflow][nf]
+
+[nf]: https://www.nextflow.io/docs/latest/getstarted.html
 
 ### 1. Clone the repository and its submodules
 
@@ -49,23 +58,44 @@ Go to http://127.0.0.1:8050/.
 
 ## Usage
 
+Click the legend button ![legend_btn] at the top for an in-app explanation of
+the heatmap view.
+
+[legend_btn]: screenshots/legend_btn.png
+
+![legend_btn_click]
+
+[legend_btn_click]: screenshots/legend_btn_click.gif
+
 ### Heatmap view
 
-The y-axis encodes VOI/VOC. The x-axis encodes nucleotide position on the top,
-and amino acid position on the bottom. Amino acid position is described in the
-following notations:
+The left axis encodes variants. VOC are in **bold**, and VOI are in _italics_.
 
-**Genic:** `{GENE}.{AMINO ACID POSITION WITHIN THAT GENE}`
+The right axis encodes the number of genomic sequences analyzed for each
+variant.
 
-**Intergenic:** `{NEAREST DOWNSTREAM GENE}.{NUMBER OF NUCLEOTIDES UPSTREAM}`
+The top axis encodes the nucleotide position of variant mutations, with respect
+to the [reference SARS-CoV-2 genome][wuhan] from Wuhan.
+
+[wuhan]: https://www.ncbi.nlm.nih.gov/nuccore/NC_045512.2
+
+The bottom axis encodes the amino acid position of variant mutations, in the
+following format:
+
+**Genic mutations:** `{GENE}.{AMINO ACID POSITION WITHIN THAT GENE}`
+
+**Intergenic:** `{NEAREST DOWNSTREAM GENE}. {NUMBER OF NUCLEOTIDES UPSTREAM}`
 
 The heatmap cells encode the presence of mutations. The color of these cells
-encodes mutation frequency. Insertions and deletions are annotated with markers.
+encodes mutation frequency. Insertions,  deletions, functional mutations, and
+variants with a sample size of one are indicated as follows:
 
-Hovering over cells displays detailed mutation information.
+![heatmap_cells]
 
-Clicking cells opens a modal with detailed mutation function descriptions, and
-their citations.
+[heatmap_cells]: screenshots/heatmap_cells.png
+
+Hovering over cells displays detailed mutation information. Clicking cells opens
+a modal with detailed mutation function descriptions, and their citations.
 
 ![scroll_hover_click]
 
@@ -87,7 +117,7 @@ genome.
 
 A tabular subset of fields for a single VOI/VOC, modified from the application
 data used to generate the heatmap and histogram views. You can alternate between
-VOI/VOI by clicking on the heatmap cells.
+variants by clicking on the heatmap cells.
 
 ![table_interface]
 
@@ -98,37 +128,48 @@ VOI/VOI by clicking on the heatmap cells.
 There are several tools in the top of the interface that can be used to edit the
 visualization.
 
-The select lineages modal allows you to rearrange and hide VOI/VOC.
+Clicking the select lineages btn ![select_lineages_btn] opens a modal that
+allows you to rearrange and hide variants.
 
+[select_lineages_btn]: screenshots/select_lineages_btn.png
 
 The mutation frequency slider allows you to filter heatmap cells by mutation
 frequency.
 
+![mutation_freq_slider]
+
+[mutation_freq_slider]: screenshots/mutation_freq_slider.gif
+
 The clade defining switch allows you to filter in and out heatmap cells
 corresponding to non-clade defining mutations.
 
+![clade_defining_switch]
+
+[clade_defining_switch]: screenshots/clade_defining_switch.gif
+
 #### Uploading data
 
-The upload button ![upload_btn] allows you to upload data on additional VOI/VOC
-in gvf format. You can find examples of files users can upload in
-[test_data/][3].
+The upload button ![upload_btn] allows you to upload your own SARs-CoV-2 genomic
+data in `FASTA` or `VCF` format.  You can find examples of files users can
+upload in [test_data/][3].
 
 [upload_btn]: screenshots/upload_btn.png
 [3]: test_data/
+
+_You must have Nextflow installed to upload files._
 
 #### Downloading data
 
 The download button ![download_btn] allows you to download a zip object
 containing surveillance reports for each reference variant. You can find
-examples of these reports in [surveillance_reports_/][4].
+examples of these reports in [surveillance_reports/][4].
 
 [download_btn]: screenshots/download_btn.png
-[4]: surveillance_reports_/
+[4]: surveillance_reports/
 
 ## [nf-ncov-voc][nf-ncov-voc]
 
-This pipeline generates the input files for the visualization. You can run the
-pipeline commands from the root COVID-MVP directory.
+This pipeline generates the data files for the visualization.
 
 ## [pokay][pokay]
 
