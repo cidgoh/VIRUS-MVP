@@ -34,7 +34,7 @@ from flask_caching import Cache
 
 from data_parser import get_data
 from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR,
-                         NF_NCOV_VOC_DIR, SURVEILLANCE_REPORTS_DIR,
+                         NF_NCOV_VOC_DIR, REFERENCE_SURVEILLANCE_REPORTS_DIR,
                          USER_SURVEILLANCE_REPORTS_DIR)
 from generators import (heatmap_generator, histogram_generator,
                         legend_generator, table_generator, toolbar_generator,
@@ -450,7 +450,7 @@ def trigger_download(_):
     """
     with TemporaryDirectory() as dir_name:
         reports_path = path.join(dir_name, "surveillance_reports")
-        copytree(SURVEILLANCE_REPORTS_DIR, reports_path)
+        copytree(REFERENCE_SURVEILLANCE_REPORTS_DIR, reports_path)
         make_archive(reports_path, "zip", reports_path)
         return dcc.send_file(reports_path + ".zip")
 
