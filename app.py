@@ -17,6 +17,8 @@ run faster.
 """
 from json import loads
 from os import path, walk
+from shutil import copytree, make_archive
+from tempfile import TemporaryDirectory
 from time import sleep
 
 import dash
@@ -29,7 +31,7 @@ from flask_caching import Cache
 
 from data_parser import get_data
 from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR,
-                         SURVEILLANCE_DOWNLOAD_PATH)
+                         REFERENCE_SURVEILLANCE_REPORTS_DIR)
 from generators import (heatmap_generator, histogram_generator,
                         legend_generator, table_generator, toolbar_generator,
                         footer_generator)
@@ -344,7 +346,12 @@ def trigger_download(_):
         clicked.
     :return: Fires dash function that triggers file download
     """
-    return dcc.send_file(SURVEILLANCE_DOWNLOAD_PATH)
+    with TemporaryDirectory() as dir_name:
+        reports_path = path.join(dir_name, "surveillance_reports")
+        copytree(REFERENCE_SURVEILLANCE_REPORTS_DIR,
+                 path.join(reports_path, "reference_surveillance_reports"))
+        make_archive(reports_path, "zip", reports_path)
+        return dcc.send_file(reports_path + ".zip")
 
 
 @app.callback(
@@ -1100,6 +1107,7 @@ app.clientside_callback(
     Output("strain-order", "data"),
     Input("select-lineages-ok-btn", "n_clicks"),
     State({"type": "select-lineages-modal-checklist", "index": ALL}, "id"),
+    State("strain-order", "data"),
     State("data", "data"),
     prevent_initial_call=True
 )

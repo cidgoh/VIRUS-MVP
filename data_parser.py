@@ -73,6 +73,10 @@ def parse_gvf_dir(dir_):
                     if "status" in attrs:
                         status = attrs["status"]
 
+                    # User uploaded files
+                    if strain == "n/a (n/a)":
+                        strain = filename
+
                     ret[strain] = {
                         "mutations": {},
                         "who_variant": who_variant,
