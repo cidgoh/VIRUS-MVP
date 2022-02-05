@@ -7,109 +7,12 @@ from copy import deepcopy
 import csv
 from io import StringIO
 from itertools import islice
-import json
 import os
 
 import numpy as np
 import pandas as pd
 
 from definitions import GENE_POSITIONS_DICT
-
-
-def vcf_str_to_gvf_str(vcf_str, strain):
-    """Convert VCF str to gvf str.
-
-    This is inspired by a script Madeline wrote:
-    https://bit.ly/2Vgv1WO. A lot of the code is directly lifted.
-
-    This is meant to rudimentarily convert VCF files to GVF files until
-    we connect the modules together, at which point the visualization
-    will not be responsible for converting VCF to GVF, because the
-    functional annotations module will do it.
-
-    :param vcf_str: String representation of VCF file uploaded by user
-    :type vcf_str: str
-    :param strain: Name of strain to assign uploaded file
-    :type strain: str
-    :return: String representation of GVF file converted from vcf_str
-    :rtype: str
-    """
-    vcf_fp = StringIO(vcf_str)
-    df = pd.read_csv(vcf_fp, sep="\t", header=65)
-
-    gvf_columns = ["#seqid", "#source", "#type", "#start", "#end", "#score",
-                   "#strand", "#phase", "#attributes"]
-    new_df = pd.DataFrame(index=range(0, len(df)), columns=gvf_columns)
-
-    # parse EFF column
-    eff_info = df["INFO"].str.findall("\((.*?)\)")
-    eff_info = eff_info.apply(pd.Series)[0]
-    eff_info = eff_info.str.split(pat="|").apply(pd.Series)
-
-    # hgvs names
-    hgvs = eff_info[3].str.rsplit(pat="c.").apply(pd.Series)
-    hgvs_protein = hgvs[0].str[:-1]
-    hgvs_protein.replace(r"^\s+$", np.nan, regex=True)
-    hgvs_nucleotide = "c." + hgvs[1]
-    new_df["#attributes"] = \
-        new_df["#attributes"].astype(str) + "Name=" + hgvs_protein + ";"
-    new_df["#attributes"] = \
-        new_df["#attributes"].astype(str) + "nt_name=" + hgvs_nucleotide + ";"
-    new_df["#attributes"] = \
-        new_df["#attributes"].astype(str) + "vcf_gene=" + eff_info[5] + ";"
-    new_df["#attributes"] = (new_df["#attributes"].astype(str)
-                             + "mutation_type=" + eff_info[1] + ";")
-
-    # columns copied straight from Zohaib"s file
-    for column in ["REF", "ALT"]:
-        key = column.lower()
-        if key == "ref":
-            key = "Reference_seq"
-        elif key == "alt":
-            key = "Variant_seq"
-        new_df["#attributes"] = (new_df["#attributes"].astype(str) + key
-                                 + "=" + df[column].astype(str) + ";")
-
-    # add ao, dp, ro
-    info = df["INFO"].str.split(pat=";").apply(pd.Series)
-    new_df["#attributes"] = new_df["#attributes"] + info[5].str.lower() + ";"
-    new_df["#attributes"] = new_df["#attributes"] + info[7].str.lower() + ";"
-    new_df["#attributes"] = new_df["#attributes"] + info[28].str.lower() + ";"
-
-    # add strain name
-    new_df["#attributes"] = \
-        new_df["#attributes"] + "viral_lineage=" + strain + ";"
-
-    new_df["#attributes"] = (new_df["#attributes"] + "who_label=;")
-    new_df["#attributes"] = new_df["#attributes"] + "status=;"
-
-    # Other attributes not in Madeline's script
-    new_df["#attributes"] += "clade_defining=False;"
-    new_df["#attributes"] += 'function_category="";'
-    new_df["#attributes"] += 'function_description="";'
-    new_df["#attributes"] += 'source="";'
-    new_df["#attributes"] += 'citation="";'
-    new_df["#attributes"] += "sample_size=%s;" % 3
-    new_df["#attributes"] += 'multi_aa_name="";'
-
-    # remove starting NaN; leave trailing ";"
-    new_df["#attributes"] = new_df["#attributes"].str[3:]
-
-    # fill in other GVF columns
-    new_df["#seqid"] = df["#CHROM"]
-    new_df["#source"] = "."
-    new_df["#type"] = info[40].str.split(pat="=").apply(pd.Series)[1]
-    new_df["#start"] = df["POS"]
-    new_df["#end"] = (df["POS"] + df["ALT"].str.len() - 1).astype(str)
-    new_df["#score"] = "."
-    new_df["#strand"] = "+"
-    new_df["#phase"] = "."
-
-    # only keep the columns needed for a gvf file
-    new_df = new_df[gvf_columns]
-
-    ret = new_df.to_csv(sep="\t", index=False)
-    return ret
 
 
 def map_pos_to_gene(pos):
@@ -172,6 +75,10 @@ def parse_gvf_dir(dir_):
                         who_variant = attrs["who_variant"]
                     if "status" in attrs:
                         status = attrs["status"]
+
+                    # User uploaded files
+                    if strain == "n/a (n/a)":
+                        strain = filename
 
                     ret[strain] = {
                         "mutations": {},
