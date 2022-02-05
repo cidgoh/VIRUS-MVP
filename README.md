@@ -20,7 +20,7 @@ functionality) at [https://covidmvp.cidgoh.ca/][deployed].
 
 ## Installation
 
-###_0. (For users that plan to upload their own data)_ [Install Nextflow][nf]
+### _0. (For users that plan to upload their own data)_ [Install Nextflow][nf]
 
 [nf]: https://www.nextflow.io/docs/latest/getstarted.html
 
