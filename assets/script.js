@@ -76,7 +76,7 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
           checkboxDivs = e2.find(':checkbox')
         }
         for (const checkboxDiv of checkboxDivs) {
-          ret.push(checkboxDiv.value)
+          ret.push(checkboxDiv.className)
         }
       }
       // Heatmap displays rows in reverse

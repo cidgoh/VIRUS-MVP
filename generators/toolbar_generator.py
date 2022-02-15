@@ -6,6 +6,8 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 
+from definitions import USER_DATA_DIR
+
 
 def get_toolbar_row(data):
     """Get Dash Bootstrap Components row that sits above heatmap.
@@ -107,22 +109,13 @@ def get_select_lineages_modal_body(data):
     :return: Checkboxes for each directory containing strains, with
         only boxes for non-hidden strains checked, and btns for
         selecting or deselecting all checkboxes.
-    :rtype: list[dbc.FormGroup]
+    :rtype: list
     """
     modal_body = []
     for dir_ in reversed(data["dir_strains"]):
-        checklist_options = []
-        selected_values = []
-        for strain in reversed(data["dir_strains"][dir_]):
-            checklist_options.append({
-                "label": strain,
-                "value": strain
-            })
-            if strain not in data["hidden_strains"]:
-                selected_values.append(strain)
-        form_group = dbc.FormGroup([
-            dbc.Row(dbc.Col(os.path.basename(dir_))),
-            dbc.ButtonGroup([
+        title = dbc.Row(dbc.Col(os.path.basename(dir_)))
+
+        all_none_btns = dbc.ButtonGroup([
                 dbc.Button(
                     "All",
                     size="sm",
@@ -137,14 +130,43 @@ def get_select_lineages_modal_body(data):
                     id={"type": "select-lineages-modal-none-btn",
                         "index": dir_}
                 )
-            ]),
-            dbc.Checklist(
-                id={"type": "select-lineages-modal-checklist", "index": dir_},
-                options=checklist_options,
-                value=selected_values
+            ])
+
+        checkboxes = []
+        for strain in reversed(data["dir_strains"][dir_]):
+            checked = strain not in data["hidden_strains"]
+            checkbox = dbc.Checkbox(
+                id={"type": "select-lineages-modal-checkbox", "index": strain},
+                # Kinda lame classname, but makes it faster to extract
+                # strain in JS.
+                className=strain,
+                checked=checked
             )
-        ])
-        modal_body.append(form_group)
+            cols = [
+                dbc.Col(checkbox, width=1),
+                dbc.Col(strain)
+            ]
+            if dir_ == USER_DATA_DIR:
+                cols.append(
+                    dbc.Col(
+                        dbc.Badge("Delete",
+                                  color="danger",
+                                  style={"cursor": "pointer"}),
+                        width=2
+                    )
+                )
+            checkboxes.append(
+                dbc.Row(cols)
+            )
+        checkboxes_div = html.Div(
+            checkboxes,
+            id={"type": "select-lineages-modal-checklist", "index": dir_}
+        )
+
+        modal_body.append(title)
+        modal_body.append(all_none_btns)
+        modal_body.append(checkboxes_div)
+
     return modal_body
 
 
@@ -234,17 +256,20 @@ def get_mutation_freq_slider(data):
         if num_val % 1 == 0:
             num_val = int(num_val)
 
-        if num_val < min_val:
+        if num_val <= min_val:
             min_val = num_val
-        if num_val > max_val:
+        if num_val >= max_val:
             max_val = num_val
         marks[num_val] = {
             "label": str_val,
             "style": {"display": "none"}
         }
-    marks[min_val]["style"].pop("display")
     marks[min_val]["label"] = "Freq=" + marks[min_val]["label"]
-    marks[max_val]["style"].pop("display")
+    if len(marks) > 1:
+        marks[min_val]["style"].pop("display")
+        marks[max_val]["style"].pop("display")
+    else:
+        marks[min_val]["style"].pop("display")
     return dcc.RangeSlider(id="mutation-freq-slider",
                            className="p-0",
                            min=min_val,
