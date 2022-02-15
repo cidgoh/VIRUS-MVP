@@ -43,13 +43,21 @@ def get_toolbar_row(data):
                 id="dialog-col"
             ),
             dbc.Col(
-                dcc.Loading(
-                    None,
-                    id="empty-loading",
-                    style={"height": "100%", "width": "100%", "margin": 0},
-                    type="dot"
-                ),
-                id="empty-loading-col",
+                [
+                    dcc.Loading(
+                        None,
+                        id="data-loading",
+                        style={"height": "100%", "width": "100%", "margin": 0},
+                        type="dot"
+                    ),
+                    dcc.Loading(
+                        None,
+                        id="select-lineages-modal-loading",
+                        style={"height": "100%", "width": "100%", "margin": 0},
+                        type="dot"
+                    )
+                ],
+                id="loading-col",
                 width=1
             ),
             dbc.Col(

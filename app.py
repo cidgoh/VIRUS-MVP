@@ -200,7 +200,7 @@ def launch_app(_):
     output=[
         Output("get-data-args", "data"),
         Output("last-data-mtime", "data"),
-        Output("empty-loading", "data")
+        Output("data-loading", "data")
     ],
     inputs=[
         Input("show-clade-defining", "data"),
@@ -222,8 +222,8 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     ret val. This fn calls ``read_data`` first, so it is already cached
     before those callbacks need it.
 
-    We also update ``last-data-mtime`` here, and ``empty-loading``. In
-    the case of ``empty-loading``, we keep the value as ``None``, but
+    We also update ``last-data-mtime`` here, and ``data-loading``. In
+    the case of ``data-loading``, we keep the value as ``None``, but
     returning it in this fn provides a spinner while this fn is being
     run.
 
@@ -243,7 +243,7 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     :param gff3_annotations: ``parse_gff3_file`` return value
     :type gff3_annotations: dict
     :return: ``get_data`` return value, last mtime across all data
-        files, and ``empty-loading`` children.
+        files, and ``data-loading`` children.
     :rtype: tuple[dict, float, None]
     :raise PreventUpdate: New upload triggered this function, and that
         new upload failed.
@@ -583,6 +583,7 @@ def update_hidden_strains(_, checkbox_ids, checkbox_vals, get_data_args,
 @app.callback(
     Output("select-lineages-modal", "is_open"),
     Output("select-lineages-modal-body", "children"),
+    Output("select-lineages-modal-loading", "children"),
     Input("open-select-lineages-modal-btn", "n_clicks"),
     Input("select-lineages-ok-btn", "n_clicks"),
     Input("select-lineages-cancel-btn", "n_clicks"),
@@ -597,6 +598,9 @@ def toggle_select_lineages_modal(_, __, ___, get_data_args, last_data_mtime):
     select lineages modal, it is also in charge of dynamically
     populating the select lineages modal body when the modal is opened.
 
+    This is a little slow to open, so we return
+    ``select-lineages-modal-loading`` to add a spinner.
+
     :param _: Select lineages button in toolbar was clicked
     :param __: OK button in select lineages modal was clicked
     :param ___: Cancel button in select lineages modal was clicked
@@ -605,8 +609,8 @@ def toggle_select_lineages_modal(_, __, ___, get_data_args, last_data_mtime):
     :param last_data_mtime: Last mtime across all data files
     :type last_data_mtime: float
     :return: Boolean representing whether the select lineages modal is
-        open or closed, and content representing the select lineages
-        modal body.
+        open or closed, content representing the select lineages
+        modal body, and ``select-lineages-modal-loading`` children.
     :rtype: (bool, list[dbc.FormGroup])
     """
     # Current ``get_data`` return val
@@ -618,10 +622,10 @@ def toggle_select_lineages_modal(_, __, ___, get_data_args, last_data_mtime):
     # toolbar is clicked.
     if triggered_prop_id == "open-select-lineages-modal-btn.n_clicks":
         modal_body = toolbar_generator.get_select_lineages_modal_body(data)
-        return True, modal_body
+        return True, modal_body, None
     else:
         # No need to populate modal body if the modal is closed
-        return False, None
+        return False, None, None
 
 
 @app.callback(
@@ -1011,7 +1015,7 @@ def update_histogram(get_data_args, last_data_mtime):
     Output("heatmap-cells-fig", "style"),
     Output("heatmap-cells-inner-container", "style"),
     Output("heatmap-cells-outer-container", "style"),
-    Output("empty-loading", "children"),
+    Output("data-loading", "children"),
     Input("get-data-args", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
@@ -1022,7 +1026,7 @@ def update_heatmap_cells_fig(get_data_args, last_data_mtime):
     This is the fig with the heatmap cells and x axis. We return style
     because attributes may need to change due to changes in data.
 
-    We also update ``empty-loading``. We keep the value as ``None``,
+    We also update ``data-loading``. We keep the value as ``None``,
     but returning it in this fn provides a spinner while this fn is
     being run.
 
@@ -1031,7 +1035,7 @@ def update_heatmap_cells_fig(get_data_args, last_data_mtime):
     :param last_data_mtime: Last mtime across all data files
     :type last_data_mtime: float
     :return: New heatmap cells fig, associated styles, and
-        ``empty-loading`` children.
+        ``data-loading`` children.
     :rtype: Tuple(plotly.graph_objects.Figure, dict, dict, dict, None)
     """
     # Current ``get_data`` return val
