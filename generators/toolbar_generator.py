@@ -71,7 +71,8 @@ def get_toolbar_row(data):
                 className="my-auto pl-xl-5",
                 width=2
             ),
-            get_select_lineages_modal()
+            get_select_lineages_modal(),
+            get_confirm_strain_del_modal()
         ],
         className="mt-3 ml-xl-3"
     )
@@ -158,6 +159,8 @@ def get_select_lineages_modal_body(data):
                 cols.append(
                     dbc.Col(
                         dbc.Badge("Delete",
+                                  id={"type": "checkbox-del-btn",
+                                      "index": strain},
                                   color="danger",
                                   style={"cursor": "pointer"}),
                         width=2
@@ -198,6 +201,30 @@ def get_select_lineages_modal_footer():
                    color="danger",
                    id="select-lineages-cancel-btn"),
     ])
+
+
+def get_confirm_strain_del_modal():
+    """Returns confirm strain deletion modal.
+
+    This modal is initially closed, and the body is empty.
+
+    :return: Initially closed Dash Bootstrap Components modal for
+        confirming deletion of strain.
+    :rtype: dbc.Modal
+    """
+    return dbc.Modal([
+        dbc.ModalHeader("Are you sure?"),
+        # Empty at launch; populated when user opens modal
+        dbc.ModalBody(None,
+                      id="confirm-strain-del-modal-body"),
+        dbc.ModalFooter([
+            dbc.Button("Delete",
+                       color="danger",
+                       id="confirm-strain-del-modal-ok-btn"),
+            dbc.Button("Cancel",
+                       id="confirm-strain-del-modal-cancel-btn")
+        ])
+    ], id="confirm-strain-del-modal", size="sm")
 
 
 def get_file_upload_component():

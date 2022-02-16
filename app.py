@@ -17,7 +17,7 @@ run faster.
 """
 from base64 import b64decode
 from json import loads
-from os import mkdir, path, walk
+from os import mkdir, path, remove, walk
 from shutil import copyfile, copytree, make_archive, rmtree
 from subprocess import run
 from tempfile import TemporaryDirectory
@@ -183,6 +183,8 @@ def launch_app(_):
         dcc.Store(id="hidden-strains", data=get_data_args["hidden_strains"]),
         dcc.Store(id="strain-order", data=get_data_args["strain_order"]),
         dcc.Store(id="last-heatmap-cell-clicked"),
+        dcc.Store(id="strain-to-del"),
+        dcc.Store(id="deleted-strain"),
         # Used to update certain figures only when necessary
         dcc.Store(id="heatmap-x-len", data=len(data_["heatmap_x_nt_pos"])),
         dcc.Store(id="heatmap-y-strains",
@@ -533,21 +535,26 @@ def hide_dialog_col(_):
 @app.callback(
     Output("hidden-strains", "data"),
     Input("select-lineages-ok-btn", "n_clicks"),
+    Input("deleted-strain", "data"),
     State({"type": "select-lineages-modal-checkbox", "index": ALL}, "id"),
     State({"type": "select-lineages-modal-checkbox", "index": ALL}, "checked"),
     State("get-data-args", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def update_hidden_strains(_, checkbox_ids, checkbox_vals, get_data_args,
-                          last_data_mtime):
+def update_hidden_strains(_, deleted_strain, checkbox_ids, checkbox_vals,
+                          get_data_args, last_data_mtime):
     """Update ``hidden-strains`` variable in dcc.Store.
 
     When the OK button is clicked in the select lineages modal, the
     unchecked boxes are returned as the new ``hidden-strains`` value.
 
+    We also update ``hidden-strains`` if the user deleted a strain.
+
     :param _: Otherwise useless input only needed to alert us when the
         ok button in the select lineages modal was clicked.
+    :param deleted_strain: Name of strain user just deleted
+    :type deleted_strain: str
     :param checkbox_ids: List of ids corresponding to checkboxes
     :type checkbox_ids: list[dict]
     :param checkbox_vals: List of booleans corresponding to checkboxes
@@ -565,6 +572,13 @@ def update_hidden_strains(_, checkbox_ids, checkbox_vals, get_data_args,
     """
     # Current ``get_data`` return val
     data = read_data(get_data_args, last_data_mtime)
+    old_hidden_strains = data["hidden_strains"]
+
+    trigger = dash.callback_context.triggered[0]["prop_id"]
+    if trigger == "deleted-strain.data":
+        if deleted_strain in old_hidden_strains:
+            old_hidden_strains.remove(deleted_strain)
+        return old_hidden_strains
 
     checkbox_strains = [id["index"] for id in checkbox_ids]
     hidden_strains_vals_zip_obj = \
@@ -587,11 +601,13 @@ def update_hidden_strains(_, checkbox_ids, checkbox_vals, get_data_args,
     Input("open-select-lineages-modal-btn", "n_clicks"),
     Input("select-lineages-ok-btn", "n_clicks"),
     Input("select-lineages-cancel-btn", "n_clicks"),
+    Input("deleted-strain", "data"),
     State("get-data-args", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def toggle_select_lineages_modal(_, __, ___, get_data_args, last_data_mtime):
+def toggle_select_lineages_modal(_, __, ___, ____, get_data_args,
+                                 last_data_mtime):
     """Open or close select lineages modal.
 
     Not only is this function in charge of opening or closing the
@@ -604,6 +620,7 @@ def toggle_select_lineages_modal(_, __, ___, get_data_args, last_data_mtime):
     :param _: Select lineages button in toolbar was clicked
     :param __: OK button in select lineages modal was clicked
     :param ___: Cancel button in select lineages modal was clicked
+    :param ____: OK button in confirm strain deletion modal was clicked
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
     :param last_data_mtime: Last mtime across all data files
@@ -668,6 +685,87 @@ def toggle_all_strains_in_select_all_lineages_modal(_, __, checkbox_rows):
             ret[i]["props"]["children"][0]["props"]\
                 ["children"]["props"]["checked"] = False
     return ret
+
+
+@app.callback(
+    Output("strain-to-del", "data"),
+    Input({"type": "checkbox-del-btn", "index": ALL}, "n_clicks"),
+    prevent_initial_call=True
+)
+def update_strain_to_del(n_clicks):
+    """Update ``strain-to-del`` var.
+
+    This happens after a user clicks a delete btn for a strain. We do
+    not immediately delete the strain, but update a var that allows
+    user confirmation.
+
+    :param n_clicks: List of times each delete btn inside the select
+        lineages modal was clicked.
+    :type n_clicks: list[int]
+    """
+    # Select lineages modal was just opened
+    if all(e is None for e in n_clicks):
+        raise PreventUpdate
+
+    ctx = dash.callback_context
+    triggered_prop_id = ctx.triggered[0]["prop_id"]
+    strain_to_del = loads(triggered_prop_id.split(".")[0])["index"]
+    return strain_to_del
+
+
+@app.callback(
+    Output("confirm-strain-del-modal", "is_open"),
+    Output("confirm-strain-del-modal-body", "children"),
+    Input("strain-to-del", "data"),
+    Input("confirm-strain-del-modal-cancel-btn", "n_clicks"),
+    Input("deleted-strain", "data"),
+    prevent_initial_call=True
+)
+def toggle_confirm_strain_del_modal(strain_to_del, _, __):
+    """Open or close confirm strain deletion modal.
+
+    This modal opens when a user clicks a delete btn in the select
+    lineages modal. It closes when the user clicks the cancel btn in
+    the confirm strain deletion modal. And it closes when the user
+    update the ``deleted_strain`` var.
+
+    :param strain_to_del: Strain corresponding to del btn user just
+        clicked.
+    :type strain_to_del: str
+    :param _: User clicked cancel btn in confirm strain del modal
+    :param __: User updated ``deleted-strain`` var
+    """
+    ctx = dash.callback_context.triggered[0]["prop_id"]
+    if ctx == "strain-to-del.data":
+        msg = "Delete %s?" % strain_to_del
+        return True, msg
+    elif ctx == "deleted-strain.data":
+        return False, None
+    else:
+        return False, None
+
+
+@app.callback(
+    Output("deleted-strain", "data"),
+    Input("confirm-strain-del-modal-ok-btn", "n_clicks"),
+    State("strain-to-del", "data"),
+    prevent_initial_call=True
+)
+def update_deleted_strain(_, strain_to_del):
+    """Update ``deleted-strain`` var.
+
+    This happens after a user clicks the OK btn in the confirm strain
+    deletion modal.
+
+    We also delete the files associated with the strain at this step.
+
+    :param _: User clicked the OK btn
+    :param strain_to_del: Strain corresponding to del btn user clicked
+    :type strain_to_del: str
+    """
+    remove(path.join(USER_DATA_DIR, strain_to_del + ".gvf"))
+    rmtree(path.join(USER_SURVEILLANCE_REPORTS_DIR, strain_to_del))
+    return strain_to_del
 
 
 @app.callback(
@@ -905,7 +1003,7 @@ def update_heatmap_sample_size_axis_fig(_, get_data_args, last_data_mtime):
     prevent_initial_call=True
 )
 def update_heatmap_gene_bar_fig(_, get_data_args, last_data_mtime):
-    """Update heatmap gene bar fig.TODO
+    """Update heatmap gene bar fig.
 
     We need to update style because width might have changed due to
     added nt positions in data.
@@ -965,7 +1063,7 @@ def update_heatmap_nt_pos_axis_fig(_, get_data_args, last_data_mtime):
     prevent_initial_call=True
 )
 def update_heatmap_aa_pos_axis_fig(_, get_data_args, last_data_mtime):
-    """Update heatmap amino acid position axis fig.TODO
+    """Update heatmap amino acid position axis fig.
 
     We need to update style because width might have changed due to
     added nt positions in data.
@@ -993,7 +1091,7 @@ def update_heatmap_aa_pos_axis_fig(_, get_data_args, last_data_mtime):
     prevent_initial_call=True
 )
 def update_histogram(get_data_args, last_data_mtime):
-    """Update histogram top row div.TODO
+    """Update histogram top row div.
 
     When the ``data`` variable in the dcc.Store is updated, the top row
     in the histogram view is updated to reflect the new data. This
@@ -1250,6 +1348,7 @@ app.clientside_callback(
     Output("strain-order", "data"),
     Input("select-lineages-ok-btn", "n_clicks"),
     Input("new-upload", "data"),
+    Input("deleted-strain", "data"),
     State({"type": "select-lineages-modal-checklist", "index": ALL}, "id"),
     State("strain-order", "data"),
     State("data", "data"),
