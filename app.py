@@ -17,8 +17,12 @@ run faster.
 """
 from base64 import b64decode
 from json import loads
-from os import path, walk
+from os import mkdir, path, remove, walk
+from shutil import copyfile, copytree, make_archive, rmtree
+from subprocess import run
+from tempfile import TemporaryDirectory
 from time import sleep
+from uuid import uuid4
 
 import dash
 import dash_bootstrap_components as dbc
@@ -28,9 +32,10 @@ from dash.dependencies import (ALL, MATCH, ClientsideFunction, Input, Output,
 from dash.exceptions import PreventUpdate
 from flask_caching import Cache
 
-from data_parser import get_data, vcf_str_to_gvf_str
+from data_parser import get_data
 from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR,
-                         SURVEILLANCE_DOWNLOAD_PATH)
+                         NF_NCOV_VOC_DIR, REFERENCE_SURVEILLANCE_REPORTS_DIR,
+                         USER_SURVEILLANCE_REPORTS_DIR)
 from generators import (heatmap_generator, histogram_generator,
                         legend_generator, table_generator, toolbar_generator,
                         footer_generator)
@@ -178,6 +183,8 @@ def launch_app(_):
         dcc.Store(id="hidden-strains", data=get_data_args["hidden_strains"]),
         dcc.Store(id="strain-order", data=get_data_args["strain_order"]),
         dcc.Store(id="last-heatmap-cell-clicked"),
+        dcc.Store(id="strain-to-del"),
+        dcc.Store(id="deleted-strain"),
         # Used to update certain figures only when necessary
         dcc.Store(id="heatmap-x-len", data=len(data_["heatmap_x_nt_pos"])),
         dcc.Store(id="heatmap-y-strains",
@@ -195,7 +202,7 @@ def launch_app(_):
     output=[
         Output("get-data-args", "data"),
         Output("last-data-mtime", "data"),
-        Output("empty-loading", "data")
+        Output("data-loading", "data")
     ],
     inputs=[
         Input("show-clade-defining", "data"),
@@ -217,8 +224,8 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     ret val. This fn calls ``read_data`` first, so it is already cached
     before those callbacks need it.
 
-    We also update ``last-data-mtime`` here, and ``empty-loading``. In
-    the case of ``empty-loading``, we keep the value as ``None``, but
+    We also update ``last-data-mtime`` here, and ``data-loading``. In
+    the case of ``data-loading``, we keep the value as ``None``, but
     returning it in this fn provides a spinner while this fn is being
     run.
 
@@ -238,7 +245,7 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     :param gff3_annotations: ``parse_gff3_file`` return value
     :type gff3_annotations: dict
     :return: ``get_data`` return value, last mtime across all data
-        files, and ``empty-loading`` children.
+        files, and ``data-loading`` children.
     :rtype: tuple[dict, float, None]
     :raise PreventUpdate: New upload triggered this function, and that
         new upload failed.
@@ -344,6 +351,7 @@ def update_show_clade_defining(switches_value):
 
 @app.callback(
     Output("new-upload", "data"),
+    Output("upload-loading", "children"),
     Input("upload-file", "contents"),
     Input("upload-file", "filename"),
     State("get-data-args", "data"),
@@ -357,6 +365,16 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
     But regardless of whether a valid file is uploaded, this function
     will return a dict describing the name of the file the user
     attempted to upload, status of upload, and name of uploaded strain.
+
+    We also re-render the uploading btn after the file is processed. We
+    do this because the btn is in a loading container, so a spinner
+    will display in place of the button while the file is being
+    processed. Which is useful feedback, and keeps uploads linear at a
+    single endpoint.
+
+    We also write the surveillance reports to disk.
+
+    TODO eventually write to database instead of disk
 
     :param file_contents: Contents of uploaded file, formatted by Dash
         into a base64 string.
@@ -376,26 +394,50 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
     # TODO more thorough validation, maybe once we finalize data
     #  standards.
     new_strain, ext = filename.rsplit(".", 1)
-    if ext != "vcf":
+    if ext not in {"vcf", "fasta"}:
         status = "error"
-        msg = "Filename must end in \".vcf\"."
+        msg = "Filename must end in \".vcf\" or \".fasta\"."
     elif new_strain in old_data["all_strains"]:
         status = "error"
         msg = "Filename must not conflict with existing variant."
     else:
-        # Dash splits MIME type and the actual str with a comma
+        # # Dash splits MIME type and the actual str with a comma
         _, base64_str = file_contents.split(",")
-        # File gets written to ``user_data`` folder
-        # TODO: eventually replace with database
-        vcf_str_bytes = b64decode(base64_str)
-        vcf_str_utf8 = vcf_str_bytes.decode("utf-8")
-        gvf_str = vcf_str_to_gvf_str(vcf_str_utf8, new_strain)
-        with open(path.join(USER_DATA_DIR, new_strain + ".gvf"), "w") as fp:
-            fp.write("\n\n\n" + gvf_str)
+        # Run pipeline, but output contents into temporary dir. Then
+        # copy appropriate output file to relevant dir.
+        with TemporaryDirectory() as dir_name:
+            user_file = path.join(dir_name, filename)
+            rand_prefix = "u" + str(uuid4())
+            with open(user_file, "w") as fp:
+                fp.write(b64decode(base64_str).decode("utf-8"))
+            run(["nextflow", "run", "main.nf", "-profile", "conda",
+                 "--prefix", rand_prefix, "--mode", "user",
+                 "--userfile", user_file, "--outdir", dir_name],
+                cwd=NF_NCOV_VOC_DIR)
+            results_path = path.join(dir_name, rand_prefix)
+
+            gvf_file = \
+                path.join(results_path, "annotation_vcfTogvf",
+                          "%s.filtered.SNPEFF.annotated.gvf" % new_strain)
+            copyfile(gvf_file, path.join(USER_DATA_DIR, new_strain + ".gvf"))
+
+            reports_dir = path.join(USER_SURVEILLANCE_REPORTS_DIR, new_strain)
+            if path.exists(reports_dir):
+                rmtree(reports_dir)
+            mkdir(reports_dir)
+            copytree(path.join(results_path, "surveillance_surveillancePDF"),
+                     path.join(reports_dir, "PDF"))
+            copytree(path.join(results_path,
+                               "surveillance_surveillanceRawTsv"),
+                     path.join(reports_dir, "TSV"))
         status = "ok"
-        msg = ""
-    return {"filename": filename, "msg": msg, "status": status,
-            "strain": new_strain}
+        msg = "%s uploaded successfully." % filename
+    new_upload_data = {"filename": filename,
+                       "msg": msg,
+                       "status": status,
+                       "strain": new_strain}
+    upload_component = toolbar_generator.get_file_upload_component()
+    return new_upload_data, upload_component
 
 
 @app.callback(
@@ -412,7 +454,14 @@ def trigger_download(_):
         clicked.
     :return: Fires dash function that triggers file download
     """
-    return dcc.send_file(SURVEILLANCE_DOWNLOAD_PATH)
+    with TemporaryDirectory() as dir_name:
+        reports_path = path.join(dir_name, "surveillance_reports")
+        copytree(REFERENCE_SURVEILLANCE_REPORTS_DIR,
+                 path.join(reports_path, "reference_surveillance_reports"))
+        copytree(USER_SURVEILLANCE_REPORTS_DIR,
+                 path.join(reports_path, "user_surveillance_reports"))
+        make_archive(reports_path, "zip", reports_path)
+        return dcc.send_file(reports_path + ".zip")
 
 
 @app.callback(
@@ -439,14 +488,23 @@ def update_dialog_col(new_upload, _):
     """
     triggers = [x["prop_id"] for x in dash.callback_context.triggered]
 
-    if "new-upload.data" in triggers and new_upload["status"] == "error":
-        return dbc.Fade(
-            dbc.Alert(new_upload["msg"],
-                      color="danger",
-                      className="mb-0 p-1 d-inline-block"),
-            id="temp-dialog-col",
-            style={"transition": "all 500ms linear 0s"}
-        )
+    if "new-upload.data" in triggers:
+        if new_upload["status"] == "ok":
+            return dbc.Fade(
+                dbc.Alert(new_upload["msg"],
+                          color="success",
+                          className="mb-0 p-1 d-inline-block"),
+                id="temp-dialog-col",
+                style={"transition": "all 500ms linear 0s"}
+            )
+        if new_upload["status"] == "error":
+            return dbc.Fade(
+                dbc.Alert(new_upload["msg"],
+                          color="danger",
+                          className="mb-0 p-1 d-inline-block"),
+                id="temp-dialog-col",
+                style={"transition": "all 500ms linear 0s"}
+            )
     elif "mutation-freq-slider.marks" in triggers:
         return dbc.Fade(
             dbc.Alert("Mutation frequency slider values reset.",
@@ -477,23 +535,31 @@ def hide_dialog_col(_):
 @app.callback(
     Output("hidden-strains", "data"),
     Input("select-lineages-ok-btn", "n_clicks"),
-    State({"type": "select-lineages-modal-checklist", "index": ALL}, "value"),
+    Input("deleted-strain", "data"),
+    State({"type": "select-lineages-modal-checkbox", "index": ALL}, "id"),
+    State({"type": "select-lineages-modal-checkbox", "index": ALL}, "checked"),
     State("get-data-args", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def update_hidden_strains(_, values, get_data_args, last_data_mtime):
+def update_hidden_strains(_, deleted_strain, checkbox_ids, checkbox_vals,
+                          get_data_args, last_data_mtime):
     """Update ``hidden-strains`` variable in dcc.Store.
 
     When the OK button is clicked in the select lineages modal, the
     unchecked boxes are returned as the new ``hidden-strains`` value.
 
+    We also update ``hidden-strains`` if the user deleted a strain.
+
     :param _: Otherwise useless input only needed to alert us when the
         ok button in the select lineages modal was clicked.
-    :param values: List of lists, with the nested lists containing
-        strains from different directories, that had checked boxes when
-        the select lineages modal was closed.
-    :type values: list
+    :param deleted_strain: Name of strain user just deleted
+    :type deleted_strain: str
+    :param checkbox_ids: List of ids corresponding to checkboxes
+    :type checkbox_ids: list[dict]
+    :param checkbox_vals: List of booleans corresponding to checkboxes
+        indicating whether they are checked or not.
+    :type checkbox_vals: list[bool]
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
     :param last_data_mtime: Last mtime across all data files
@@ -506,20 +572,22 @@ def update_hidden_strains(_, values, get_data_args, last_data_mtime):
     """
     # Current ``get_data`` return val
     data = read_data(get_data_args, last_data_mtime)
+    old_hidden_strains = data["hidden_strains"]
 
-    # Merge list of lists into single list. I got it from:
-    # https://stackoverflow.com/a/716761/11472358.
-    checked_strains = [j for i in values for j in i]
+    trigger = dash.callback_context.triggered[0]["prop_id"]
+    if trigger == "deleted-strain.data":
+        if deleted_strain in old_hidden_strains:
+            old_hidden_strains.remove(deleted_strain)
+        return old_hidden_strains
 
-    all_strains = data["all_strains"]
-    hidden_strains = []
-    for strain in all_strains:
-        if strain not in checked_strains:
-            hidden_strains.append(strain)
+    checkbox_strains = [id["index"] for id in checkbox_ids]
+    hidden_strains_vals_zip_obj = \
+        filter(lambda x: not x[1], zip(checkbox_strains, checkbox_vals))
+    hidden_strains = [strain for (strain, _) in hidden_strains_vals_zip_obj]
 
     old_hidden_strains = data["hidden_strains"]
     no_change = hidden_strains == old_hidden_strains
-    all_hidden = hidden_strains == all_strains
+    all_hidden = checkbox_strains == hidden_strains
     if no_change or all_hidden:
         raise PreventUpdate
 
@@ -529,30 +597,37 @@ def update_hidden_strains(_, values, get_data_args, last_data_mtime):
 @app.callback(
     Output("select-lineages-modal", "is_open"),
     Output("select-lineages-modal-body", "children"),
+    Output("select-lineages-modal-loading", "children"),
     Input("open-select-lineages-modal-btn", "n_clicks"),
     Input("select-lineages-ok-btn", "n_clicks"),
     Input("select-lineages-cancel-btn", "n_clicks"),
+    Input("deleted-strain", "data"),
     State("get-data-args", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def toggle_select_lineages_modal(_, __, ___, get_data_args, last_data_mtime):
+def toggle_select_lineages_modal(_, __, ___, ____, get_data_args,
+                                 last_data_mtime):
     """Open or close select lineages modal.
 
     Not only is this function in charge of opening or closing the
     select lineages modal, it is also in charge of dynamically
     populating the select lineages modal body when the modal is opened.
 
+    This is a little slow to open, so we return
+    ``select-lineages-modal-loading`` to add a spinner.
+
     :param _: Select lineages button in toolbar was clicked
     :param __: OK button in select lineages modal was clicked
     :param ___: Cancel button in select lineages modal was clicked
+    :param ____: OK button in confirm strain deletion modal was clicked
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
     :param last_data_mtime: Last mtime across all data files
     :type last_data_mtime: float
     :return: Boolean representing whether the select lineages modal is
-        open or closed, and content representing the select lineages
-        modal body.
+        open or closed, content representing the select lineages
+        modal body, and ``select-lineages-modal-loading`` children.
     :rtype: (bool, list[dbc.FormGroup])
     """
     # Current ``get_data`` return val
@@ -564,24 +639,24 @@ def toggle_select_lineages_modal(_, __, ___, get_data_args, last_data_mtime):
     # toolbar is clicked.
     if triggered_prop_id == "open-select-lineages-modal-btn.n_clicks":
         modal_body = toolbar_generator.get_select_lineages_modal_body(data)
-        return True, modal_body
+        return True, modal_body, None
     else:
         # No need to populate modal body if the modal is closed
-        return False, None
+        return False, None, None
 
 
 @app.callback(
     Output({"type": "select-lineages-modal-checklist", "index": MATCH},
-           "value"),
+           "children"),
     Input({"type": "select-lineages-modal-all-btn", "index": MATCH},
           "n_clicks"),
     Input({"type": "select-lineages-modal-none-btn", "index": MATCH},
           "n_clicks"),
     State({"type": "select-lineages-modal-checklist", "index": MATCH},
-          "options"),
+          "children"),
     prevent_initial_call=True
 )
-def toggle_all_strains_in_select_all_lineages_modal(_, __, opts):
+def toggle_all_strains_in_select_all_lineages_modal(_, __, checkbox_rows):
     """Toggle checkboxes after user clicks "all" or "none" modal btns.
 
     Only the relevant checkboxes are toggled, specific to a directory,
@@ -589,14 +664,108 @@ def toggle_all_strains_in_select_all_lineages_modal(_, __, opts):
 
     :param: _: "all" btn in select lineages modal was clicked.
     :param: __: "none" btn in select lineages modal was clicked.
+    :param checkbox_rows: List of rows containing checkboxes in each
+        dir subsection of select lineages modal.
+    :type: list
+    :return: ``checkbox_rows``, but with appropriately modified checked
+        vals for checkboxes.
     """
     ctx = dash.callback_context
     triggered_prop_id = ctx.triggered[0]["prop_id"]
     triggered_prop_id_type = loads(triggered_prop_id.split(".")[0])["type"]
+    ret = checkbox_rows
+    # TODO the way we edit the children is hackey and could break in
+    #  the future. But we're in a bit of a time crunch atm.
     if triggered_prop_id_type == "select-lineages-modal-all-btn":
-        return [x["value"] for x in opts]
+        for i in range(len(ret)):
+            ret[i]["props"]["children"][0]["props"]\
+                ["children"]["props"]["checked"] = True
     else:
-        return []
+        for i in range(len(ret)):
+            ret[i]["props"]["children"][0]["props"]\
+                ["children"]["props"]["checked"] = False
+    return ret
+
+
+@app.callback(
+    Output("strain-to-del", "data"),
+    Input({"type": "checkbox-del-btn", "index": ALL}, "n_clicks"),
+    prevent_initial_call=True
+)
+def update_strain_to_del(n_clicks):
+    """Update ``strain-to-del`` var.
+
+    This happens after a user clicks a delete btn for a strain. We do
+    not immediately delete the strain, but update a var that allows
+    user confirmation.
+
+    :param n_clicks: List of times each delete btn inside the select
+        lineages modal was clicked.
+    :type n_clicks: list[int]
+    """
+    # Select lineages modal was just opened
+    if all(e is None for e in n_clicks):
+        raise PreventUpdate
+
+    ctx = dash.callback_context
+    triggered_prop_id = ctx.triggered[0]["prop_id"]
+    strain_to_del = loads(triggered_prop_id.split(".")[0])["index"]
+    return strain_to_del
+
+
+@app.callback(
+    Output("confirm-strain-del-modal", "is_open"),
+    Output("confirm-strain-del-modal-body", "children"),
+    Input("strain-to-del", "data"),
+    Input("confirm-strain-del-modal-cancel-btn", "n_clicks"),
+    Input("deleted-strain", "data"),
+    prevent_initial_call=True
+)
+def toggle_confirm_strain_del_modal(strain_to_del, _, __):
+    """Open or close confirm strain deletion modal.
+
+    This modal opens when a user clicks a delete btn in the select
+    lineages modal. It closes when the user clicks the cancel btn in
+    the confirm strain deletion modal. And it closes when the user
+    update the ``deleted_strain`` var.
+
+    :param strain_to_del: Strain corresponding to del btn user just
+        clicked.
+    :type strain_to_del: str
+    :param _: User clicked cancel btn in confirm strain del modal
+    :param __: User updated ``deleted-strain`` var
+    """
+    ctx = dash.callback_context.triggered[0]["prop_id"]
+    if ctx == "strain-to-del.data":
+        msg = "Delete %s?" % strain_to_del
+        return True, msg
+    elif ctx == "deleted-strain.data":
+        return False, None
+    else:
+        return False, None
+
+
+@app.callback(
+    Output("deleted-strain", "data"),
+    Input("confirm-strain-del-modal-ok-btn", "n_clicks"),
+    State("strain-to-del", "data"),
+    prevent_initial_call=True
+)
+def update_deleted_strain(_, strain_to_del):
+    """Update ``deleted-strain`` var.
+
+    This happens after a user clicks the OK btn in the confirm strain
+    deletion modal.
+
+    We also delete the files associated with the strain at this step.
+
+    :param _: User clicked the OK btn
+    :param strain_to_del: Strain corresponding to del btn user clicked
+    :type strain_to_del: str
+    """
+    remove(path.join(USER_DATA_DIR, strain_to_del + ".gvf"))
+    rmtree(path.join(USER_SURVEILLANCE_REPORTS_DIR, strain_to_del))
+    return strain_to_del
 
 
 @app.callback(
@@ -834,7 +1003,7 @@ def update_heatmap_sample_size_axis_fig(_, get_data_args, last_data_mtime):
     prevent_initial_call=True
 )
 def update_heatmap_gene_bar_fig(_, get_data_args, last_data_mtime):
-    """Update heatmap gene bar fig.TODO
+    """Update heatmap gene bar fig.
 
     We need to update style because width might have changed due to
     added nt positions in data.
@@ -894,7 +1063,7 @@ def update_heatmap_nt_pos_axis_fig(_, get_data_args, last_data_mtime):
     prevent_initial_call=True
 )
 def update_heatmap_aa_pos_axis_fig(_, get_data_args, last_data_mtime):
-    """Update heatmap amino acid position axis fig.TODO
+    """Update heatmap amino acid position axis fig.
 
     We need to update style because width might have changed due to
     added nt positions in data.
@@ -922,7 +1091,7 @@ def update_heatmap_aa_pos_axis_fig(_, get_data_args, last_data_mtime):
     prevent_initial_call=True
 )
 def update_histogram(get_data_args, last_data_mtime):
-    """Update histogram top row div.TODO
+    """Update histogram top row div.
 
     When the ``data`` variable in the dcc.Store is updated, the top row
     in the histogram view is updated to reflect the new data. This
@@ -944,7 +1113,7 @@ def update_histogram(get_data_args, last_data_mtime):
     Output("heatmap-cells-fig", "style"),
     Output("heatmap-cells-inner-container", "style"),
     Output("heatmap-cells-outer-container", "style"),
-    Output("empty-loading", "children"),
+    Output("data-loading", "children"),
     Input("get-data-args", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
@@ -955,7 +1124,7 @@ def update_heatmap_cells_fig(get_data_args, last_data_mtime):
     This is the fig with the heatmap cells and x axis. We return style
     because attributes may need to change due to changes in data.
 
-    We also update ``empty-loading``. We keep the value as ``None``,
+    We also update ``data-loading``. We keep the value as ``None``,
     but returning it in this fn provides a spinner while this fn is
     being run.
 
@@ -964,7 +1133,7 @@ def update_heatmap_cells_fig(get_data_args, last_data_mtime):
     :param last_data_mtime: Last mtime across all data files
     :type last_data_mtime: float
     :return: New heatmap cells fig, associated styles, and
-        ``empty-loading`` children.
+        ``data-loading`` children.
     :rtype: Tuple(plotly.graph_objects.Figure, dict, dict, dict, None)
     """
     # Current ``get_data`` return val
@@ -1179,6 +1348,7 @@ app.clientside_callback(
     Output("strain-order", "data"),
     Input("select-lineages-ok-btn", "n_clicks"),
     Input("new-upload", "data"),
+    Input("deleted-strain", "data"),
     State({"type": "select-lineages-modal-checklist", "index": ALL}, "id"),
     State("strain-order", "data"),
     State("data", "data"),

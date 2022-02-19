@@ -114,7 +114,7 @@ def get_heatmap_row(data):
                                 id="heatmap-gene-bar-fig",
                                 figure=get_heatmap_gene_bar_fig(data),
                                 config={"displayModeBar": False},
-                                style={"height": 25,
+                                style={"height": 30,
                                        "width": heatmap_cells_fig_width}
                             )
                         ),
@@ -386,105 +386,77 @@ def get_heatmap_gene_bar_fig(data):
     :rtype: go.Figure
     """
     heatmap_gene_bar_obj = get_heatmap_gene_bar_graph_obj(data)
-    ret = go.Figure(heatmap_gene_bar_obj)
-    ret.update_xaxes(type="linear",
-                     fixedrange=True,
-                     visible=False)
-    ret.update_yaxes(type="linear",
-                     fixedrange=True,
-                     visible=False)
-    ret.update_layout(
-        plot_bgcolor="white",
-        margin={
-            "l": 0,
-            "r": 0,
-            "t": 0,
-            "b": 0,
-            "pad": 0
+    ret = go.Figure(
+        heatmap_gene_bar_obj,
+        layout={
+            "font": {
+                "size": 16
+            },
+            "plot_bgcolor": "white",
+            "margin": {
+                "l": 0, "r": 0, "t": 0, "b": 0, "pad": 0
+            },
+            "xaxis": {
+                "fixedrange": True,
+                "range": [0, len(data["heatmap_x_genes"])],
+                "type": "linear",
+                "visible": False
+            },
+            "yaxis": {
+                "fixedrange": True,
+                "type": "linear",
+                "visible": False
+            }
         }
     )
-    # This bit of hackey code is needed to display the labels on the
-    # gene bar where we want them. The labels are in the middle.
-    midpoints = []
-    endpoints = heatmap_gene_bar_obj["x"]
-    for i, val in enumerate(endpoints[:-1]):
-        midpoint = ((endpoints[i+1] - endpoints[i]) / 2) + endpoints[i]
-        midpoints.append(midpoint)
-    for i, gene_label in enumerate(heatmap_gene_bar_obj["text"][0]):
-        x_start = heatmap_gene_bar_obj["x"][i]
-        x_end = heatmap_gene_bar_obj["x"][i + 1]
-        # Too small for label
-        if (x_end - x_start) < 3:
-            continue
-        ret.add_annotation(
-            xref="x1",
-            yref="y1",
-            x=midpoints[i],
-            y=heatmap_gene_bar_obj["y"][0],
-            text=gene_label,
-            showarrow=False,
-            font={"color": "white", "size": 16}
-        )
     return ret
 
 
 def get_heatmap_gene_bar_graph_obj(data):
     """Get Plotly graph object corresponding to gene bar.
 
-    # TODO this is way out of date, back when we used heatmap objects
-    #  instead of scatter traces. The way we implement this gene bar is
-    #  too convoluted, we need to revisit this. This docstring is
-    #  incorrect.
-
-    The way we produce this gene bar is quite hackey. To ensure the bar
-    lines up perfectly with the heatmap cells view, the gene bar is a
-    heatmap itself. We use the x axis values of the heatmap cells, with
-    0.5 offsets to shift the gene bar cells to the middle of the main
-    heatmap cells. We use mock z values to assign colors to the gene
-    bar cells.
-
-    The gene bar labels are added later in ``get_heatmap_cells_fig``.
-    This is because individual section gene bars are composed of
-    multiple cells, so we cannot simply add labels to the cells.
-
     :param data: ``data_parser.get_data`` return value
     :type data: dict
-    :return: Plotly heatmap object containing gene bar without labels
-    :rtype: go.Heatmap
+    :return: Plotly bar object containing gene bar with labels
+    :rtype: go.Bar
     """
-    heatmap_center_genes_obj_x = []
-    heatmap_center_genes_obj_labels = []
+    ret_x = []
+    ret_text = []
+    ret_color = []
+
+    bar_len = 0
     last_gene_seen = ""
-    for i, heatmap_x_gene in enumerate(data["heatmap_x_genes"]):
+    for i, gene in enumerate(data["heatmap_x_genes"]):
         if i == 0:
-            heatmap_center_genes_obj_x.append(i-0.5)
-            last_gene_seen = heatmap_x_gene
+            last_gene_seen = gene
+        if gene != last_gene_seen:
+            ret_x.append(bar_len)
+            ret_color.append(GENE_COLORS_DICT[last_gene_seen])
+            if bar_len > 2:
+                ret_text.append(last_gene_seen)
+            else:
+                ret_text.append("")
+
+            last_gene_seen = gene
+            bar_len = 0
+        bar_len += 1
         if i == (len(data["heatmap_x_genes"]) - 1):
-            heatmap_center_genes_obj_x.append(i+0.5)
-            heatmap_center_genes_obj_labels.append(last_gene_seen)
-        if heatmap_x_gene != last_gene_seen:
-            heatmap_center_genes_obj_x.append(i-0.5)
-            heatmap_center_genes_obj_labels.append(last_gene_seen)
-            last_gene_seen = heatmap_x_gene
+            ret_x.append(bar_len)
+            ret_text.append(gene)
+            ret_color.append(GENE_COLORS_DICT[gene])
 
-    heatmap_center_genes_obj_z = [[]]
-    heatmap_center_genes_obj_colorscale = []
-    for i, label in enumerate(heatmap_center_genes_obj_labels):
-        mock_z_val = (i + 1) / len(heatmap_center_genes_obj_labels)
-        heatmap_center_genes_obj_z[0].append(mock_z_val)
-        # We add the same color to the colorscale twice, to prevent
-        # things from breaking when the gene bar has only one z val.
-        heatmap_center_genes_obj_colorscale.append(GENE_COLORS_DICT[label])
-        heatmap_center_genes_obj_colorscale.append(GENE_COLORS_DICT[label])
-
-    ret = go.Heatmap(
-        x=heatmap_center_genes_obj_x,
-        y=[1],
-        z=heatmap_center_genes_obj_z,
+    ret = go.Bar(
+        x=ret_x,
+        y=[1 for _ in ret_x],
         hoverinfo="skip",
-        text=[heatmap_center_genes_obj_labels],
-        showscale=False,
-        colorscale=heatmap_center_genes_obj_colorscale
+        marker={
+            "color": ret_color
+        },
+        orientation="h",
+        text=ret_text,
+        textposition="inside",
+        insidetextanchor="middle",
+        insidetextfont={"color": "white"}
     )
 
     return ret
