@@ -36,18 +36,20 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
     /**
      * Get the order of the strains in the select lineage modal after the user
      * clicks the OK button. We also update the strain order if the user uploads
-     * a new file.
+     * a new file, or deletes an old one.
      * @param _ OK button in select lineages modal was clicked
      * @param {Object} newUpload ``update_new_upload`` return value
+     * @param {Object} deletedStrain ``update_deleted_strain`` return value
      * @param {Array<Object>} idArray Dash pattern matching id values for
      *  checkboxes in select lineages modal.
-     * @param {Object} strainOrder Previous strain order
+     * @param {Array<string>} strainOrder Previous strain order
      * @param {Object} data ``data_parser.get_data`` return value
      * @return {Array<string>} The strains corresponding the checkboxes in the
      *  select lineages modal, in the final order they were in when the OK
      *  button was clicked.
      */
-    getStrainOrder: (_, newUpload, idArray, strainOrder, data) => {
+    getStrainOrder:
+        (_, newUpload, deletedStrain, idArray, strainOrder, data) => {
       const trigger = dash_clientside.callback_context.triggered[0].prop_id
       if (trigger === 'new-upload.data') {
         if (newUpload['status'] === 'error') {
@@ -57,6 +59,13 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
           strainOrder.push(newUpload['strain'])
           return strainOrder
         }
+      }
+      if (trigger === 'deleted-strain.data') {
+        const deletedStrainIndex = strainOrder.indexOf(deletedStrain)
+        if (deletedStrainIndex > -1) {
+          strainOrder.splice(deletedStrainIndex, 1)
+        }
+        return strainOrder
       }
 
       let ret = []
@@ -76,7 +85,7 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
           checkboxDivs = e2.find(':checkbox')
         }
         for (const checkboxDiv of checkboxDivs) {
-          ret.push(checkboxDiv.value)
+          ret.push(checkboxDiv.className)
         }
       }
       // Heatmap displays rows in reverse
