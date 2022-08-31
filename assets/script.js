@@ -171,12 +171,16 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
       return null
     },
     /**
-     * TODO
+     * Scroll the first column of a gene in the heatmap into view after a user
+     * clicks the corresponding gene in the bar under the histogram.
+     * @param {Object} clickData ``last-histogram-point-clicked`` in-browser var
+     *  val.
+     * @param {Object} data ``data_parser.get_data`` return value
      */
     jumpToHeatmapPosAfterHistogramClick: (clickData, data) => {
       const curveNumber = clickData['points'][0]['curveNumber'];
       // User clicked histogram plot, not gene bar underneath
-      if (curveNumber === 0) return null;
+      if (curveNumber === 0) return;
 
       const geneStartNtPos = clickData['points'][0]['customdata'];
       let closestNtPosIndex = 0;
@@ -194,8 +198,6 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
       })[0]
 
       xtick_el.scrollIntoView(false, {inline: 'end'});
-
-      return null;
     },
     /**
      * Using pure JS, link the scrolling of the heatmap cells and y-axis
