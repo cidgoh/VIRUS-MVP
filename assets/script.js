@@ -174,14 +174,27 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
      * TODO
      */
     jumpToHeatmapPosAfterHistogramClick: (clickData, data) => {
-      // If this is 0, do nothing
       const curveNumber = clickData['points'][0]['curveNumber'];
+      // User clicked histogram plot, not gene bar underneath
+      if (curveNumber === 0) return null;
+
       const geneStartNtPos = clickData['points'][0]['customdata'];
-      let closestNtPos = Number(data['heatmap_x_nt_pos'][0])
-      for (const ntPos of data['heatmap_x_nt_pos']) {
-        if (Number(ntPos) > geneStartNtPos) break
-        closestNtPos = Number(ntPos)
+      let closestNtPosIndex = 0;
+      for (const [i, ntPos] of data['heatmap_x_nt_pos'].entries()) {
+        if (Number(ntPos) > geneStartNtPos) break;
+        closestNtPosIndex++;
       }
+      const closestNtPos = Number(data['heatmap_x_nt_pos'][closestNtPosIndex]);
+
+      const xticks_selector =
+          `#heatmap-nt-pos-axis-fig g.xtick > text:contains(${closestNtPos})`;
+      const $xticks = $(xticks_selector);
+      const xtick_el = $xticks.filter((e) => {
+        return Number($xticks[e].textContent) === closestNtPos;
+      })[0]
+
+      xtick_el.scrollIntoView(false, {inline: 'end'});
+
       return null;
     },
     /**
