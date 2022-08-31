@@ -264,10 +264,9 @@ def get_legend_toggle_component():
     :return: Dash Bootstrap Components button with appropriate label
     :rtype: dbc.Button
     """
-    icon = html.I(className="bi-question", style={"font-size": 16})
-    return dbc.Button(icon,
+    return dbc.Button("HELP",
                       color="info",
-                      outline=True,
+                      # outline=True,
                       id="toggle-legend-btn")
 
 
