@@ -149,10 +149,10 @@ def launch_app(_):
     data_ = read_data(get_data_args, last_data_mtime)
 
     return [
-        # Bootstrap row containing tools at the top of the application
-        toolbar_generator.get_toolbar_row(data_),
         # Bootstrap collapse containing legend
         legend_generator.get_legend_collapse(),
+        # Bootstrap row containing tools
+        toolbar_generator.get_toolbar_row(data_),
         # Bootstrap row containing heatmap
         heatmap_generator.get_heatmap_row(data_),
         # Bootstrap row containing histogram
