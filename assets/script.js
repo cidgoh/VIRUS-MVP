@@ -171,6 +171,20 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
       return null
     },
     /**
+     * TODO
+     */
+    jumpToHeatmapPosAfterHistogramClick: (clickData, data) => {
+      // If this is 0, do nothing
+      const curveNumber = clickData['points'][0]['curveNumber'];
+      const geneStartNtPos = clickData['points'][0]['customdata'];
+      let closestNtPos = Number(data['heatmap_x_nt_pos'][0])
+      for (const ntPos of data['heatmap_x_nt_pos']) {
+        if (Number(ntPos) > geneStartNtPos) break
+        closestNtPos = Number(ntPos)
+      }
+      return null;
+    },
+    /**
      * Using pure JS, link the scrolling of the heatmap cells and y-axis
      * containers.
      * Lifted from https://stackoverflow.com/a/41998497/11472358

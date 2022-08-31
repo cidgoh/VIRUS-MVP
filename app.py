@@ -183,6 +183,7 @@ def launch_app(_):
         dcc.Store(id="hidden-strains", data=get_data_args["hidden_strains"]),
         dcc.Store(id="strain-order", data=get_data_args["strain_order"]),
         dcc.Store(id="last-heatmap-cell-clicked"),
+        dcc.Store(id="last-histogram-point-clicked"),
         dcc.Store(id="strain-to-del"),
         dcc.Store(id="deleted-strain"),
         # Used to update certain figures only when necessary
@@ -194,6 +195,7 @@ def launch_app(_):
         # functions.
         dcc.Store(id="make-select-lineages-modal-checkboxes-draggable"),
         dcc.Store(id="make-histogram-rel-pos-bar-dynamic"),
+        dcc.Store(id="allow-jumps-from-histogram"),
         dcc.Store(id="link-heatmap-cells-y-scrolling")
     ], None
 
@@ -1204,6 +1206,26 @@ def route_heatmap_cells_fig_click(click_data):
 
 
 @app.callback(
+    Output("histogram", "clickData"),
+    Output("last-histogram-point-clicked", "data"),
+    Input("histogram", "clickData"),
+    prevent_initial_call=True
+)
+def route_histogram_click(click_data):
+    """Store histogram click data in "last-histogram-point-clicked".
+
+    See ``route_heatmap_cells_fig_click`` for more details on logic.
+
+    :param click_data: ``histogram.clickData`` value
+    :type click_data: dict
+    :return: ``None`` to reset histogram ``clickData`` attribute, and a
+        copy of  this attribute before resetting
+    :rtype: (None, dict)
+    """
+    return None, click_data
+
+
+@app.callback(
     Output("mutation-details-modal", "is_open"),
     Output("mutation-details-modal-header", "children"),
     Output("mutation-details-modal-body", "children"),
@@ -1362,6 +1384,16 @@ app.clientside_callback(
     Output("make-histogram-rel-pos-bar-dynamic", "data"),
     Input("heatmap-nt-pos-axis-fig", "figure"),
     State("data", "data")
+)
+app.clientside_callback(
+    ClientsideFunction(
+        namespace="clientside",
+        function_name="jumpToHeatmapPosAfterHistogramClick"
+    ),
+    Output("allow-jumps-from-histogram", "data"),
+    Input("last-histogram-point-clicked", "data"),
+    State("data", "data"),
+    prevent_initial_call=True
 )
 app.clientside_callback(
     ClientsideFunction(
