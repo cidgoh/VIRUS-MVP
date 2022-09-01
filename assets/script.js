@@ -178,6 +178,9 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
      * @param {Object} data ``data_parser.get_data`` return value
      */
     jumpToHeatmapPosAfterHistogramClick: (clickData, data) => {
+      // New histogram resets click data
+      if (!clickData) return;
+
       const curveNumber = clickData['points'][0]['curveNumber'];
       // User clicked histogram plot, not gene bar underneath
       if (curveNumber === 0) return;
