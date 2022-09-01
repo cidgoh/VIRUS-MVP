@@ -193,6 +193,9 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
       }
       const closestNtPos = Number(data['heatmap_x_nt_pos'][closestNtPosIndex]);
 
+      $('#heatmap-center-div')[0].scrollLeft =
+          $('#heatmap-nt-pos-axis-fig')[0].offsetWidth;
+
       const xticks_selector =
           `#heatmap-nt-pos-axis-fig g.xtick > text:contains(${closestNtPos})`;
       const $xticks = $(xticks_selector);
@@ -200,7 +203,23 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
         return Number($xticks[e].textContent) === closestNtPos;
       })[0]
 
-      xtick_el.scrollIntoView(false, {inline: 'end'});
+      xtick_el.scrollIntoView(false, {inline: 'start'});
+    },
+    /**
+     * TODO
+     */
+    jumpToHeatmapPosAfterSelectingMutationName: (_, val) => {
+      if (!val) return null;
+
+      $('#heatmap-center-div')[0].scrollLeft =
+          $('#heatmap-nt-pos-axis-fig')[0].offsetWidth;
+
+      const xticks_selector =
+          `#heatmap-nt-pos-axis-fig g.xtick > text:contains(${val})`;
+      const xtick_el = $(xticks_selector)[0];
+      xtick_el.scrollIntoView(false, {inline: 'start'});
+
+      return null;
     },
     /**
      * Using pure JS, link the scrolling of the heatmap cells and y-axis

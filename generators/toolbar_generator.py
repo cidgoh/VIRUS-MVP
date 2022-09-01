@@ -267,9 +267,21 @@ def get_jump_to_modal():
     """TODO"""
     return dbc.Modal([
         dbc.ModalHeader("Jump to mutation"),
-        # Empty at launch; populated when user opens modal
-        dbc.ModalBody(None,
-                      id="jump-to-modal-body"),
+        dbc.ModalBody(
+            dbc.Row(
+                dbc.Col(
+                    dcc.Dropdown(
+                        id="jump-to-modal-dropdown-search",
+                        options=[
+                            {"label": "p.N2596S", "value": 8052},
+                            {"label": "p.V4997G", "value": 15254},
+                            {"label": "c.-3delA", "value": 28270}
+                        ]
+                    )
+                )
+            ),
+            id="jump-to-modal-body"
+        ),
         dbc.ModalFooter(
             dbc.ButtonGroup([
                 dbc.Button("Cancel",

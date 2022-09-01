@@ -198,6 +198,7 @@ def launch_app(_):
         dcc.Store(id="make-select-lineages-modal-checkboxes-draggable"),
         dcc.Store(id="make-histogram-rel-pos-bar-dynamic"),
         dcc.Store(id="allow-jumps-from-histogram"),
+        dcc.Store(id="allow-jumps-from-jump-to-modal"),
         dcc.Store(id="link-heatmap-cells-y-scrolling")
     ], None
 
@@ -1385,6 +1386,16 @@ app.clientside_callback(
     Output("allow-jumps-from-histogram", "data"),
     Input("last-histogram-point-clicked", "data"),
     State("data", "data"),
+    prevent_initial_call=True
+)
+app.clientside_callback(
+    ClientsideFunction(
+        namespace="clientside",
+        function_name="jumpToHeatmapPosAfterSelectingMutationName"
+    ),
+    Output("allow-jumps-from-jump-to-modal", "data"),
+    Input("jump-to-modal-ok-btn", "n_clicks"),
+    State("jump-to-modal-dropdown-search", "value"),
     prevent_initial_call=True
 )
 app.clientside_callback(
