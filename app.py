@@ -37,8 +37,8 @@ from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR,
                          NF_NCOV_VOC_DIR, REFERENCE_SURVEILLANCE_REPORTS_DIR,
                          USER_SURVEILLANCE_REPORTS_DIR)
 from generators import (heatmap_generator, histogram_generator,
-                        legend_generator, table_generator, toolbar_generator,
-                        footer_generator)
+                        legend_generator, table_generator, toast_generator,
+                        toolbar_generator, footer_generator)
 
 
 # This is the only global variable Dash plays nice with, and it
@@ -153,6 +153,8 @@ def launch_app(_):
         legend_generator.get_legend_collapse(),
         # Bootstrap row containing tools
         toolbar_generator.get_toolbar_row(data_),
+        # Bootstrap row containing toasts
+        toast_generator.get_toast_row(),
         # Bootstrap row containing heatmap
         heatmap_generator.get_heatmap_row(data_),
         # Bootstrap row containing histogram
@@ -467,71 +469,45 @@ def trigger_download(_):
 
 
 @app.callback(
-    Output("dialog-col", "children"),
+    Output("toast-col", "children"),
     Input("new-upload", "data"),
     Input("mutation-freq-slider", "marks"),
     prevent_initial_call=True
 )
-def update_dialog_col(new_upload, _):
-    """Update ``dialog-col`` div in toolbar.
+def toggle_toast(new_upload, _):
+    """Update ``toast-col`` div.
 
-    This function shows an error alert when there was an unsuccessful
-    upload by the user, or the mutation frequency slider was
-    re-rendered. In a hackey way, this function triggers
-    ``hide_dialog_col``, which hides the dialog col after some time.
+    This function shows appropriate toasts when there was following a
+    user upload, and re-rendering of mutation frequency vals.
 
     :param new_upload: ``update_new_upload`` return value
     :type new_upload: dict
     :param _: Unused input variable that allows re-rendering of the
         mutation frequency slider to trigger this function.
-    :return: Dash Bootstrap Components alert if new_upload describes an
-        unsuccessfully uploaded file.
-    :rtype: dbc.Alert
+    :return: Appropriate Dash Bootstrap Components toast for situation
+    :rtype: dbc.Toast
     """
     triggers = [x["prop_id"] for x in dash.callback_context.triggered]
 
     if "new-upload.data" in triggers:
         if new_upload["status"] == "ok":
-            return dbc.Fade(
-                dbc.Alert(new_upload["msg"],
-                          color="success",
-                          className="mb-0 p-1 d-inline-block"),
-                id="temp-dialog-col",
-                style={"transition": "all 500ms linear 0s"}
+            return toast_generator.get_toast(
+                new_upload["msg"],
+                "Success",
+                "success"
             )
         if new_upload["status"] == "error":
-            return dbc.Fade(
-                dbc.Alert(new_upload["msg"],
-                          color="danger",
-                          className="mb-0 p-1 d-inline-block"),
-                id="temp-dialog-col",
-                style={"transition": "all 500ms linear 0s"}
+            return toast_generator.get_toast(
+                new_upload["msg"],
+                "Error",
+                "danger"
             )
     elif "mutation-freq-slider.marks" in triggers:
-        return dbc.Fade(
-            dbc.Alert("Mutation frequency slider values reset.",
-                      color="warning",
-                      className="mb-0 p-1 d-inline-block"),
-            id="temp-dialog-col",
-            style={"transition": "all 500ms linear 0s"}
+        return toast_generator.get_toast(
+            "Mutation frequency slider vals set to min and max",
+            "Info",
+            "info"
         )
-
-
-@app.callback(
-    Output("temp-dialog-col", "is_in"),
-    Input("temp-dialog-col", "children")
-)
-def hide_dialog_col(_):
-    """Hides newly generated ``dialog-col`` divs after five seconds.
-
-    :param _: Unused input variable that allows generation of
-        ``temp-dialog-col`` in ``update_dialog_col`` to trigger this
-        function.
-    :return: Property that fades newly generated ``dialog-col`` out.
-    :rtype: bool
-    """
-    sleep(5)
-    return False
 
 
 @app.callback(

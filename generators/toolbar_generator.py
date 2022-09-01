@@ -10,12 +10,11 @@ from definitions import USER_DATA_DIR
 
 
 def get_toolbar_row(data):
-    """Get Dash Bootstrap Components row that sits above heatmap.
+    """Get Dash Bootstrap Components row that contains toolbar.
 
     :param data: ``get_data`` return value
     :type data: dict
-    :return: Dash Bootstrap Component row with upload button and clade
-        defining mutations switch.
+    :return: Dash Bootstrap Component row with toolbar btns.
     :rtype: dbc.Row
     """
     ret = dbc.Row(
@@ -35,12 +34,7 @@ def get_toolbar_row(data):
                     ],
                     className="pl-4 pl-xl-5"
                 ),
-                width=4
-            ),
-            dbc.Col(
-                # Empty on launch
-                className="my-auto",
-                id="dialog-col"
+                width=7
             ),
             dbc.Col(
                 [
