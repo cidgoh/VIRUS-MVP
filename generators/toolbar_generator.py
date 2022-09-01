@@ -30,6 +30,7 @@ def get_toolbar_row(data):
                             type="circle"
                         ),
                         get_file_download_component(),
+                        get_jump_to_btn(),
                         get_legend_toggle_component()
                     ],
                     className="pl-4 pl-xl-5"
@@ -66,7 +67,8 @@ def get_toolbar_row(data):
                 width=2
             ),
             get_select_lineages_modal(),
-            get_confirm_strain_del_modal()
+            get_confirm_strain_del_modal(),
+            get_jump_to_modal()
         ],
         className="mt-3 ml-xl-3"
     )
@@ -252,6 +254,36 @@ def get_file_download_component():
     ], className="mr-2")
 
 
+def get_jump_to_btn():
+    """TODO"""
+    return dbc.Button("Jump to...",
+                      color="secondary",
+                      outline=True,
+                      id="jump-to-btn",
+                      className="mr-2")
+
+
+def get_jump_to_modal():
+    """TODO"""
+    return dbc.Modal([
+        dbc.ModalHeader("Jump to mutation"),
+        # Empty at launch; populated when user opens modal
+        dbc.ModalBody(None,
+                      id="jump-to-modal-body"),
+        dbc.ModalFooter(
+            dbc.ButtonGroup([
+                dbc.Button("Cancel",
+                           className="mr-1",
+                           color="secondary",
+                           id="jump-to-modal-cancel-btn"),
+                dbc.Button("Jump",
+                           color="primary",
+                           id="jump-to-modal-ok-btn")
+            ])
+        )
+    ], id="jump-to-modal")
+
+
 def get_legend_toggle_component():
     """Get dash component for toggling heatmap legend.
 
@@ -260,7 +292,6 @@ def get_legend_toggle_component():
     """
     return dbc.Button("HELP",
                       color="info",
-                      # outline=True,
                       id="toggle-legend-btn")
 
 

@@ -724,6 +724,22 @@ def toggle_confirm_strain_del_modal(strain_to_del, _, __):
 
 
 @app.callback(
+    Output("jump-to-modal", "is_open"),
+    Input("jump-to-btn", "n_clicks"),
+    Input("jump-to-modal-ok-btn", "n_clicks"),
+    Input("jump-to-modal-cancel-btn", "n_clicks"),
+    prevent_initial_call=True
+)
+def toggle_jump_to_modal(_, __, ___):
+    """TODO"""
+    ctx = dash.callback_context.triggered[0]["prop_id"]
+    if ctx == "jump-to-btn.n_clicks":
+        return True
+    else:
+        return False
+
+
+@app.callback(
     Output("deleted-strain", "data"),
     Input("confirm-strain-del-modal-ok-btn", "n_clicks"),
     State("strain-to-del", "data"),
