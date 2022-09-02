@@ -238,7 +238,7 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
       strainsAxisInnerContainerEl.scrollTop =
           ytickBottom - strainsAxisOuterContainerBottom;
 
-      return null;
+      return {"strain": strain, "nt_pos": nt_pos};
     },
     /**
      * Using pure JS, link the scrolling of the heatmap cells and y-axis

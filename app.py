@@ -188,6 +188,7 @@ def launch_app(_):
         dcc.Store(id="last-histogram-point-clicked"),
         dcc.Store(id="strain-to-del"),
         dcc.Store(id="deleted-strain"),
+        dcc.Store(id="positions-jumped-to"),
         # Used to update certain figures only when necessary
         dcc.Store(id="heatmap-x-len", data=len(data_["heatmap_x_nt_pos"])),
         dcc.Store(id="heatmap-y-strains",
@@ -198,7 +199,6 @@ def launch_app(_):
         dcc.Store(id="make-select-lineages-modal-checkboxes-draggable"),
         dcc.Store(id="make-histogram-rel-pos-bar-dynamic"),
         dcc.Store(id="allow-jumps-from-histogram"),
-        dcc.Store(id="allow-jumps-from-jump-to-modal"),
         dcc.Store(id="link-heatmap-cells-y-scrolling")
     ], None
 
@@ -473,10 +473,11 @@ def trigger_download(_):
     Output("toast-col", "children"),
     Input("new-upload", "data"),
     Input("mutation-freq-slider", "marks"),
+    Input("positions-jumped-to", "data"),
     prevent_initial_call=True
 )
-def toggle_toast(new_upload, _):
-    """Update ``toast-col`` div.
+def toggle_toast(new_upload, _, positions_jumped_to):
+    """Update ``toast-col`` div. TODO
 
     This function shows appropriate toasts when there was following a
     user upload, and re-rendering of mutation frequency vals.
@@ -495,19 +496,31 @@ def toggle_toast(new_upload, _):
             return toast_generator.get_toast(
                 new_upload["msg"],
                 "Success",
-                "success"
+                "success",
+                5000
             )
         if new_upload["status"] == "error":
             return toast_generator.get_toast(
                 new_upload["msg"],
                 "Error",
-                "danger"
+                "danger",
+                5000
             )
     elif "mutation-freq-slider.marks" in triggers:
         return toast_generator.get_toast(
             "Mutation frequency slider vals set to min and max",
             "Info",
-            "info"
+            "info",
+            5000
+        )
+    elif "positions-jumped-to.data" in triggers:
+        msg = "Jumped to strain %s at nucleotide position %s"
+        msg %= (positions_jumped_to["strain"], positions_jumped_to["nt_pos"])
+        return toast_generator.get_toast(
+            msg,
+            "Info",
+            "info",
+            10000
         )
 
 
@@ -1398,7 +1411,7 @@ app.clientside_callback(
         namespace="clientside",
         function_name="jumpToHeatmapPosAfterSelectingMutationName"
     ),
-    Output("allow-jumps-from-jump-to-modal", "data"),
+    Output("positions-jumped-to", "data"),
     Input("jump-to-modal-ok-btn", "n_clicks"),
     State("jump-to-modal-dropdown-search", "value"),
     State("data", "data"),

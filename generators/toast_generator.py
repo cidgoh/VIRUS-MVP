@@ -19,8 +19,8 @@ def get_toast_row():
     return ret
 
 
-def get_toast(msg, header, color):
-    """Get toast div.
+def get_toast(msg, header, color, duration):
+    """Get toast div.TODO
 
     @param msg: Message in toast body
     @type msg: str
@@ -36,6 +36,6 @@ def get_toast(msg, header, color):
         header=header,
         className="mt-1",
         dismissable=True,
-        duration=5000,
+        duration=duration,
         icon=color
     )
