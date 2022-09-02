@@ -14,59 +14,81 @@ def get_legend_collapse():
     :rtype: dbc.Collapse
     """
     ret = dbc.Collapse(
-        get_legend_row(),
+        get_legend_rows(),
         id="legend-collapse",
         is_open=False
     )
     return ret
 
 
-def get_legend_row():
-    """Get Dash Bootstrap Components row containing legend columns.
+def get_legend_rows():
+    """Get Dash Bootstrap Components rows containing legend columns.
 
-    :return: Dash Bootstrap Components row with multiple cols for
+    :return: Dash Bootstrap Components rows with multiple cols for
         legend view.
-    :rtype: dbc.Row
+    :rtype: list[dbc.Row]
     """
-    ret = dbc.Row(
-        [
-            dbc.Col(
-                get_axes_description(),
-                className="border-top border-bottom border-left border-dark "
-                          "p-1",
-                width={"offset": 1, "size": 7}
-            ),
-            dbc.Col(
-                dcc.Graph(
-                    id="single-genome-legend-fig",
-                    figure=get_single_genome_legend_fig(),
-                    config={"displayModeBar": False},
+    ret = [
+        dbc.Row(
+            [
+                dbc.Col(
+                    get_axes_description(),
+                    className="border-top border-bottom border-left "
+                              "border-dark "
+                              "p-1",
+                    width={"offset": 1, "size": 7}
                 ),
-                className="border-top border-bottom border-left border-dark",
-                width=1
-            ),
-            dbc.Col(
-                dcc.Graph(
-                    id="indel-legend-fig",
-                    figure=get_indel_legend_fig(),
-                    config={"displayModeBar": False},
+                dbc.Col(
+                    dcc.Graph(
+                        id="single-genome-legend-fig",
+                        figure=get_single_genome_legend_fig(),
+                        config={"displayModeBar": False},
+                    ),
+                    className="border-top border-bottom border-left "
+                              "border-dark p-0",
+                    width=1
                 ),
-                className="border-top border-bottom border-dark",
-                width=1
-            ),
-            dbc.Col(
-                dcc.Graph(
-                    id="recorded-functions-legend-fig",
-                    figure=get_recorded_functions_legend_fig(),
-                    config={"displayModeBar": False},
+                dbc.Col(
+                    dcc.Graph(
+                        id="indel-legend-fig",
+                        figure=get_indel_legend_fig(),
+                        config={"displayModeBar": False},
+                    ),
+                    className="border-top border-bottom border-dark p-0",
+                    width=1
                 ),
-                className="border-top border-bottom border-right border-dark",
-                width=1
-            )
-        ],
-        className="mt-2",
-        no_gutters=True
-    )
+                dbc.Col(
+                    dcc.Graph(
+                        id="recorded-functions-legend-fig",
+                        figure=get_recorded_functions_legend_fig(),
+                        config={"displayModeBar": False},
+                    ),
+                    className="border-top border-bottom border-right "
+                              "border-dark p-0",
+                    width=1
+                )
+            ],
+            className="mt-2",
+            no_gutters=True
+        ),
+        dbc.Row(
+            dbc.Col(html.B("You can zoom out of your browser to view more "
+                           "cells at a time--the visualization will scale."),
+                    className="border-bottom border-left border-right "
+                              "border-dark p-1",
+                    width={"offset": 1, "size": 10}),
+            no_gutters=True
+        ),
+        dbc.Row(
+            dbc.Col(html.B("Click on a gene/region in the bar below the "
+                           "histogram to automatically scroll to the "
+                           "beginning of that gene/region in the heatmap."),
+                    className="border-bottom border-left border-right "
+                              "border-dark p-1",
+                    width={"offset": 1, "size": 10}),
+            no_gutters=True
+        )
+    ]
     return ret
 
 

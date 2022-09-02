@@ -37,8 +37,8 @@ from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR,
                          NF_NCOV_VOC_DIR, REFERENCE_SURVEILLANCE_REPORTS_DIR,
                          USER_SURVEILLANCE_REPORTS_DIR)
 from generators import (heatmap_generator, histogram_generator,
-                        legend_generator, table_generator, toolbar_generator,
-                        footer_generator)
+                        legend_generator, table_generator, toast_generator,
+                        toolbar_generator, footer_generator)
 
 
 # This is the only global variable Dash plays nice with, and it
@@ -149,10 +149,12 @@ def launch_app(_):
     data_ = read_data(get_data_args, last_data_mtime)
 
     return [
-        # Bootstrap row containing tools at the top of the application
-        toolbar_generator.get_toolbar_row(data_),
         # Bootstrap collapse containing legend
         legend_generator.get_legend_collapse(),
+        # Bootstrap row containing tools
+        toolbar_generator.get_toolbar_row(data_),
+        # Bootstrap row containing toasts
+        toast_generator.get_toast_row(),
         # Bootstrap row containing heatmap
         heatmap_generator.get_heatmap_row(data_),
         # Bootstrap row containing histogram
@@ -183,8 +185,10 @@ def launch_app(_):
         dcc.Store(id="hidden-strains", data=get_data_args["hidden_strains"]),
         dcc.Store(id="strain-order", data=get_data_args["strain_order"]),
         dcc.Store(id="last-heatmap-cell-clicked"),
+        dcc.Store(id="last-histogram-point-clicked"),
         dcc.Store(id="strain-to-del"),
         dcc.Store(id="deleted-strain"),
+        dcc.Store(id="positions-jumped-to"),
         # Used to update certain figures only when necessary
         dcc.Store(id="heatmap-x-len", data=len(data_["heatmap_x_nt_pos"])),
         dcc.Store(id="heatmap-y-strains",
@@ -194,6 +198,7 @@ def launch_app(_):
         # functions.
         dcc.Store(id="make-select-lineages-modal-checkboxes-draggable"),
         dcc.Store(id="make-histogram-rel-pos-bar-dynamic"),
+        dcc.Store(id="allow-jumps-from-histogram"),
         dcc.Store(id="link-heatmap-cells-y-scrolling")
     ], None
 
@@ -465,71 +470,62 @@ def trigger_download(_):
 
 
 @app.callback(
-    Output("dialog-col", "children"),
+    Output("toast-col", "children"),
     Input("new-upload", "data"),
     Input("mutation-freq-slider", "marks"),
+    Input("positions-jumped-to", "data"),
     prevent_initial_call=True
 )
-def update_dialog_col(new_upload, _):
-    """Update ``dialog-col`` div in toolbar.
+def toggle_toast(new_upload, _, positions_jumped_to):
+    """Update ``toast-col`` div.
 
-    This function shows an error alert when there was an unsuccessful
-    upload by the user, or the mutation frequency slider was
-    re-rendered. In a hackey way, this function triggers
-    ``hide_dialog_col``, which hides the dialog col after some time.
+    This function shows appropriate toasts when there was following a
+    user upload, re-rendering of mutation frequency vals, or the
+    heatmap is automatically scrolled to a specific mutation.
 
     :param new_upload: ``update_new_upload`` return value
     :type new_upload: dict
     :param _: Unused input variable that allows re-rendering of the
         mutation frequency slider to trigger this function.
-    :return: Dash Bootstrap Components alert if new_upload describes an
-        unsuccessfully uploaded file.
-    :rtype: dbc.Alert
+    :param positions_jumped_to:
+        ``jumpToHeatmapPosAfterSelectingMutationName`` return val.
+    :type positions_jumped_to: dict
+    :return: Appropriate Dash Bootstrap Components toast for situation
+    :rtype: dbc.Toast
     """
     triggers = [x["prop_id"] for x in dash.callback_context.triggered]
 
     if "new-upload.data" in triggers:
         if new_upload["status"] == "ok":
-            return dbc.Fade(
-                dbc.Alert(new_upload["msg"],
-                          color="success",
-                          className="mb-0 p-1 d-inline-block"),
-                id="temp-dialog-col",
-                style={"transition": "all 500ms linear 0s"}
+            return toast_generator.get_toast(
+                new_upload["msg"],
+                "Success",
+                "success",
+                5000
             )
         if new_upload["status"] == "error":
-            return dbc.Fade(
-                dbc.Alert(new_upload["msg"],
-                          color="danger",
-                          className="mb-0 p-1 d-inline-block"),
-                id="temp-dialog-col",
-                style={"transition": "all 500ms linear 0s"}
+            return toast_generator.get_toast(
+                new_upload["msg"],
+                "Error",
+                "danger",
+                5000
             )
     elif "mutation-freq-slider.marks" in triggers:
-        return dbc.Fade(
-            dbc.Alert("Mutation frequency slider values reset.",
-                      color="warning",
-                      className="mb-0 p-1 d-inline-block"),
-            id="temp-dialog-col",
-            style={"transition": "all 500ms linear 0s"}
+        return toast_generator.get_toast(
+            "Mutation frequency slider vals set to min and max",
+            "Info",
+            "info",
+            5000
         )
-
-
-@app.callback(
-    Output("temp-dialog-col", "is_in"),
-    Input("temp-dialog-col", "children")
-)
-def hide_dialog_col(_):
-    """Hides newly generated ``dialog-col`` divs after five seconds.
-
-    :param _: Unused input variable that allows generation of
-        ``temp-dialog-col`` in ``update_dialog_col`` to trigger this
-        function.
-    :return: Property that fades newly generated ``dialog-col`` out.
-    :rtype: bool
-    """
-    sleep(5)
-    return False
+    elif "positions-jumped-to.data" in triggers:
+        msg = "Jumped to strain %s at nucleotide position %s"
+        msg %= (positions_jumped_to["strain"], positions_jumped_to["nt_pos"])
+        return toast_generator.get_toast(
+            msg,
+            "Info",
+            "info",
+            10000
+        )
 
 
 @app.callback(
@@ -743,6 +739,41 @@ def toggle_confirm_strain_del_modal(strain_to_del, _, __):
         return False, None
     else:
         return False, None
+
+
+@app.callback(
+    Output("jump-to-modal", "is_open"),
+    Output("jump-to-modal-dropdown-search", "options"),
+    Input("jump-to-btn", "n_clicks"),
+    Input("jump-to-modal-ok-btn", "n_clicks"),
+    Input("jump-to-modal-cancel-btn", "n_clicks"),
+    State("get-data-args", "data"),
+    State("last-data-mtime", "data"),
+    prevent_initial_call=True
+)
+def toggle_jump_to_modal(_, __, ___, get_data_args, last_data_mtime):
+    """Open or close modal for jumping to mutations.
+
+    This modal opens when a user clicks the toolbar btn for jumping to
+    mutations. It closes when the user clicks the cancel or ok btn in
+    the modal.
+
+    This fn also populates the dropdown content when the modal is
+    opened.
+
+    :param _: User clicked btn in toolbar for opening modal
+    :param __: User clicked ok btn in modal
+    :param ___: User clicked cancel btn in modal
+    :return: Whether modal is open, and the dropdown content if it is
+    :rtype: (bool, list)
+    """
+    ctx = dash.callback_context.triggered[0]["prop_id"]
+    if ctx == "jump-to-btn.n_clicks":
+        # Current ``get_data`` return val
+        data = read_data(get_data_args, last_data_mtime)
+        return True, data["jump_to_dropdown_search_options"]
+    else:
+        return False, []
 
 
 @app.callback(
@@ -1204,6 +1235,26 @@ def route_heatmap_cells_fig_click(click_data):
 
 
 @app.callback(
+    Output("histogram", "clickData"),
+    Output("last-histogram-point-clicked", "data"),
+    Input("histogram", "clickData"),
+    prevent_initial_call=True
+)
+def route_histogram_click(click_data):
+    """Store histogram click data in "last-histogram-point-clicked".
+
+    See ``route_heatmap_cells_fig_click`` for more details on logic.
+
+    :param click_data: ``histogram.clickData`` value
+    :type click_data: dict
+    :return: ``None`` to reset histogram ``clickData`` attribute, and a
+        copy of  this attribute before resetting
+    :rtype: (None, dict)
+    """
+    return None, click_data
+
+
+@app.callback(
     Output("mutation-details-modal", "is_open"),
     Output("mutation-details-modal-header", "children"),
     Output("mutation-details-modal-body", "children"),
@@ -1362,6 +1413,27 @@ app.clientside_callback(
     Output("make-histogram-rel-pos-bar-dynamic", "data"),
     Input("heatmap-nt-pos-axis-fig", "figure"),
     State("data", "data")
+)
+app.clientside_callback(
+    ClientsideFunction(
+        namespace="clientside",
+        function_name="jumpToHeatmapPosAfterHistogramClick"
+    ),
+    Output("allow-jumps-from-histogram", "data"),
+    Input("last-histogram-point-clicked", "data"),
+    State("data", "data"),
+    prevent_initial_call=True
+)
+app.clientside_callback(
+    ClientsideFunction(
+        namespace="clientside",
+        function_name="jumpToHeatmapPosAfterSelectingMutationName"
+    ),
+    Output("positions-jumped-to", "data"),
+    Input("jump-to-modal-ok-btn", "n_clicks"),
+    State("jump-to-modal-dropdown-search", "value"),
+    State("data", "data"),
+    prevent_initial_call=True
 )
 app.clientside_callback(
     ClientsideFunction(
