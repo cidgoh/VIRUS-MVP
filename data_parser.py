@@ -323,7 +323,9 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
             get_heatmap_mutation_fns(visible_parsed_mutations,
                                      max_mutations_per_pos_dict),
         "heatmap_x_genes":
-            get_heatmap_x_genes(max_mutations_per_pos_dict)
+            get_heatmap_x_genes(max_mutations_per_pos_dict),
+        "mutation_name_dict":
+            get_mutation_name_dict(visible_parsed_mutations)
     }
     ret["heatmap_x_tickvals"] = \
         get_heatmap_x_tickvals(ret["heatmap_cells_tickvals"])
@@ -333,6 +335,8 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
     ret["heatmap_cells_container_height"] = \
         min(10*40, ret["heatmap_cells_fig_height"])
     ret["heatmap_cells_fig_width"] = len(ret["heatmap_x_nt_pos"]) * 36
+    ret["jump_to_dropdown_search_options"] = \
+        get_jump_to_dropdown_search_options(ret["mutation_name_dict"])
 
     return ret
 
@@ -619,6 +623,26 @@ def get_heatmap_hover_text(parsed_mutations, max_mutations_per_pos_dict):
                     cols[i] = cell_text_str % cell_text_params
             row.extend(cols)
         ret.append(row)
+    return ret
+
+
+def get_mutation_name_dict(parsed_mutations):
+    """TODO"""
+    ret = {}
+    for strain in reversed(parsed_mutations):
+        for nt_pos in parsed_mutations[strain]:
+            for mutation in parsed_mutations[strain][nt_pos]:
+                mutation_name = mutation["mutation_name"]
+                if mutation_name and mutation_name not in ret:
+                    ret[mutation_name] = {"strain": strain, "nt_pos": nt_pos}
+    return ret
+
+
+def get_jump_to_dropdown_search_options(mutation_name_dict):
+    """TODO"""
+    ret = []
+    for mutation_name in mutation_name_dict:
+        ret.append({"label": mutation_name, "value": mutation_name})
     return ret
 
 

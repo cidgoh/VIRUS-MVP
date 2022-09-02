@@ -726,18 +726,23 @@ def toggle_confirm_strain_del_modal(strain_to_del, _, __):
 
 @app.callback(
     Output("jump-to-modal", "is_open"),
+    Output("jump-to-modal-dropdown-search", "options"),
     Input("jump-to-btn", "n_clicks"),
     Input("jump-to-modal-ok-btn", "n_clicks"),
     Input("jump-to-modal-cancel-btn", "n_clicks"),
+    State("get-data-args", "data"),
+    State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def toggle_jump_to_modal(_, __, ___):
+def toggle_jump_to_modal(_, __, ___, get_data_args, last_data_mtime):
     """TODO"""
     ctx = dash.callback_context.triggered[0]["prop_id"]
     if ctx == "jump-to-btn.n_clicks":
-        return True
+        # Current ``get_data`` return val
+        data = read_data(get_data_args, last_data_mtime)
+        return True, data["jump_to_dropdown_search_options"]
     else:
-        return False
+        return False, []
 
 
 @app.callback(
@@ -1396,6 +1401,7 @@ app.clientside_callback(
     Output("allow-jumps-from-jump-to-modal", "data"),
     Input("jump-to-modal-ok-btn", "n_clicks"),
     State("jump-to-modal-dropdown-search", "value"),
+    State("data", "data"),
     prevent_initial_call=True
 )
 app.clientside_callback(

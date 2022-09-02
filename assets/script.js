@@ -196,28 +196,47 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
       $('#heatmap-center-div')[0].scrollLeft =
           $('#heatmap-nt-pos-axis-fig')[0].offsetWidth;
 
-      const xticks_selector =
+      const xtickSelector =
           `#heatmap-nt-pos-axis-fig g.xtick > text:contains(${closestNtPos})`;
-      const $xticks = $(xticks_selector);
-      const xtick_el = $xticks.filter((e) => {
+      const $xticks = $(xtickSelector);
+      const xtickEl = $xticks.filter((e) => {
         return Number($xticks[e].textContent) === closestNtPos;
       })[0]
 
-      xtick_el.scrollIntoView(false, {inline: 'start'});
+      xtickEl.scrollIntoView(false, {inline: 'start'});
     },
     /**
      * TODO
      */
-    jumpToHeatmapPosAfterSelectingMutationName: (_, val) => {
+    jumpToHeatmapPosAfterSelectingMutationName: (_, val, data) => {
       if (!val) return null;
+
+      const nt_pos = data['mutation_name_dict'][val]['nt_pos'];
+      const strain = data['mutation_name_dict'][val]['strain'];
 
       $('#heatmap-center-div')[0].scrollLeft =
           $('#heatmap-nt-pos-axis-fig')[0].offsetWidth;
+      const xtickEl =
+          $(`#heatmap-nt-pos-axis-fig g.xtick > text:contains(${nt_pos})`)[0];
+      xtickEl.scrollIntoView(false, {inline: 'start'});
 
-      const xticks_selector =
-          `#heatmap-nt-pos-axis-fig g.xtick > text:contains(${val})`;
-      const xtick_el = $(xticks_selector)[0];
-      xtick_el.scrollIntoView(false, {inline: 'start'});
+      // Scrolling the y-tick into view is a bit more complicated due to the
+      // inner and outer container infrastructure.
+
+      const strainsAxisInnerContainerEl =
+          $('#heatmap-strains-axis-inner-container')[0];
+      strainsAxisInnerContainerEl.scrollTop = 0
+
+      const strainsAxisOuterContainerEl =
+          $('#heatmap-strains-axis-outer-container')[0];
+      const strainsAxisOuterContainerBottom =
+          strainsAxisOuterContainerEl.getBoundingClientRect().bottom;
+      const ytickEl =
+          $(`#heatmap-strains-axis-fig g.ytick > text:contains(${strain})`)[0];
+      const ytickBottom =
+          ytickEl.getBoundingClientRect().bottom;
+      strainsAxisInnerContainerEl.scrollTop =
+          ytickBottom - strainsAxisOuterContainerBottom;
 
       return null;
     },

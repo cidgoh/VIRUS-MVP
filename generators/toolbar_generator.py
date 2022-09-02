@@ -272,11 +272,8 @@ def get_jump_to_modal():
                 dbc.Col(
                     dcc.Dropdown(
                         id="jump-to-modal-dropdown-search",
-                        options=[
-                            {"label": "p.N2596S", "value": 8052},
-                            {"label": "p.V4997G", "value": 15254},
-                            {"label": "c.-3delA", "value": 28270}
-                        ]
+                        # Populate when opening modal
+                        options=[]
                     )
                 )
             ),
