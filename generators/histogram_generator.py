@@ -252,7 +252,8 @@ def get_histogram_gene_bar_obj_list():
                                         "line": {"width": 0}
                                     },
                                     showlegend=False,
-                                    hovertemplate=gene)
+                                    hovertemplate=gene,
+                                    customdata=[gene_start])
         ret.append(intragenic_bar_obj)
 
     return ret
