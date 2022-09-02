@@ -72,9 +72,17 @@ def get_legend_rows():
             no_gutters=True
         ),
         dbc.Row(
-            dbc.Col(html.B("Note: you can zoom out of your browser to view "
-                           "more cells at a time--the visualization will "
-                           "scale."),
+            dbc.Col(html.B("You can zoom out of your browser to view more "
+                           "cells at a time--the visualization will scale."),
+                    className="border-bottom border-left border-right "
+                              "border-dark p-1",
+                    width={"offset": 1, "size": 10}),
+            no_gutters=True
+        ),
+        dbc.Row(
+            dbc.Col(html.B("Click on a gene/region in the bar below the "
+                           "histogram to automatically scroll to the "
+                           "beginning of that gene/region in the heatmap."),
                     className="border-bottom border-left border-right "
                               "border-dark p-1",
                     width={"offset": 1, "size": 10}),

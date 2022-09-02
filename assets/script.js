@@ -171,6 +171,82 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
       return null
     },
     /**
+     * Scroll the first column of a gene in the heatmap into view after a user
+     * clicks the corresponding gene in the bar under the histogram.
+     * @param {Object} clickData ``last-histogram-point-clicked`` in-browser var
+     *  val.
+     * @param {Object} data ``data_parser.get_data`` return value
+     */
+    jumpToHeatmapPosAfterHistogramClick: (clickData, data) => {
+      // New histogram resets click data
+      if (!clickData) return;
+
+      const curveNumber = clickData['points'][0]['curveNumber'];
+      // User clicked histogram plot, not gene bar underneath
+      if (curveNumber === 0) return;
+
+      const geneStartNtPos = clickData['points'][0]['customdata'];
+      let closestNtPosIndex = 0;
+      for (const [i, ntPos] of data['heatmap_x_nt_pos'].entries()) {
+        if (Number(ntPos) > geneStartNtPos) break;
+        closestNtPosIndex++;
+      }
+      const closestNtPos = Number(data['heatmap_x_nt_pos'][closestNtPosIndex]);
+
+      $('#heatmap-center-div')[0].scrollLeft =
+          $('#heatmap-nt-pos-axis-fig')[0].offsetWidth;
+
+      const xtickSelector =
+          `#heatmap-nt-pos-axis-fig g.xtick > text:contains(${closestNtPos})`;
+      const $xticks = $(xtickSelector);
+      const xtickEl = $xticks.filter((e) => {
+        return Number($xticks[e].textContent) === closestNtPos;
+      })[0]
+
+      xtickEl.scrollIntoView(false, {inline: 'start'});
+    },
+    /**
+     * Scroll the first row and column of a mutation in the heatmap into view
+     * after a user selects a mutation in the modal for jumping to mutations.
+     * @param _ User clicked the okay btn in the modal for jumping to
+     *  mutations.
+     * @param {string} val Mutation selected by user
+     * @param {Object} data ``data_parser.get_data`` return value
+     * @return {Object} Info on strain and nt pos heatmap jumped to
+     */
+    jumpToHeatmapPosAfterSelectingMutationName: (_, val, data) => {
+      if (!val) return null;
+
+      const nt_pos = data['mutation_name_dict'][val]['nt_pos'];
+      const strain = data['mutation_name_dict'][val]['strain'];
+
+      $('#heatmap-center-div')[0].scrollLeft =
+          $('#heatmap-nt-pos-axis-fig')[0].offsetWidth;
+      const xtickEl =
+          $(`#heatmap-nt-pos-axis-fig g.xtick > text:contains(${nt_pos})`)[0];
+      xtickEl.scrollIntoView(false, {inline: 'start'});
+
+      // Scrolling the y-tick into view is a bit more complicated due to the
+      // inner and outer container infrastructure.
+
+      const strainsAxisInnerContainerEl =
+          $('#heatmap-strains-axis-inner-container')[0];
+      strainsAxisInnerContainerEl.scrollTop = 0
+
+      const strainsAxisOuterContainerEl =
+          $('#heatmap-strains-axis-outer-container')[0];
+      const strainsAxisOuterContainerBottom =
+          strainsAxisOuterContainerEl.getBoundingClientRect().bottom;
+      const ytickEl =
+          $(`#heatmap-strains-axis-fig g.ytick > text:contains(${strain})`)[0];
+      const ytickBottom =
+          ytickEl.getBoundingClientRect().bottom;
+      strainsAxisInnerContainerEl.scrollTop =
+          ytickBottom - strainsAxisOuterContainerBottom;
+
+      return {"strain": strain, "nt_pos": nt_pos};
+    },
+    /**
      * Using pure JS, link the scrolling of the heatmap cells and y-axis
      * containers.
      * Lifted from https://stackoverflow.com/a/41998497/11472358

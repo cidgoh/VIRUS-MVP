@@ -10,12 +10,11 @@ from definitions import USER_DATA_DIR
 
 
 def get_toolbar_row(data):
-    """Get Dash Bootstrap Components row that sits above heatmap.
+    """Get Dash Bootstrap Components row that contains toolbar.
 
     :param data: ``get_data`` return value
     :type data: dict
-    :return: Dash Bootstrap Component row with upload button and clade
-        defining mutations switch.
+    :return: Dash Bootstrap Component row with toolbar btns.
     :rtype: dbc.Row
     """
     ret = dbc.Row(
@@ -31,16 +30,12 @@ def get_toolbar_row(data):
                             type="circle"
                         ),
                         get_file_download_component(),
+                        get_jump_to_btn(),
                         get_legend_toggle_component()
                     ],
                     className="pl-4 pl-xl-5"
                 ),
-                width=4
-            ),
-            dbc.Col(
-                # Empty on launch
-                className="my-auto",
-                id="dialog-col"
+                width=7
             ),
             dbc.Col(
                 [
@@ -72,7 +67,8 @@ def get_toolbar_row(data):
                 width=2
             ),
             get_select_lineages_modal(),
-            get_confirm_strain_del_modal()
+            get_confirm_strain_del_modal(),
+            get_jump_to_modal()
         ],
         className="mt-3 ml-xl-3"
     )
@@ -258,6 +254,57 @@ def get_file_download_component():
     ], className="mr-2")
 
 
+def get_jump_to_btn():
+    """Returns button for opening modal for jumping to mutations.
+
+    :return: Dash Bootstrap Components button with appropriate label
+        for jumping to mutations.
+    :rtype: dbc.Button
+    """
+    return dbc.Button("Jump to...",
+                      color="secondary",
+                      outline=True,
+                      id="jump-to-btn",
+                      className="mr-2")
+
+
+def get_jump_to_modal():
+    """Returns modal for jumping to mutations.
+
+    This modal is initially closed, and the body is empty.
+
+    :return: Initially closed Dash Bootstrap Components modal for
+        jumping to mutations.
+    :rtype: dbc.Modal
+    """
+    return dbc.Modal([
+        dbc.ModalHeader("Jump to mutation"),
+        dbc.ModalBody(
+            dbc.Row(
+                dbc.Col(
+                    dcc.Dropdown(
+                        id="jump-to-modal-dropdown-search",
+                        # Populate when opening modal
+                        options=[]
+                    )
+                )
+            ),
+            id="jump-to-modal-body"
+        ),
+        dbc.ModalFooter(
+            dbc.ButtonGroup([
+                dbc.Button("Cancel",
+                           className="mr-1",
+                           color="secondary",
+                           id="jump-to-modal-cancel-btn"),
+                dbc.Button("Jump",
+                           color="primary",
+                           id="jump-to-modal-ok-btn")
+            ])
+        )
+    ], id="jump-to-modal")
+
+
 def get_legend_toggle_component():
     """Get dash component for toggling heatmap legend.
 
@@ -266,7 +313,6 @@ def get_legend_toggle_component():
     """
     return dbc.Button("HELP",
                       color="info",
-                      # outline=True,
                       id="toggle-legend-btn")
 
 
