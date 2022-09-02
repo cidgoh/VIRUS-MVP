@@ -640,7 +640,8 @@ def get_mutation_name_dict(parsed_mutations):
         for nt_pos in parsed_mutations[strain]:
             for mutation in parsed_mutations[strain][nt_pos]:
                 mutation_name = mutation["mutation_name"]
-                if mutation_name and mutation_name not in ret:
+                hidden = mutation["hidden_cell"]
+                if mutation_name and not hidden and mutation_name not in ret:
                     ret[mutation_name] = {"strain": strain, "nt_pos": nt_pos}
     return ret
 
