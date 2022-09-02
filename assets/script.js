@@ -206,7 +206,13 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
       xtickEl.scrollIntoView(false, {inline: 'start'});
     },
     /**
-     * TODO
+     * Scroll the first row and column of a mutation in the heatmap into view
+     * after a user selects a mutation in the modal for jumping to mutations.
+     * @param _ User clicked the okay btn in the modal for jumping to
+     *  mutations.
+     * @param {string} val Mutation selected by user
+     * @param {Object} data ``data_parser.get_data`` return value
+     * @return {Object} Info on strain and nt pos heatmap jumped to
      */
     jumpToHeatmapPosAfterSelectingMutationName: (_, val, data) => {
       if (!val) return null;

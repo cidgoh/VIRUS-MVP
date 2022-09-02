@@ -627,7 +627,17 @@ def get_heatmap_hover_text(parsed_mutations, max_mutations_per_pos_dict):
 
 
 def get_mutation_name_dict(parsed_mutations):
-    """TODO"""
+    """Get dict containing strain and nt pos of mutations.
+
+    For each unique mutation, we assign the top-left most strain and
+    pos seen in the heatmap with the corresponding mutation.
+
+    :param parsed_mutations: A dictionary containing multiple merged
+        ``get_parsed_gvf_dir`` return "mutations" values.
+    :type parsed_mutations: dict
+    :return: Dict with mutation names and their strains/positions
+    :type: dict
+    """
     ret = {}
     for strain in reversed(parsed_mutations):
         for nt_pos in parsed_mutations[strain]:
@@ -639,7 +649,13 @@ def get_mutation_name_dict(parsed_mutations):
 
 
 def get_jump_to_dropdown_search_options(mutation_name_dict):
-    """TODO"""
+    """List of dash bootstrap options corresponding to mutation dict.
+
+    @param mutation_name_dict: ``get_mutation_name_dict`` ret val
+    @type mutation_name_dict: dict
+    @return: List of dicts with a label and val key
+    @rtype: list
+    """
     ret = []
     for mutation_name in mutation_name_dict:
         ret.append({"label": mutation_name, "value": mutation_name})

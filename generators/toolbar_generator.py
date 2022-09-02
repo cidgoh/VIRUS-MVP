@@ -255,7 +255,12 @@ def get_file_download_component():
 
 
 def get_jump_to_btn():
-    """TODO"""
+    """Returns button for opening modal for jumping to mutations.
+
+    :return: Dash Bootstrap Components button with appropriate label
+        for jumping to mutations.
+    :rtype: dbc.Button
+    """
     return dbc.Button("Jump to...",
                       color="secondary",
                       outline=True,
@@ -264,7 +269,14 @@ def get_jump_to_btn():
 
 
 def get_jump_to_modal():
-    """TODO"""
+    """Returns modal for jumping to mutations.
+
+    This modal is initially closed, and the body is empty.
+
+    :return: Initially closed Dash Bootstrap Components modal for
+        jumping to mutations.
+    :rtype: dbc.Modal
+    """
     return dbc.Modal([
         dbc.ModalHeader("Jump to mutation"),
         dbc.ModalBody(

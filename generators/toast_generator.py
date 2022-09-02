@@ -20,7 +20,7 @@ def get_toast_row():
 
 
 def get_toast(msg, header, color, duration):
-    """Get toast div.TODO
+    """Get toast div.
 
     @param msg: Message in toast body
     @type msg: str
@@ -28,6 +28,8 @@ def get_toast(msg, header, color, duration):
     @type header: str
     @param color: Bootstrap color of icon in toast header
     @type color: str
+    @param duration: Time in ms for toast before auto-dismissing
+    @type duration: int
     @return: Toast with user-specified content
     @rtype: dbc.Toast
     """

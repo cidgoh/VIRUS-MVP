@@ -477,15 +477,19 @@ def trigger_download(_):
     prevent_initial_call=True
 )
 def toggle_toast(new_upload, _, positions_jumped_to):
-    """Update ``toast-col`` div. TODO
+    """Update ``toast-col`` div.
 
     This function shows appropriate toasts when there was following a
-    user upload, and re-rendering of mutation frequency vals.
+    user upload, re-rendering of mutation frequency vals, or the
+    heatmap is automatically scrolled to a specific mutation.
 
     :param new_upload: ``update_new_upload`` return value
     :type new_upload: dict
     :param _: Unused input variable that allows re-rendering of the
         mutation frequency slider to trigger this function.
+    :param positions_jumped_to:
+        ``jumpToHeatmapPosAfterSelectingMutationName`` return val.
+    :type positions_jumped_to: dict
     :return: Appropriate Dash Bootstrap Components toast for situation
     :rtype: dbc.Toast
     """
@@ -748,7 +752,21 @@ def toggle_confirm_strain_del_modal(strain_to_del, _, __):
     prevent_initial_call=True
 )
 def toggle_jump_to_modal(_, __, ___, get_data_args, last_data_mtime):
-    """TODO"""
+    """Open or close modal for jumping to mutations.
+
+    This modal opens when a user clicks the toolbar btn for jumping to
+    mutations. It closes when the user clicks the cancel or ok btn in
+    the modal.
+
+    This fn also populates the dropdown content when the modal is
+    opened.
+
+    :param _: User clicked btn in toolbar for opening modal
+    :param __: User clicked ok btn in modal
+    :param ___: User clicked cancel btn in modal
+    :return: Whether modal is open, and the dropdown content if it is
+    :rtype: (bool, list)
+    """
     ctx = dash.callback_context.triggered[0]["prop_id"]
     if ctx == "jump-to-btn.n_clicks":
         # Current ``get_data`` return val
