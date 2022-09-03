@@ -331,7 +331,8 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
         get_heatmap_x_tickvals(ret["heatmap_cells_tickvals"])
     ret["heatmap_x_aa_pos"] = \
         get_heatmap_x_aa_pos(ret["heatmap_x_nt_pos"], ret["heatmap_x_genes"])
-    ret["heatmap_cells_fig_height"] = len(ret["heatmap_y_strains"]) * 40
+    ret["heatmap_cells_fig_height"] = \
+        max(10*40, len(ret["heatmap_y_strains"]) * 40)
     ret["heatmap_cells_container_height"] = \
         min(10*40, ret["heatmap_cells_fig_height"])
     ret["heatmap_cells_fig_width"] = len(ret["heatmap_x_nt_pos"]) * 36
