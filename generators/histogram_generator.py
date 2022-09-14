@@ -11,6 +11,7 @@ from plotly.subplots import make_subplots
 
 from definitions import GENE_COLORS_DICT, GENE_POSITIONS_DICT
 
+
 def get_histogram_row(data):
     """Get Dash Bootstrap Components row containing histogram view.
 
@@ -136,14 +137,13 @@ def get_histogram_fig(np_histogram):
     ret.update_layout(
         margin={"t": 0, "b": 0, "l": 0, "r": 0, "pad": 0},
         plot_bgcolor="white",
-        bargap=0.1,
         font={"size": 16},
         # TODO hardcoding genome length here because I'm lazy
         xaxis1={"visible": False, "range": [1, 29903], "fixedrange": True},
         xaxis2={"visible": False, "range": [1, 29903], "fixedrange": True},
         yaxis1={"visible": False, "fixedrange": True},
         yaxis2={"visible": False, "fixedrange": True},
-        barmode="stack"
+        barmode="overlay"
     )
 
     return ret
@@ -204,7 +204,7 @@ def get_np_histogram(data):
 def get_histogram_gene_bar_obj_list():
     """Get Plotly graph object list representing histogram gene bar.
 
-    We return a list so they can be stacked on top of each other in
+    We return a list so they can be overlayed on top of each other in
     ``get_histogram_fig``.
 
     :param data: ``data_parser.get_data`` return value
@@ -213,47 +213,37 @@ def get_histogram_gene_bar_obj_list():
         histogram view.
     :rtype: list[go.Bar]
     """
-    ret = []
-    total_bar_len_so_far = 0
-    last_gene_end = 1
+    ret = [go.Bar(name="",
+                  x=[29903],
+                  y=["foo"],
+                  base=1,
+                  orientation="h",
+                  marker={
+                      "color": GENE_COLORS_DICT["INTERGENIC"],
+                      "line": {"width": 0}
+                  },
+                  showlegend=False,
+                  hoverinfo="skip")]
     for gene in GENE_POSITIONS_DICT:
         gene_start = GENE_POSITIONS_DICT[gene]["start"]
         gene_end = GENE_POSITIONS_DICT[gene]["end"]
-        igr_color = GENE_COLORS_DICT["INTERGENIC"]
-        # Intergenic region before this gene--add it
-        if gene_start > last_gene_end:
-            intergenic_bar_len = gene_start - total_bar_len_so_far
-            total_bar_len_so_far += intergenic_bar_len
-            intergenic_bar_obj = go.Bar(name="",
-                                        x=[intergenic_bar_len],
-                                        y=["foo"],
-                                        orientation="h",
-                                        marker={
-                                            "color": igr_color,
-                                            "line": {"width": 0}
-                                        },
-                                        showlegend=False,
-                                        hovertemplate="INTERGENIC")
-            ret.append(intergenic_bar_obj)
-        # Now add intragenic bar
-        intragenic_bar_len = gene_end - total_bar_len_so_far
-        total_bar_len_so_far += intragenic_bar_len
-        intragenic_bar_text = [gene] if intragenic_bar_len > 1000 else []
-        intragenic_bar_obj = go.Bar(name=gene,
-                                    x=[intragenic_bar_len],
-                                    y=["foo"],
-                                    orientation="h",
-                                    text=intragenic_bar_text,
-                                    textposition="inside",
-                                    insidetextanchor="middle",
-                                    insidetextfont={"color": "white"},
-                                    marker={
-                                        "color": GENE_COLORS_DICT[gene],
-                                        "line": {"width": 0}
-                                    },
-                                    showlegend=False,
-                                    hovertemplate=gene,
-                                    customdata=[gene_start])
-        ret.append(intragenic_bar_obj)
-
+        gene_bar_len = gene_end - gene_start
+        gene_bar_text = [gene] if gene_bar_len > 1000 else []
+        gene_bar_obj = go.Bar(name=gene,
+                              x=[gene_bar_len],
+                              y=["foo"],
+                              base=gene_start,
+                              orientation="h",
+                              text=gene_bar_text,
+                              textposition="inside",
+                              insidetextanchor="middle",
+                              insidetextfont={"color": "white"},
+                              marker={
+                                  "color": GENE_COLORS_DICT[gene],
+                                  "line": {"width": 0}
+                              },
+                              showlegend=False,
+                              hovertemplate=gene,
+                              customdata=[gene_start])
+        ret.append(gene_bar_obj)
     return ret
