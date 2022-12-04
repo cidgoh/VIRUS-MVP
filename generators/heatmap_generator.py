@@ -12,7 +12,7 @@ import dash_html_components as html
 import dash_core_components as dcc
 import plotly.graph_objects as go
 
-from definitions import GENE_COLORS_DICT
+from definitions import GENE_COLORS_DICT, PROTEIN_COLORS_DICT
 
 
 def get_color_scale():
@@ -113,6 +113,19 @@ def get_heatmap_row(data):
                             dcc.Graph(
                                 id="heatmap-gene-bar-fig",
                                 figure=get_heatmap_gene_bar_fig(data),
+                                config={"displayModeBar": False},
+                                style={"height": 30,
+                                       "width": heatmap_cells_fig_width}
+                            )
+                        ),
+                        no_gutters=True
+                    ),
+                    # Protein bar above heatmap
+                    dbc.Row(
+                        dbc.Col(
+                            dcc.Graph(
+                                id="heatmap-protein-bar-fig",
+                                figure=get_heatmap_protein_bar_fig(data),
                                 config={"displayModeBar": False},
                                 style={"height": 30,
                                        "width": heatmap_cells_fig_width}
@@ -451,6 +464,92 @@ def get_heatmap_gene_bar_graph_obj(data):
         hoverinfo="skip",
         marker={
             "color": ret_color
+        },
+        orientation="h",
+        text=ret_text,
+        textposition="inside",
+        insidetextanchor="middle",
+        insidetextfont={"color": "white"}
+    )
+
+    return ret
+
+
+def get_heatmap_protein_bar_fig(data):
+    """Get Plotly figure used as a protein bar above the heatmap.
+
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
+    :return: Plotly figure containing heatmap gene bar
+    :rtype: go.Figure
+    """
+    heatmap_protein_bar_obj = get_heatmap_protein_bar_graph_obj(data)
+    ret = go.Figure(
+        heatmap_protein_bar_obj,
+        layout={
+            "font": {
+                "size": 16
+            },
+            "plot_bgcolor": "white",
+            "margin": {
+                "l": 0, "r": 0, "t": 0, "b": 0, "pad": 0
+            },
+            "xaxis": {
+                "fixedrange": True,
+                "range": [0, len(data["heatmap_x_proteins"])],
+                "type": "linear",
+                "visible": False
+            },
+            "yaxis": {
+                "fixedrange": True,
+                "type": "linear",
+                "visible": False
+            }
+        }
+    )
+    return ret
+
+
+def get_heatmap_protein_bar_graph_obj(data):
+    """Get Plotly graph object corresponding to protein bar.
+
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
+    :return: Plotly bar object containing gene bar with labels
+    :rtype: go.Bar
+    """
+    ret_x = []
+    ret_text = []
+    ret_color = []
+
+    bar_len = 0
+    last_protein_seen = ""
+    for i, protein in enumerate(data["heatmap_x_proteins"]):
+        if i == 0:
+            last_protein_seen = protein
+        if protein != last_protein_seen:
+            ret_x.append(bar_len)
+            ret_color.append(PROTEIN_COLORS_DICT[last_protein_seen])
+            if bar_len > 2:
+                ret_text.append(last_protein_seen)
+            else:
+                ret_text.append("")
+
+            last_protein_seen = protein
+            bar_len = 0
+        bar_len += 1
+        if i == (len(data["heatmap_x_proteins"]) - 1):
+            ret_x.append(bar_len)
+            ret_text.append(protein)
+            ret_color.append(PROTEIN_COLORS_DICT[protein])
+
+    ret = go.Bar(
+        x=ret_x,
+        y=[1 for _ in ret_x],
+        hoverinfo="text",
+        marker={
+            "color": ret_color,
+            "line_width": 0
         },
         orientation="h",
         text=ret_text,

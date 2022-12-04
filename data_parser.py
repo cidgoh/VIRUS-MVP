@@ -5,14 +5,10 @@ Entry point is ``get_data``.
 
 from copy import deepcopy
 import csv
-from io import StringIO
 from itertools import islice
 import os
 
-import numpy as np
-import pandas as pd
-
-from definitions import GENE_POSITIONS_DICT
+from definitions import GENE_POSITIONS_DICT, PROTEIN_POSITIONS_DICT
 
 
 def map_pos_to_gene(pos):
@@ -31,6 +27,22 @@ def map_pos_to_gene(pos):
         if start <= pos <= end:
             return gene
     return "INTERGENIC"
+
+
+def map_pos_to_protein(pos):
+    """Map a nucleotide position to a SARS-CoV-2 protein.
+
+    :param pos: Nucleotide position
+    :type pos: int
+    :return: SARS-CoV-2 gene at nucleotide position ``pos``
+    :rtype: str
+    """
+    for protein in PROTEIN_POSITIONS_DICT:
+        start = PROTEIN_POSITIONS_DICT[protein]["start"]
+        end = PROTEIN_POSITIONS_DICT[protein]["end"]
+        if start <= pos <= end:
+            return protein
+    return "n/a"
 
 
 def parse_gvf_dir(dir_):
@@ -324,6 +336,8 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
                                      max_mutations_per_pos_dict),
         "heatmap_x_genes":
             get_heatmap_x_genes(max_mutations_per_pos_dict),
+        "heatmap_x_proteins":
+            get_heatmap_x_proteins(max_mutations_per_pos_dict),
         "mutation_name_dict":
             get_mutation_name_dict(visible_parsed_mutations)
     }
@@ -457,6 +471,23 @@ def get_heatmap_x_genes(max_mutations_per_pos_dict):
         gene = map_pos_to_gene(int(pos))
         for _ in range(max_mutations_per_pos_dict[pos]):
             ret.append(gene)
+    return ret
+
+
+def get_heatmap_x_proteins(max_mutations_per_pos_dict):
+    """Get protein values corresponding to x-axis values in heatmap.
+
+    :param max_mutations_per_pos_dict: See
+        ``get_max_mutations_per_pos`` return value.
+    :type max_mutations_per_pos_dict: dict
+    :return: List of proteins for each x in ``heatmap_x``
+    :rtype: list[str]
+    """
+    ret = []
+    for pos in max_mutations_per_pos_dict:
+        protein = map_pos_to_protein(int(pos))
+        for _ in range(max_mutations_per_pos_dict[pos]):
+            ret.append(protein)
     return ret
 
 
