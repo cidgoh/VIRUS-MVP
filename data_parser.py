@@ -261,8 +261,6 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
                    if parsed_gvf_dirs[k]["variant_type"] == "VOC"}
     voi_strains = {k: None for k in parsed_gvf_dirs
                    if parsed_gvf_dirs[k]["variant_type"] == "VOI"}
-    de_escalated_strains = {k: None for k in parsed_gvf_dirs
-                            if parsed_gvf_dirs[k]["status"] == "de_escalated"}
     circulating_strains = \
         {k: None for k in parsed_gvf_dirs
          if parsed_gvf_dirs[k]["status"] == "actively_circulating"}
@@ -304,8 +302,6 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
             voc_strains,
         "voi_strains":
             voi_strains,
-        "de_escalated_strains":
-            de_escalated_strains,
         "circulating_strains":
             circulating_strains,
         "all_strains":

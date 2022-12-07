@@ -108,7 +108,7 @@ def get_axes_description():
                 html.B("bold"),
                 ", and VOI are in ",
                 html.I("italics"),
-                "."
+                ". Actively circulating strains are denoted with ⚠️."
             ]),
             dbc.Col([
                 html.B("Top axis: "),
