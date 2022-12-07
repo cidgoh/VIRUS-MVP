@@ -262,10 +262,10 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
     voi_strains = {k: None for k in parsed_gvf_dirs
                    if parsed_gvf_dirs[k]["variant_type"] == "VOI"}
     de_escalated_strains = {k: None for k in parsed_gvf_dirs
-                   if parsed_gvf_dirs[k]["status"] == "de_escalated"}
-    circulating_strains = {k: None for k in parsed_gvf_dirs
-                 if parsed_gvf_dirs[k]["status"] ==
-                           "actively_circulating"}
+                            if parsed_gvf_dirs[k]["status"] == "de_escalated"}
+    circulating_strains = \
+        {k: None for k in parsed_gvf_dirs
+         if parsed_gvf_dirs[k]["status"] == "actively_circulating"}
 
     visible_parsed_mutations = \
         {k: v for k, v in parsed_mutations.items() if k not in hidden_strains}
