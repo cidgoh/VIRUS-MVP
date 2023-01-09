@@ -322,11 +322,17 @@ def get_heatmap_strains_axis_fig(data):
     tick_text = []
     for strain in data["heatmap_y_strains"]:
         if strain in data["voc_strains"]:
-            tick_text.append("<b>%s</b>" % strain)
+            strain_text = "<b>%s</b>" % strain
         elif strain in data["voi_strains"]:
-            tick_text.append("<i>%s</i>" % strain)
+            strain_text = "<i>%s</i>" % strain
         else:
-            tick_text.append(strain)
+            strain_text = strain
+
+        if strain in data["circulating_strains"]:
+            strain_text += "⚠️"
+
+        tick_text.append(strain_text)
+
     ret.update_yaxes(range=[-0.5, len(data["heatmap_y_strains"])-0.5],
                      fixedrange=True,
                      tickmode="array",

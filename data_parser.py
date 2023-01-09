@@ -64,15 +64,18 @@ def parse_gvf_dir(dir_):
                 if parsing_first_row:
                     # Default values
                     strain = filename
-                    who_variant = None
+                    variant = None
+                    variant_type = None
                     status = None
                     sample_size = attrs["sample_size"]
 
                     if "viral_lineage" in attrs:
                         strain = attrs["viral_lineage"]
-                    if "who_variant" in attrs:
-                        strain += " (" + attrs["who_variant"] + ")"
-                        who_variant = attrs["who_variant"]
+                    if "variant" in attrs:
+                        strain += " (" + attrs["variant"] + ")"
+                        variant = attrs["variant"]
+                    if "variant_type" in attrs:
+                        variant_type = attrs["variant_type"]
                     if "status" in attrs:
                         status = attrs["status"]
 
@@ -82,7 +85,8 @@ def parse_gvf_dir(dir_):
 
                     ret[strain] = {
                         "mutations": {},
-                        "who_variant": who_variant,
+                        "variant": variant,
+                        "variant_type": variant_type,
                         "status": status,
                         "sample_size": sample_size
                     }
@@ -254,9 +258,12 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
     # needs to be json compatible (how Dash moves content across
     # network).
     voc_strains = {k: None for k in parsed_gvf_dirs
-                   if parsed_gvf_dirs[k]["status"] == "VOC"}
+                   if parsed_gvf_dirs[k]["variant_type"] == "VOC"}
     voi_strains = {k: None for k in parsed_gvf_dirs
-                   if parsed_gvf_dirs[k]["status"] == "VOI"}
+                   if parsed_gvf_dirs[k]["variant_type"] == "VOI"}
+    circulating_strains = \
+        {k: None for k in parsed_gvf_dirs
+         if parsed_gvf_dirs[k]["status"] == "actively_circulating"}
 
     visible_parsed_mutations = \
         {k: v for k, v in parsed_mutations.items() if k not in hidden_strains}
@@ -295,6 +302,8 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
             voc_strains,
         "voi_strains":
             voi_strains,
+        "circulating_strains":
+            circulating_strains,
         "all_strains":
             get_heatmap_y_strains(parsed_mutations),
         "mutation_freq_slider_vals":
