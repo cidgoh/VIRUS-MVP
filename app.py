@@ -427,15 +427,17 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
                           ".annotated.gvf" % new_strain)
             copyfile(gvf_file, path.join(USER_DATA_DIR, new_strain + ".gvf"))
 
-            reports_dir = path.join(USER_SURVEILLANCE_REPORTS_DIR, new_strain)
-            if path.exists(reports_dir):
-                rmtree(reports_dir)
-            mkdir(reports_dir)
-            copytree(path.join(results_path, "surveillance_surveillancePDF"),
-                     path.join(reports_dir, "PDF"))
-            copytree(path.join(results_path,
-                               "surveillance_surveillanceRawTsv"),
-                     path.join(reports_dir, "TSV"))
+            # TODO uncomment after surveillance reports for user
+            #  uploads working again.
+            # reports_dir = path.join(USER_SURVEILLANCE_REPORTS_DIR, new_strain)
+            # if path.exists(reports_dir):
+            #     rmtree(reports_dir)
+            # mkdir(reports_dir)
+            # copytree(path.join(results_path, "surveillance_surveillancePDF"),
+            #          path.join(reports_dir, "PDF"))
+            # copytree(path.join(results_path,
+            #                    "surveillance_surveillanceRawTsv"),
+            #          path.join(reports_dir, "TSV"))
         status = "ok"
         msg = "%s uploaded successfully." % filename
     new_upload_data = {"filename": filename,
@@ -796,7 +798,9 @@ def update_deleted_strain(_, strain_to_del):
     :type strain_to_del: str
     """
     remove(path.join(USER_DATA_DIR, strain_to_del + ".gvf"))
-    rmtree(path.join(USER_SURVEILLANCE_REPORTS_DIR, strain_to_del))
+    # TODO uncomment after surveillance reports for user uploads
+    #  working again.
+    # rmtree(path.join(USER_SURVEILLANCE_REPORTS_DIR, strain_to_del))
     return strain_to_del
 
 

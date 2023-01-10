@@ -26,7 +26,7 @@ functionality) at [https://covidmvp.cidgoh.ca/][deployed].
 
 ### 1. Clone the repository and its submodules
 
-`$ git clone git@github.com:cidgoh/COVID-MVP.git`
+`$ git clone git@github.com:cidgoh/COVID-MVP.git --recurse-submodules`
 
 ### 2. Create a virtual environment
 
