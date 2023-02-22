@@ -8,7 +8,7 @@ import csv
 from itertools import islice
 import os
 
-from definitions import GENE_POSITIONS_DICT, PROTEIN_POSITIONS_DICT
+from definitions import GENE_POSITIONS_DICT, NSP_POSITIONS_DICT
 
 
 def map_pos_to_gene(pos):
@@ -29,19 +29,21 @@ def map_pos_to_gene(pos):
     return "INTERGENIC"
 
 
-def map_pos_to_protein(pos):
-    """Map a nucleotide position to a SARS-CoV-2 protein.
+def map_pos_to_nsp(pos):
+    """Map a nucleotide position to a SARS-CoV-2 NSP.
+
+    NSP == non-structural protein
 
     :param pos: Nucleotide position
     :type pos: int
-    :return: SARS-CoV-2 gene at nucleotide position ``pos``
+    :return: SARS-CoV-2 NSP at nucleotide position ``pos``
     :rtype: str
     """
-    for protein in PROTEIN_POSITIONS_DICT:
-        start = PROTEIN_POSITIONS_DICT[protein]["start"]
-        end = PROTEIN_POSITIONS_DICT[protein]["end"]
+    for nsp in NSP_POSITIONS_DICT:
+        start = NSP_POSITIONS_DICT[nsp]["start"]
+        end = NSP_POSITIONS_DICT[nsp]["end"]
         if start <= pos <= end:
-            return protein
+            return nsp
     return "n/a"
 
 
@@ -336,8 +338,8 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
                                      max_mutations_per_pos_dict),
         "heatmap_x_genes":
             get_heatmap_x_genes(max_mutations_per_pos_dict),
-        "heatmap_x_proteins":
-            get_heatmap_x_proteins(max_mutations_per_pos_dict),
+        "heatmap_x_nsps":
+            get_heatmap_x_nsps(max_mutations_per_pos_dict),
         "mutation_name_dict":
             get_mutation_name_dict(visible_parsed_mutations)
     }
@@ -474,20 +476,20 @@ def get_heatmap_x_genes(max_mutations_per_pos_dict):
     return ret
 
 
-def get_heatmap_x_proteins(max_mutations_per_pos_dict):
-    """Get protein values corresponding to x-axis values in heatmap.
+def get_heatmap_x_nsps(max_mutations_per_pos_dict):
+    """Get NSP values corresponding to x-axis values in heatmap.
 
     :param max_mutations_per_pos_dict: See
         ``get_max_mutations_per_pos`` return value.
     :type max_mutations_per_pos_dict: dict
-    :return: List of proteins for each x in ``heatmap_x``
+    :return: List of NSPs for each x in ``heatmap_x``
     :rtype: list[str]
     """
     ret = []
     for pos in max_mutations_per_pos_dict:
-        protein = map_pos_to_protein(int(pos))
+        nsp = map_pos_to_nsp(int(pos))
         for _ in range(max_mutations_per_pos_dict[pos]):
-            ret.append(protein)
+            ret.append(nsp)
     return ret
 
 

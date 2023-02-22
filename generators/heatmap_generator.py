@@ -12,7 +12,7 @@ import dash_html_components as html
 import dash_core_components as dcc
 import plotly.graph_objects as go
 
-from definitions import GENE_COLORS_DICT, PROTEIN_COLORS_DICT
+from definitions import GENE_COLORS_DICT, NSP_COLORS_DICT
 
 
 def get_color_scale():
@@ -124,8 +124,8 @@ def get_heatmap_row(data):
                     dbc.Row(
                         dbc.Col(
                             dcc.Graph(
-                                id="heatmap-protein-bar-fig",
-                                figure=get_heatmap_protein_bar_fig(data),
+                                id="heatmap-nsp-bar-fig",
+                                figure=get_heatmap_nsp_bar_fig(data),
                                 config={"displayModeBar": False},
                                 style={"height": 30,
                                        "width": heatmap_cells_fig_width}
@@ -475,17 +475,17 @@ def get_heatmap_gene_bar_graph_obj(data):
     return ret
 
 
-def get_heatmap_protein_bar_fig(data):
-    """Get Plotly figure used as a protein bar above the heatmap.
+def get_heatmap_nsp_bar_fig(data):
+    """Get Plotly figure used as a NSP bar above the heatmap.
 
     :param data: ``data_parser.get_data`` return value
     :type data: dict
-    :return: Plotly figure containing heatmap gene bar
+    :return: Plotly figure containing heatmap NSP bar
     :rtype: go.Figure
     """
-    heatmap_protein_bar_obj = get_heatmap_protein_bar_graph_obj(data)
+    heatmap_nsp_bar_obj = get_heatmap_nsp_bar_graph_obj(data)
     ret = go.Figure(
-        heatmap_protein_bar_obj,
+        heatmap_nsp_bar_obj,
         layout={
             "font": {
                 "size": 16
@@ -496,7 +496,7 @@ def get_heatmap_protein_bar_fig(data):
             },
             "xaxis": {
                 "fixedrange": True,
-                "range": [0, len(data["heatmap_x_proteins"])],
+                "range": [0, len(data["heatmap_x_nsps"])],
                 "type": "linear",
                 "visible": False
             },
@@ -510,12 +510,12 @@ def get_heatmap_protein_bar_fig(data):
     return ret
 
 
-def get_heatmap_protein_bar_graph_obj(data):
-    """Get Plotly graph object corresponding to protein bar.
+def get_heatmap_nsp_bar_graph_obj(data):
+    """Get Plotly graph object corresponding to NSP bar.
 
     :param data: ``data_parser.get_data`` return value
     :type data: dict
-    :return: Plotly bar object containing gene bar with labels
+    :return: Plotly bar object containing NSP bar with labels
     :rtype: go.Bar
     """
     ret_x = []
@@ -523,25 +523,25 @@ def get_heatmap_protein_bar_graph_obj(data):
     ret_color = []
 
     bar_len = 0
-    last_protein_seen = ""
-    for i, protein in enumerate(data["heatmap_x_proteins"]):
+    last_nsp_seen = ""
+    for i, nsp in enumerate(data["heatmap_x_nsps"]):
         if i == 0:
-            last_protein_seen = protein
-        if protein != last_protein_seen:
+            last_nsp_seen = nsp
+        if nsp != last_nsp_seen:
             ret_x.append(bar_len)
-            ret_color.append(PROTEIN_COLORS_DICT[last_protein_seen])
+            ret_color.append(NSP_COLORS_DICT[last_nsp_seen])
             if bar_len > 2:
-                ret_text.append(last_protein_seen)
+                ret_text.append(last_nsp_seen)
             else:
                 ret_text.append("")
 
-            last_protein_seen = protein
+            last_nsp_seen = nsp
             bar_len = 0
         bar_len += 1
-        if i == (len(data["heatmap_x_proteins"]) - 1):
+        if i == (len(data["heatmap_x_nsps"]) - 1):
             ret_x.append(bar_len)
-            ret_text.append(protein)
-            ret_color.append(PROTEIN_COLORS_DICT[protein])
+            ret_text.append(nsp)
+            ret_color.append(NSP_COLORS_DICT[nsp])
 
     ret = go.Bar(
         x=ret_x,

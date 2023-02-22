@@ -8,9 +8,8 @@ ASSETS_DIR = os.path.join(ROOT_DIR, "assets")
 NF_NCOV_VOC_DIR = os.path.join(ROOT_DIR, "nf-ncov-voc")
 GENE_COLORS_PATH = os.path.join(ROOT_DIR, "assets", "gene_colors.json")
 GENE_POSITIONS_PATH = os.path.join(ROOT_DIR, "assets", "gene_positions.json")
-PROTEIN_COLORS_PATH = os.path.join(ROOT_DIR, "assets", "protein_colors.json")
-PROTEIN_POSITIONS_PATH = \
-    os.path.join(ROOT_DIR, "assets", "protein_positions.json")
+NSP_COLORS_PATH = os.path.join(ROOT_DIR, "assets", "nsp_colors.json")
+NSP_POSITIONS_PATH = os.path.join(ROOT_DIR, "assets", "nsp_positions.json")
 REFERENCE_SURVEILLANCE_REPORTS_DIR = \
     os.path.join(ROOT_DIR, "reference_surveillance_reports")
 USER_SURVEILLANCE_REPORTS_DIR = \
@@ -22,8 +21,8 @@ with open(GENE_COLORS_PATH) as fp:
 with open(GENE_POSITIONS_PATH) as fp:
     GENE_POSITIONS_DICT = json.load(fp)
 
-with open(PROTEIN_COLORS_PATH) as fp:
-    PROTEIN_COLORS_DICT = json.load(fp)
+with open(NSP_COLORS_PATH) as fp:
+    NSP_COLORS_DICT = json.load(fp)
 
-with open(PROTEIN_POSITIONS_PATH) as fp:
-    PROTEIN_POSITIONS_DICT = json.load(fp)
+with open(NSP_POSITIONS_PATH) as fp:
+    NSP_POSITIONS_DICT = json.load(fp)
