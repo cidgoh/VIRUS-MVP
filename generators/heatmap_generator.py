@@ -12,7 +12,7 @@ import dash_html_components as html
 import dash_core_components as dcc
 import plotly.graph_objects as go
 
-from definitions import GENE_COLORS_DICT, NSP_COLORS_DICT
+from definitions import GENE_COLORS_DICT
 
 
 def get_color_scale():
@@ -520,7 +520,6 @@ def get_heatmap_nsp_bar_graph_obj(data):
     """
     ret_x = []
     ret_text = []
-    ret_color = []
 
     bar_len = 0
     last_nsp_seen = ""
@@ -529,11 +528,7 @@ def get_heatmap_nsp_bar_graph_obj(data):
             last_nsp_seen = nsp
         if nsp != last_nsp_seen:
             ret_x.append(bar_len)
-            ret_color.append(NSP_COLORS_DICT[last_nsp_seen])
-            if bar_len > 2:
-                ret_text.append(last_nsp_seen)
-            else:
-                ret_text.append("")
+            ret_text.append(last_nsp_seen)
 
             last_nsp_seen = nsp
             bar_len = 0
@@ -541,7 +536,10 @@ def get_heatmap_nsp_bar_graph_obj(data):
         if i == (len(data["heatmap_x_nsps"]) - 1):
             ret_x.append(bar_len)
             ret_text.append(nsp)
-            ret_color.append(NSP_COLORS_DICT[nsp])
+
+    ret_text = ["" if e == "n/a" else e for e in ret_text]
+    ret_color = ["purple" if e else "white" for e in ret_text]
+    ret_line_width = [1 if e else 0 for e in ret_text]
 
     ret = go.Bar(
         x=ret_x,
@@ -549,7 +547,7 @@ def get_heatmap_nsp_bar_graph_obj(data):
         hoverinfo="text",
         marker={
             "color": ret_color,
-            "line_width": 0
+            "line_width": ret_line_width
         },
         orientation="h",
         text=ret_text,
