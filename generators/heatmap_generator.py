@@ -547,10 +547,23 @@ def get_heatmap_nsp_bar_graph_obj(data):
     ret_color = ["purple" if e else "white" for e in ret_text]
     ret_line_width = [1 if e else 0 for e in ret_text]
 
+    # Hackey solution for repeating NSP label
+    for i, (bar_len, nsp) in enumerate(zip(ret_x, ret_text)):
+        if not ret_text:
+            continue
+        delimiter = "".join([" " for _ in nsp])
+        label_len = bar_len // 2
+        if label_len:
+            label = delimiter.join([nsp for _ in range(label_len)])
+        # Not enough room for NSP label to fit, but we will cram it in
+        else:
+            label = nsp
+        ret_text[i] = label
+
     ret = go.Bar(
         x=ret_x,
         y=[1 for _ in ret_x],
-        hoverinfo="text",
+        hoverinfo="skip",
         marker={
             "color": ret_color,
             "line_width": ret_line_width
@@ -558,6 +571,8 @@ def get_heatmap_nsp_bar_graph_obj(data):
         orientation="h",
         text=ret_text,
         textposition="inside",
+        # Monospace to prevent issues with our hackey repeating labels
+        textfont={"family": "Courier New, monospace"},
         insidetextanchor="middle",
         insidetextfont={"color": "white"}
     )
