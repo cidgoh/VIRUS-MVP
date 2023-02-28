@@ -57,9 +57,9 @@ def get_heatmap_row(data):
                         dbc.Col(
                             "Variants",
                             className="text-right h5",
-                            style={"padding-top": 75, "padding-right": 15}
+                            style={"padding-top": 105, "padding-right": 15}
                         ),
-                        style={"height": 100},
+                        style={"height": 130},
                         no_gutters=True
                     ),
                     # Space for y-axis fig; hackeyness for scrolling
@@ -215,9 +215,9 @@ def get_heatmap_row(data):
                         dbc.Col(
                             "N",
                             className="h5 font-italic",
-                            style={"padding-top": 75, "padding-left": 15}
+                            style={"padding-top": 105, "padding-left": 15}
                         ),
-                        style={"height": 100},
+                        style={"height": 130},
                         no_gutters=True
                     ),
                     # Space for sample size axis; some hackeyness for
