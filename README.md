@@ -58,14 +58,14 @@ Go to http://0.0.0.0:8050/.
 
 ## Usage
 
-Click the legend button ![legend_btn] at the top for an in-app explanation of
-the heatmap view.
+Click the help button ![help_btn] at the top for an in-app explanation of the
+heatmap view.
 
-[legend_btn]: screenshots/legend_btn.png
+[help_btn]: screenshots/help_btn.png
 
-![legend_btn_click]
+![legend]
 
-[legend_btn_click]: screenshots/legend_btn_click.gif
+[legend]: screenshots/legend.png
 
 ### Heatmap view
 
