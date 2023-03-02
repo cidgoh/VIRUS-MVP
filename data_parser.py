@@ -5,14 +5,10 @@ Entry point is ``get_data``.
 
 from copy import deepcopy
 import csv
-from io import StringIO
 from itertools import islice
 import os
 
-import numpy as np
-import pandas as pd
-
-from definitions import GENE_POSITIONS_DICT
+from definitions import GENE_POSITIONS_DICT, NSP_POSITIONS_DICT
 
 
 def map_pos_to_gene(pos):
@@ -31,6 +27,24 @@ def map_pos_to_gene(pos):
         if start <= pos <= end:
             return gene
     return "INTERGENIC"
+
+
+def map_pos_to_nsp(pos):
+    """Map a nucleotide position to a SARS-CoV-2 NSP.
+
+    NSP == non-structural protein
+
+    :param pos: Nucleotide position
+    :type pos: int
+    :return: SARS-CoV-2 NSP at nucleotide position ``pos``
+    :rtype: str
+    """
+    for nsp in NSP_POSITIONS_DICT:
+        start = NSP_POSITIONS_DICT[nsp]["start"]
+        end = NSP_POSITIONS_DICT[nsp]["end"]
+        if start <= pos <= end:
+            return nsp
+    return "n/a"
 
 
 def parse_gvf_dir(dir_):
@@ -64,15 +78,19 @@ def parse_gvf_dir(dir_):
                 if parsing_first_row:
                     # Default values
                     strain = filename
-                    who_variant = None
+                    variant = None
+                    variant_type = None
                     status = None
                     sample_size = attrs["sample_size"]
 
                     if "viral_lineage" in attrs:
                         strain = attrs["viral_lineage"]
-                    if "who_variant" in attrs:
-                        strain += " (" + attrs["who_variant"] + ")"
-                        who_variant = attrs["who_variant"]
+                    if "variant" in attrs:
+                        strain += " (" + attrs["variant"] + ")"
+                        variant = attrs["variant"]
+
+                    if "variant_type" in attrs:
+                        variant_type = attrs["variant_type"]
                     if "status" in attrs:
                         status = attrs["status"]
 
@@ -82,7 +100,8 @@ def parse_gvf_dir(dir_):
 
                     ret[strain] = {
                         "mutations": {},
-                        "who_variant": who_variant,
+                        "variant": variant,
+                        "variant_type": variant_type,
                         "status": status,
                         "sample_size": sample_size
                     }
@@ -240,7 +259,7 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
                                   key=lambda item: strain_order_dict[item[0]])
         else:
             sorted_items = sorted(unsorted_items,
-                                  key=lambda item: item[0])
+                                  key=default_strains_sort_key)
         parsed_gvf_dir = {k: v for k, v in sorted_items}
 
         parsed_gvf_dirs = {**parsed_gvf_dirs, **parsed_gvf_dir}
@@ -254,9 +273,12 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
     # needs to be json compatible (how Dash moves content across
     # network).
     voc_strains = {k: None for k in parsed_gvf_dirs
-                   if parsed_gvf_dirs[k]["status"] == "VOC"}
+                   if parsed_gvf_dirs[k]["variant_type"] == "VOC"}
     voi_strains = {k: None for k in parsed_gvf_dirs
-                   if parsed_gvf_dirs[k]["status"] == "VOI"}
+                   if parsed_gvf_dirs[k]["variant_type"] == "VOI"}
+    circulating_strains = \
+        {k: None for k in parsed_gvf_dirs
+         if parsed_gvf_dirs[k]["status"] == "actively_circulating"}
 
     visible_parsed_mutations = \
         {k: v for k, v in parsed_mutations.items() if k not in hidden_strains}
@@ -295,6 +317,8 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
             voc_strains,
         "voi_strains":
             voi_strains,
+        "circulating_strains":
+            circulating_strains,
         "all_strains":
             get_heatmap_y_strains(parsed_mutations),
         "mutation_freq_slider_vals":
@@ -324,6 +348,8 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
                                      max_mutations_per_pos_dict),
         "heatmap_x_genes":
             get_heatmap_x_genes(max_mutations_per_pos_dict),
+        "heatmap_x_nsps":
+            get_heatmap_x_nsps(max_mutations_per_pos_dict),
         "mutation_name_dict":
             get_mutation_name_dict(visible_parsed_mutations)
     }
@@ -331,7 +357,8 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
         get_heatmap_x_tickvals(ret["heatmap_cells_tickvals"])
     ret["heatmap_x_aa_pos"] = \
         get_heatmap_x_aa_pos(ret["heatmap_x_nt_pos"], ret["heatmap_x_genes"])
-    ret["heatmap_cells_fig_height"] = len(ret["heatmap_y_strains"]) * 40
+    ret["heatmap_cells_fig_height"] = \
+        max(10*40, len(ret["heatmap_y_strains"]) * 40)
     ret["heatmap_cells_container_height"] = \
         min(10*40, ret["heatmap_cells_fig_height"])
     ret["heatmap_cells_fig_width"] = len(ret["heatmap_x_nt_pos"]) * 36
@@ -339,6 +366,23 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
         get_jump_to_dropdown_search_options(ret["mutation_name_dict"])
 
     return ret
+
+
+def default_strains_sort_key(strain_item):
+    """Key for default sort of strain order.
+
+    The strains are sorted by whether they are actively circulating,
+    then variant, and then strain name.
+
+    @param strain_item: Key-value pair from ``parse_gvf_dir`` ret val
+    @type strain_item: dict
+    @return: Sort key value for ``strain_item`` in default strain order
+    @rtype: tuple[bool, str, str]
+    """
+    strain = strain_item[0]
+    variant = strain_item[1]["variant"]
+    circulating = strain_item[1]["status"] == "actively_circulating"
+    return circulating, variant, strain
 
 
 def get_mutation_freq_slider_vals(parsed_mutations):
@@ -456,6 +500,23 @@ def get_heatmap_x_genes(max_mutations_per_pos_dict):
         gene = map_pos_to_gene(int(pos))
         for _ in range(max_mutations_per_pos_dict[pos]):
             ret.append(gene)
+    return ret
+
+
+def get_heatmap_x_nsps(max_mutations_per_pos_dict):
+    """Get NSP values corresponding to x-axis values in heatmap.
+
+    :param max_mutations_per_pos_dict: See
+        ``get_max_mutations_per_pos`` return value.
+    :type max_mutations_per_pos_dict: dict
+    :return: List of NSPs for each x in ``heatmap_x``
+    :rtype: list[str]
+    """
+    ret = []
+    for pos in max_mutations_per_pos_dict:
+        nsp = map_pos_to_nsp(int(pos))
+        for _ in range(max_mutations_per_pos_dict[pos]):
+            ret.append(nsp)
     return ret
 
 

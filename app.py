@@ -423,7 +423,8 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
 
             gvf_file = \
                 path.join(results_path, "annotation_vcfTogvf",
-                          "%s.filtered.SNPEFF.annotated.gvf" % new_strain)
+                          "%s.qc.sorted.variants.filtered.SNPEFF.annotated.gvf"
+                          % new_strain)
             copyfile(gvf_file, path.join(USER_DATA_DIR, new_strain + ".gvf"))
 
             reports_dir = path.join(USER_SURVEILLANCE_REPORTS_DIR, new_strain)
