@@ -259,7 +259,7 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
                                   key=lambda item: strain_order_dict[item[0]])
         else:
             sorted_items = sorted(unsorted_items,
-                                  key=lambda item: item[0])
+                                  key=default_strains_sort_key)
         parsed_gvf_dir = {k: v for k, v in sorted_items}
 
         parsed_gvf_dirs = {**parsed_gvf_dirs, **parsed_gvf_dir}
@@ -366,6 +366,23 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
         get_jump_to_dropdown_search_options(ret["mutation_name_dict"])
 
     return ret
+
+
+def default_strains_sort_key(strain_item):
+    """Key for default sort of strain order.
+
+    The strains are sorted by whether they are actively circulating,
+    then variant, and then strain name.
+
+    @param strain_item: Key-value pair from ``parse_gvf_dir`` ret val
+    @type strain_item: dict
+    @return: Sort key value for ``strain_item`` in default strain order
+    @rtype: tuple[bool, str, str]
+    """
+    strain = strain_item[0]
+    variant = strain_item[1]["variant"]
+    circulating = strain_item[1]["status"] == "actively_circulating"
+    return circulating, variant, strain
 
 
 def get_mutation_freq_slider_vals(parsed_mutations):
