@@ -57,9 +57,9 @@ def get_heatmap_row(data):
                         dbc.Col(
                             "Variants",
                             className="text-right h5",
-                            style={"padding-top": 75, "padding-right": 15}
+                            style={"padding-top": 105, "padding-right": 15}
                         ),
-                        style={"height": 100},
+                        style={"height": 130},
                         no_gutters=True
                     ),
                     # Space for y-axis fig; hackeyness for scrolling
@@ -113,6 +113,19 @@ def get_heatmap_row(data):
                             dcc.Graph(
                                 id="heatmap-gene-bar-fig",
                                 figure=get_heatmap_gene_bar_fig(data),
+                                config={"displayModeBar": False},
+                                style={"height": 30,
+                                       "width": heatmap_cells_fig_width}
+                            )
+                        ),
+                        no_gutters=True
+                    ),
+                    # Protein bar above heatmap
+                    dbc.Row(
+                        dbc.Col(
+                            dcc.Graph(
+                                id="heatmap-nsp-bar-fig",
+                                figure=get_heatmap_nsp_bar_fig(data),
                                 config={"displayModeBar": False},
                                 style={"height": 30,
                                        "width": heatmap_cells_fig_width}
@@ -202,9 +215,9 @@ def get_heatmap_row(data):
                         dbc.Col(
                             "N",
                             className="h5 font-italic",
-                            style={"padding-top": 75, "padding-left": 15}
+                            style={"padding-top": 105, "padding-left": 15}
                         ),
-                        style={"height": 100},
+                        style={"height": 130},
                         no_gutters=True
                     ),
                     # Space for sample size axis; some hackeyness for
@@ -322,11 +335,17 @@ def get_heatmap_strains_axis_fig(data):
     tick_text = []
     for strain in data["heatmap_y_strains"]:
         if strain in data["voc_strains"]:
-            tick_text.append("<b>%s</b>" % strain)
+            strain_text = "<b>%s</b>" % strain
         elif strain in data["voi_strains"]:
-            tick_text.append("<i>%s</i>" % strain)
+            strain_text = "<i>%s</i>" % strain
         else:
-            tick_text.append(strain)
+            strain_text = strain
+
+        if strain in data["circulating_strains"]:
+            strain_text += "⚠️"
+
+        tick_text.append(strain_text)
+
     ret.update_yaxes(range=[-0.5, len(data["heatmap_y_strains"])-0.5],
                      fixedrange=True,
                      tickmode="array",
@@ -455,6 +474,105 @@ def get_heatmap_gene_bar_graph_obj(data):
         orientation="h",
         text=ret_text,
         textposition="inside",
+        insidetextanchor="middle",
+        insidetextfont={"color": "white"}
+    )
+
+    return ret
+
+
+def get_heatmap_nsp_bar_fig(data):
+    """Get Plotly figure used as a NSP bar above the heatmap.
+
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
+    :return: Plotly figure containing heatmap NSP bar
+    :rtype: go.Figure
+    """
+    heatmap_nsp_bar_obj = get_heatmap_nsp_bar_graph_obj(data)
+    ret = go.Figure(
+        heatmap_nsp_bar_obj,
+        layout={
+            "font": {
+                "size": 16
+            },
+            "plot_bgcolor": "white",
+            "margin": {
+                "l": 0, "r": 0, "t": 0, "b": 0, "pad": 0
+            },
+            "xaxis": {
+                "fixedrange": True,
+                "range": [0, len(data["heatmap_x_nsps"])],
+                "type": "linear",
+                "visible": False
+            },
+            "yaxis": {
+                "fixedrange": True,
+                "type": "linear",
+                "visible": False
+            }
+        }
+    )
+    return ret
+
+
+def get_heatmap_nsp_bar_graph_obj(data):
+    """Get Plotly graph object corresponding to NSP bar.
+
+    :param data: ``data_parser.get_data`` return value
+    :type data: dict
+    :return: Plotly bar object containing NSP bar with labels
+    :rtype: go.Bar
+    """
+    ret_x = []
+    ret_text = []
+
+    bar_len = 0
+    last_nsp_seen = ""
+    for i, nsp in enumerate(data["heatmap_x_nsps"]):
+        if i == 0:
+            last_nsp_seen = nsp
+        if nsp != last_nsp_seen:
+            ret_x.append(bar_len)
+            ret_text.append(last_nsp_seen)
+
+            last_nsp_seen = nsp
+            bar_len = 0
+        bar_len += 1
+        if i == (len(data["heatmap_x_nsps"]) - 1):
+            ret_x.append(bar_len)
+            ret_text.append(nsp)
+
+    ret_text = ["" if e == "n/a" else e for e in ret_text]
+    ret_color = ["purple" if e else "white" for e in ret_text]
+    ret_line_width = [1 if e else 0 for e in ret_text]
+
+    # Hackey solution for repeating NSP label
+    for i, (bar_len, nsp) in enumerate(zip(ret_x, ret_text)):
+        if not ret_text:
+            continue
+        delimiter = "".join([" " for _ in nsp])
+        label_len = bar_len // 2
+        if label_len:
+            label = delimiter.join([nsp for _ in range(label_len)])
+        # Not enough room for NSP label to fit, but we will cram it in
+        else:
+            label = nsp
+        ret_text[i] = label
+
+    ret = go.Bar(
+        x=ret_x,
+        y=[1 for _ in ret_x],
+        hoverinfo="skip",
+        marker={
+            "color": ret_color,
+            "line_width": ret_line_width
+        },
+        orientation="h",
+        text=ret_text,
+        textposition="inside",
+        # Monospace to prevent issues with our hackey repeating labels
+        textfont={"family": "Courier New, monospace"},
         insidetextanchor="middle",
         insidetextfont={"color": "white"}
     )
