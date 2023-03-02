@@ -88,11 +88,6 @@ def parse_gvf_dir(dir_):
                     if "variant" in attrs:
                         strain += " (" + attrs["variant"] + ")"
                         variant = attrs["variant"]
-                    # TODO remove after nf-ncov-voc updates user gvf
-                    #  file annotations.
-                    elif "who_variant" in attrs:
-                        strain += " (" + attrs["who_variant"] + ")"
-                        variant = attrs["who_variant"]
 
                     if "variant_type" in attrs:
                         variant_type = attrs["variant_type"]
