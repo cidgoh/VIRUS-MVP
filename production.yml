@@ -11,6 +11,8 @@ services:
     image: covid_mvp_production_app
     ports:
       - "8050:8050"
+    volumes:
+      - .:/app
   nginx:
       build:
         context: .
