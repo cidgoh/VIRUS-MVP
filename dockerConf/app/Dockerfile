@@ -1,33 +1,19 @@
-FROM continuumio/anaconda3
-
-RUN apt-get update -y\
-  && apt-get install git -y
+FROM continuumio/miniconda3
 
 WORKDIR /app
 
-# Make RUN commands use `bash --login`:
-SHELL ["/bin/bash", "--login", "-c"]
-
-## create conda env
-COPY ./dockerConf/app/condaEnviroment.yml .
-RUN conda env create -f condaEnviroment.yml
-RUN conda init bash
-
-# Activate the environment
-RUN conda activate covidMVP
-
-# Requirements are installed here to ensure they will be cached.
-COPY requirements.txt .
-RUN pip install -r /app/requirements.txt \
-    && rm -rf /app/requirements.txt
-
-
-COPY . /app
-
+COPY ./dockerConf/app/environment.yml .
 COPY ./dockerConf/app/start.sh /start.sh
-RUN sed -i 's/\r$//g' /start.sh
-RUN chmod +x /start.sh
 
-ENTRYPOINT ["/start.sh"]
+RUN apt-get update -y \
+    && apt-get install default-jre -y \
+    && wget -qO- https://get.nextflow.io | bash \
+    && chmod +x nextflow \
+    && mv /app/nextflow /usr/local/bin \
+    && conda env create -f environment.yml \
+    && sed -i 's/\r$//g' /start.sh \
+    && chmod +x /start.sh
 
+# https://pythonspeed.com/articles/activate-conda-dockerfile/
+ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "COVID-MVP", "/start.sh"]
 EXPOSE 8050
