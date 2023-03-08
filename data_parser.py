@@ -111,46 +111,58 @@ def parse_gvf_dir(dir_):
                 pos = row["#start"]
                 if pos not in ret[strain]["mutations"]:
                     ret[strain]["mutations"][pos] = []
-                    mutation_types = row["#type"].split(",")
-                    num_of_mutations = len(mutation_types)
-                    for i in range(num_of_mutations):
-                        mutation_dict = {
-                            "ref": attrs["Reference_seq"],
-                            "alt": attrs["Variant_seq"].split(",")[i],
-                            "gene": attrs["vcf_gene"],
-                            "ao": float(attrs["ao"].split(",")[i]),
-                            "dp": float(attrs["dp"]),
-                            "multi_aa_name": attrs["multi_aa_name"],
-                            "clade_defining":
-                                attrs["clade_defining"] == "True",
-                            "hidden_cell": False,
-                            "mutation_name": attrs["Name"],
-                            "functions": {}
-                        }
-                        alt_freq = mutation_dict["ao"]/mutation_dict["dp"]
-                        mutation_dict["alt_freq"] = str(round(alt_freq, 4))
-                        type = mutation_types[i]
-                        if type == "ins":
-                            mutation_dict["mutation_type"] = "insertion"
-                        elif type == "del":
-                            mutation_dict["mutation_type"] = "deletion"
-                        else:
-                            mutation_dict["mutation_type"] = "snp"
-                        ret[strain]["mutations"][pos].append(mutation_dict)
 
+                mutation_name = attrs["Name"]
+                alt = attrs["Variant_seq"]
+
+                mutation_dict = {}
+                for existing_dict in ret[strain]["mutations"][pos]:
+                    cond1 = existing_dict["mutation_name"] == mutation_name
+                    cond2 = existing_dict["alt"] == alt
+                    if cond1 and cond2:
+                        mutation_dict = existing_dict
+                        break
+
+                if not mutation_dict:
+                    mutation_dict = {
+                        "ref": attrs["Reference_seq"],
+                        "alt": alt,
+                        "gene": attrs["vcf_gene"],
+                        "ao": float(attrs["ao"]),
+                        "dp": float(attrs["dp"]),
+                        "multi_aa_name": attrs["multi_aa_name"],
+                        "clade_defining":
+                            attrs["clade_defining"] == "True",
+                        "hidden_cell": False,
+                        "mutation_name": mutation_name,
+                        "functions": {}
+                    }
+
+                    alt_freq = mutation_dict["ao"]/mutation_dict["dp"]
+                    mutation_dict["alt_freq"] = str(round(alt_freq, 4))
+
+                    mutation_type = row["#type"]
+                    if mutation_type == "ins":
+                        mutation_dict["mutation_type"] = "insertion"
+                    elif mutation_type == "del":
+                        mutation_dict["mutation_type"] = "deletion"
+                    else:
+                        mutation_dict["mutation_type"] = mutation_type
+
+                    ret[strain]["mutations"][pos].append(mutation_dict)
+
+                fn_dict = mutation_dict["functions"]
                 fn_category = attrs["function_category"].strip('"')
+                if not fn_category:
+                    continue
+                if fn_category not in fn_dict:
+                    fn_dict[fn_category] = {}
+
                 fn_desc = attrs["function_description"].strip('"')
                 fn_source = attrs["source"].strip('"')
                 fn_citation = attrs["citation"].strip('"')
-                fn_dict = {}
-                if fn_category:
-                    if fn_category not in fn_dict:
-                        fn_dict[fn_category] = {}
-                    fn_dict[fn_category][fn_desc] = \
-                        {"source": fn_source, "citation": fn_citation}
-                for i in range(len(ret[strain]["mutations"][pos])):
-                    parsed_mutation = ret[strain]["mutations"][pos]
-                    parsed_mutation[i]["functions"].update(fn_dict)
+                fn_dict[fn_category][fn_desc] = \
+                    {"source": fn_source, "citation": fn_citation}
 
     return ret
 
