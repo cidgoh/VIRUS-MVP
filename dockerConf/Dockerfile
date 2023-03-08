@@ -2,15 +2,15 @@ FROM continuumio/miniconda3
 
 WORKDIR /app
 
-COPY ./dockerConf/app/environment.yml .
-COPY ./dockerConf/app/start.sh /start.sh
+COPY ./dockerConf/environment.yml /environment.yml
+COPY ./dockerConf/start.sh /start.sh
 
 RUN apt-get update -y \
     && apt-get install default-jre -y \
     && wget -qO- https://get.nextflow.io | bash \
     && chmod +x nextflow \
     && mv /app/nextflow /usr/local/bin \
-    && conda env create -f environment.yml \
+    && conda env create -f /environment.yml \
     && sed -i 's/\r$//g' /start.sh \
     && chmod +x /start.sh
 

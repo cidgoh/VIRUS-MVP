@@ -1,14 +1,12 @@
 version: '3'
 
-volumes:
-  letsencrypt:
-
 services:
   app:
+    tty: true
     build:
       context: .
-      dockerfile: ./dockerConf/app/Dockerfile
-    image: covid_mvp_local_app
+      dockerfile: ./dockerConf/Dockerfile
+    image: covid_mvp_app
     ports:
       - "8050:8050"
     volumes:
