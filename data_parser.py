@@ -49,6 +49,38 @@ def map_pos_to_nsp(pos):
     return "n/a"
 
 
+def get_sorted_gvf_dir_strains(dir_, strain_order_dict):
+    """TODO"""
+    dir_entries = [e for e in os.scandir(dir_)]
+
+    first_rows = []
+    for entry in dir_entries:
+        if not entry.path.endswith(".gvf"):
+            continue
+        with open(entry.path, encoding="utf-8") as fp:
+            reader = csv.DictReader(islice(fp, 3, None), delimiter="\t")
+            first_rows.append(next(reader))
+    attr_dict_list = [e["#attributes"].split(";")[:-1] for e in first_rows]
+    attr_dict_list = [[x.split("=", 1) for x in e] for e in attr_dict_list]
+    attr_dict_list = [{k: v for k, v in e} for e in attr_dict_list]
+    strain_list = [e["viral_lineage"] for e in attr_dict_list]
+
+    filenames_list = [e.name.rsplit(".", 1)[0] for e in dir_entries]
+
+    unsorted_ret = [x if x else y for x, y in zip(strain_list, filenames_list)]
+
+    def strain_sort_key(strain):
+        if strain in strain_order_dict:
+            return strain_order_dict[strain], strain
+        else:
+            return len(strain_order_dict), strain
+
+    sorted_ret = \
+        [e for e in reversed(sorted(unsorted_ret, key=strain_sort_key))]
+
+    return sorted_ret
+
+
 def parse_gvf_dir(dir_, hidden_strains):
     """Parse a directory with gvf files for relevant data.TODO
 
@@ -290,6 +322,7 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
     dir_strains = {}
     parsed_gvf_dirs = {}
     for dir_ in dirs:
+        dir_strains[dir_] = get_sorted_gvf_dir_strains(dir_, strain_order_dict)
         unsorted_parsed_gvf_dir = parse_gvf_dir(dir_, hidden_strains)
         unsorted_items = unsorted_parsed_gvf_dir.items()
         sorted_items = sorted(unsorted_items,
@@ -297,7 +330,6 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
         sorted_items = reversed(sorted_items)
         parsed_gvf_dir = {k: v for k, v in sorted_items}
         parsed_gvf_dirs = {**parsed_gvf_dirs, **parsed_gvf_dir}
-        dir_strains[dir_] = list(parsed_gvf_dir.keys())
 
     parsed_mutations = \
         {k: v["mutations"] for k, v in parsed_gvf_dirs.items()}
@@ -314,9 +346,7 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
         {k: None for k in parsed_gvf_dirs
          if parsed_gvf_dirs[k]["status"] == "actively_circulating"}
 
-    visible_parsed_mutations = \
-        {k: v for k, v in parsed_mutations.items() if k not in hidden_strains}
-
+    visible_parsed_mutations = parsed_mutations
     if show_clade_defining:
         visible_parsed_mutations = \
             filter_parsed_mutations_by_clade_defining(visible_parsed_mutations)
