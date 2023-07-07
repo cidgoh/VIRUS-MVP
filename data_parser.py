@@ -345,6 +345,7 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
     circulating_strains = \
         {k: None for k in parsed_gvf_dirs
          if parsed_gvf_dirs[k]["status"] == "actively_circulating"}
+    variants_dict = {k: v["variant"] for k, v in parsed_gvf_dirs.items()}
 
     visible_parsed_mutations = parsed_mutations
     if show_clade_defining:
@@ -384,8 +385,10 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
             voi_strains,
         "circulating_strains":
             circulating_strains,
+        "variants_dict":
+            variants_dict,
         "all_strains":
-            get_heatmap_y_strains(parsed_mutations),
+            [i for v in dir_strains.values() for i in v],
         "mutation_freq_slider_vals":
             mutation_freq_slider_vals,
         "insertions_x":
@@ -971,7 +974,7 @@ def get_deletions_y(parsed_mutations):
 
 
 def get_tables(parsed_mutations):
-    """Get table column data for each y axis value or strain.
+    """Get table column data for each y axis value or strain.TODO
 
     The columns are represented as lists.
 
