@@ -51,12 +51,10 @@ def map_pos_to_nsp(pos):
 
 def get_sorted_gvf_dir_strains(dir_, strain_order_dict):
     """TODO"""
-    dir_entries = [e for e in os.scandir(dir_)]
+    dir_entries = [e for e in os.scandir(dir_) if e.path.endswith(".gvf")]
 
     first_rows = []
     for entry in dir_entries:
-        if not entry.path.endswith(".gvf"):
-            continue
         with open(entry.path, encoding="utf-8") as fp:
             reader = csv.DictReader(islice(fp, 3, None), delimiter="\t")
             first_rows.append(next(reader))
@@ -67,7 +65,8 @@ def get_sorted_gvf_dir_strains(dir_, strain_order_dict):
 
     filenames_list = [e.name.rsplit(".", 1)[0] for e in dir_entries]
 
-    unsorted_ret = [x if x else y for x, y in zip(strain_list, filenames_list)]
+    unsorted_ret = \
+        [x if x != "n/a" else y for x, y in zip(strain_list, filenames_list)]
 
     def strain_sort_key(strain):
         if strain in strain_order_dict:
@@ -75,8 +74,7 @@ def get_sorted_gvf_dir_strains(dir_, strain_order_dict):
         else:
             return len(strain_order_dict), strain
 
-    sorted_ret = \
-        [e for e in reversed(sorted(unsorted_ret, key=strain_sort_key))]
+    sorted_ret = [e for e in sorted(unsorted_ret, key=strain_sort_key)]
 
     return sorted_ret
 
@@ -95,11 +93,9 @@ def parse_gvf_dir(dir_, hidden_strains):
     ret = {}
 
     # TODO
-    dir_entries = [e for e in os.scandir(dir_)]
+    dir_entries = [e for e in os.scandir(dir_) if e.path.endswith(".gvf")]
     first_rows = []
     for entry in dir_entries:
-        if not entry.path.endswith(".gvf"):
-            continue
         with open(entry.path, encoding="utf-8") as fp:
             reader = csv.DictReader(islice(fp, 3, None), delimiter="\t")
             first_rows.append(next(reader))
@@ -143,7 +139,7 @@ def parse_gvf_dir(dir_, hidden_strains):
                         status = attrs["status"]
 
                     # User uploaded files
-                    if strain == "n/a (n/a)":
+                    if strain == "n/a":
                         strain = filename
 
                     ret[strain] = {
@@ -300,14 +296,10 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
         folders listed in dirs.
     :rtype: dict
     """
-    if hidden_strains is None:
-        hidden_strains = []
-    if strain_order is None:
-        strain_order = []
-
     # Default view
-    if hidden_strains == [] and strain_order == []:
+    if not hidden_strains:
         hidden_strains = DEFAULT_REFERENCE_HIDDEN_STRAINS
+    if not strain_order:
         strain_order = DEFAULT_REFERENCE_STRAIN_ORDER
 
     # Faster sort with this obj
@@ -327,6 +319,7 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
         unsorted_items = unsorted_parsed_gvf_dir.items()
         sorted_items = sorted(unsorted_items,
                               key=lambda item: strain_sort_key(item[0]))
+        # Heatmap displays rows in reverse
         sorted_items = reversed(sorted_items)
         parsed_gvf_dir = {k: v for k, v in sorted_items}
         parsed_gvf_dirs = {**parsed_gvf_dirs, **parsed_gvf_dir}

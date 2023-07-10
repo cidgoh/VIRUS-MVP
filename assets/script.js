@@ -88,8 +88,6 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
           ret.push(checkboxDiv.className)
         }
       }
-      // Heatmap displays rows in reverse
-      ret = ret.reverse()
       // Do not update if strain order reflects current strain order. We check
       // against the implicit strain order because it may not have been
       // explicitly specified.
