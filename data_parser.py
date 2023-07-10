@@ -5,10 +5,12 @@ Entry point is ``get_data``.
 
 from copy import deepcopy
 import csv
-from itertools import islice
+from itertools import compress, islice
 import os
 
-from definitions import GENE_POSITIONS_DICT, NSP_POSITIONS_DICT
+from definitions import (GENE_POSITIONS_DICT, NSP_POSITIONS_DICT,
+                         DEFAULT_REFERENCE_HIDDEN_STRAINS,
+                         DEFAULT_REFERENCE_STRAIN_ORDER)
 
 
 def map_pos_to_gene(pos):
@@ -47,22 +49,82 @@ def map_pos_to_nsp(pos):
     return "n/a"
 
 
-def parse_gvf_dir(dir_):
+def get_sorted_gvf_dir_strains(dir_, strain_order_dict):
+    """Get a list of all strains, hidden and visible, from ``dir_``.
+
+    This is used to keep a list of all strains handy. i.e., in the
+    select lineages modal.
+
+    :param dir_: Path to directory to parse
+    :type dir_: str
+    @param strain_order_dict: Dict with strains as keys, and order as
+        vals.
+    @type strain_order_dict: dict[str, int]
+    @return: Sorted list of all strains from ``dir_``
+    @rtype: list[str]
+    """
+    dir_entries = [e for e in os.scandir(dir_) if e.path.endswith(".gvf")]
+
+    first_rows = []
+    for entry in dir_entries:
+        with open(entry.path, encoding="utf-8") as fp:
+            reader = csv.DictReader(islice(fp, 3, None), delimiter="\t")
+            first_rows.append(next(reader))
+    attr_dict_list = [e["#attributes"].split(";")[:-1] for e in first_rows]
+    attr_dict_list = [[x.split("=", 1) for x in e] for e in attr_dict_list]
+    attr_dict_list = [{k: v for k, v in e} for e in attr_dict_list]
+    strain_list = [e["viral_lineage"] for e in attr_dict_list]
+
+    filenames_list = [e.name.rsplit(".", 1)[0] for e in dir_entries]
+
+    unsorted_ret = \
+        [x if x != "n/a" else y for x, y in zip(strain_list, filenames_list)]
+
+    def strain_sort_key(strain):
+        if strain in strain_order_dict:
+            return strain_order_dict[strain], strain
+        else:
+            return len(strain_order_dict), strain
+
+    sorted_ret = [e for e in sorted(unsorted_ret, key=strain_sort_key)]
+
+    return sorted_ret
+
+
+def parse_gvf_dir(dir_, hidden_strains):
     """Parse a directory with gvf files for relevant data.
 
     This supplies ``get_data`` with the relevant information it needs
     from gvf files to generate the data used in visualizations.
 
+    This function only parses gvf files for strains that are not
+    hidden.
+
     :param dir_: Path to directory to parse
     :type dir_: str
+    :param hidden_strains: List of strains from the dirs that the user
+        does not want to display in the heatmap and table.
+    :type hidden_strains: list[str]
     :return: Relevant strain data from gvf files used by ``get_data``
     :rtype: dict
     """
     ret = {}
-    for entry in os.scandir(dir_):
-        filename, ext = entry.name.rsplit(".", 1)
-        if ext != "gvf":
-            continue
+
+    dir_entries = [e for e in os.scandir(dir_) if e.path.endswith(".gvf")]
+    first_rows = []
+    for entry in dir_entries:
+        with open(entry.path, encoding="utf-8") as fp:
+            reader = csv.DictReader(islice(fp, 3, None), delimiter="\t")
+            first_rows.append(next(reader))
+    filter_list = [e["#attributes"].split(";")[:-1] for e in first_rows]
+    filter_list = [[x.split("=", 1) for x in e] for e in filter_list]
+    filter_list = [{k: v for k, v in e} for e in filter_list]
+    filter_list = \
+        [e["viral_lineage"] not in hidden_strains for e in filter_list]
+    visible_entries = list(compress(dir_entries, filter_list))
+
+    for entry in visible_entries:
+        filename = entry.name.rsplit(".", 1)[0]
         with open(entry.path, encoding="utf-8") as fp:
             # Skip gvf header rows
             reader = csv.DictReader(islice(fp, 3, None), delimiter="\t")
@@ -86,7 +148,6 @@ def parse_gvf_dir(dir_):
                     if "viral_lineage" in attrs:
                         strain = attrs["viral_lineage"]
                     if "variant" in attrs:
-                        strain += " (" + attrs["variant"] + ")"
                         variant = attrs["variant"]
 
                     if "variant_type" in attrs:
@@ -95,7 +156,7 @@ def parse_gvf_dir(dir_):
                         status = attrs["status"]
 
                     # User uploaded files
-                    if strain == "n/a (n/a)":
+                    if strain == "n/a":
                         strain = filename
 
                     ret[strain] = {
@@ -252,30 +313,33 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
         folders listed in dirs.
     :rtype: dict
     """
-    if hidden_strains is None:
-        hidden_strains = []
-    if strain_order is None:
-        strain_order = []
+    # Default view
+    if not hidden_strains:
+        hidden_strains = DEFAULT_REFERENCE_HIDDEN_STRAINS
+    if not strain_order:
+        strain_order = DEFAULT_REFERENCE_STRAIN_ORDER
 
     # Faster sort with this obj
     strain_order_dict = {s: i for i, s in enumerate(strain_order)}
 
+    def strain_sort_key(strain):
+        if strain in strain_order_dict:
+            return strain_order_dict[strain], strain
+        else:
+            return len(strain_order_dict), strain
+
     dir_strains = {}
     parsed_gvf_dirs = {}
     for dir_ in dirs:
-        unsorted_parsed_gvf_dir = parse_gvf_dir(dir_)
-
+        dir_strains[dir_] = get_sorted_gvf_dir_strains(dir_, strain_order_dict)
+        unsorted_parsed_gvf_dir = parse_gvf_dir(dir_, hidden_strains)
         unsorted_items = unsorted_parsed_gvf_dir.items()
-        if strain_order_dict:
-            sorted_items = sorted(unsorted_items,
-                                  key=lambda item: strain_order_dict[item[0]])
-        else:
-            sorted_items = sorted(unsorted_items,
-                                  key=default_strains_sort_key)
+        sorted_items = sorted(unsorted_items,
+                              key=lambda item: strain_sort_key(item[0]))
+        # Heatmap displays rows in reverse
+        sorted_items = reversed(sorted_items)
         parsed_gvf_dir = {k: v for k, v in sorted_items}
-
         parsed_gvf_dirs = {**parsed_gvf_dirs, **parsed_gvf_dir}
-        dir_strains[dir_] = list(parsed_gvf_dir.keys())
 
     parsed_mutations = \
         {k: v["mutations"] for k, v in parsed_gvf_dirs.items()}
@@ -291,10 +355,9 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
     circulating_strains = \
         {k: None for k in parsed_gvf_dirs
          if parsed_gvf_dirs[k]["status"] == "actively_circulating"}
+    variants_dict = {k: v["variant"] for k, v in parsed_gvf_dirs.items()}
 
-    visible_parsed_mutations = \
-        {k: v for k, v in parsed_mutations.items() if k not in hidden_strains}
-
+    visible_parsed_mutations = parsed_mutations
     if show_clade_defining:
         visible_parsed_mutations = \
             filter_parsed_mutations_by_clade_defining(visible_parsed_mutations)
@@ -332,8 +395,10 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
             voi_strains,
         "circulating_strains":
             circulating_strains,
+        "variants_dict":
+            variants_dict,
         "all_strains":
-            get_heatmap_y_strains(parsed_mutations),
+            [i for v in dir_strains.values() for i in v],
         "mutation_freq_slider_vals":
             mutation_freq_slider_vals,
         "insertions_x":
@@ -379,23 +444,6 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
         get_jump_to_dropdown_search_options(ret["mutation_name_dict"])
 
     return ret
-
-
-def default_strains_sort_key(strain_item):
-    """Key for default sort of strain order.
-
-    The strains are sorted by whether they are actively circulating,
-    then variant, and then strain name.
-
-    @param strain_item: Key-value pair from ``parse_gvf_dir`` ret val
-    @type strain_item: dict
-    @return: Sort key value for ``strain_item`` in default strain order
-    @rtype: tuple[bool, str, str]
-    """
-    strain = strain_item[0]
-    variant = strain_item[1]["variant"]
-    circulating = strain_item[1]["status"] == "actively_circulating"
-    return circulating, variant, strain
 
 
 def get_mutation_freq_slider_vals(parsed_mutations):
