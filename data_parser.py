@@ -50,7 +50,19 @@ def map_pos_to_nsp(pos):
 
 
 def get_sorted_gvf_dir_strains(dir_, strain_order_dict):
-    """TODO"""
+    """Get a list of all strains, hidden and visible, from ``dir_``.
+
+    This is used to keep a list of all strains handy. i.e., in the
+    select lineages modal.
+
+    :param dir_: Path to directory to parse
+    :type dir_: str
+    @param strain_order_dict: Dict with strains as keys, and order as
+        vals.
+    @type strain_order_dict: dict[str, int]
+    @return: Sorted list of all strains from ``dir_``
+    @rtype: list[str]
+    """
     dir_entries = [e for e in os.scandir(dir_) if e.path.endswith(".gvf")]
 
     first_rows = []
@@ -80,19 +92,24 @@ def get_sorted_gvf_dir_strains(dir_, strain_order_dict):
 
 
 def parse_gvf_dir(dir_, hidden_strains):
-    """Parse a directory with gvf files for relevant data.TODO
+    """Parse a directory with gvf files for relevant data.
 
     This supplies ``get_data`` with the relevant information it needs
     from gvf files to generate the data used in visualizations.
 
+    This function only parses gvf files for strains that are not
+    hidden.
+
     :param dir_: Path to directory to parse
     :type dir_: str
+    :param hidden_strains: List of strains from the dirs that the user
+        does not want to display in the heatmap and table.
+    :type hidden_strains: list[str]
     :return: Relevant strain data from gvf files used by ``get_data``
     :rtype: dict
     """
     ret = {}
 
-    # TODO
     dir_entries = [e for e in os.scandir(dir_) if e.path.endswith(".gvf")]
     first_rows = []
     for entry in dir_entries:
@@ -619,7 +636,7 @@ def get_heatmap_x_aa_pos(heatmap_x_nt_pos, heatmap_x_genes):
 
 
 def get_heatmap_y_strains(parsed_mutations):
-    """Get strain y axis values of heatmap cells.TODO
+    """Get strain y axis values of heatmap cells.
 
     :param parsed_mutations: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return "mutations" values.
@@ -967,7 +984,7 @@ def get_deletions_y(parsed_mutations):
 
 
 def get_tables(parsed_mutations):
-    """Get table column data for each y axis value or strain.TODO
+    """Get table column data for each y axis value or strain.
 
     The columns are represented as lists.
 

@@ -1,14 +1,17 @@
-"""Write subset of files from `reference_data_/` to `reference_data/`.
-TODO hardcoded strain names
+"""Write hidden strains and strain order assets.
 
-The subset of files should be an intersection of:
-  * Lineages in `reference_data_/`
-  * Canadian lineages from `GrowingLineages.tsv`
-  * Lineages from `Last 120 days.tsv`
+The subset of visible strains should be an intersection of:
+  * Strains in `reference_data_/`
+  * Canadian strains from `GrowingLineages.tsv`
+  * Strains from `Last 120 days.tsv`
 
-Ultimately, we are generating a subset of lineages to display by
-default. This script is run manually whenever we update the data.
+The order of strains should match the order in `GrowingLineages.tsv`.
+
+Ultimately, we are generating a subset of strains to display by
+default, in a specific order. This script is run manually whenever we
+update the data. This script should not be run by users.
 """
+
 import json
 from csv import DictReader
 from os import scandir
