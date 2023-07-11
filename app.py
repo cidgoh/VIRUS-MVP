@@ -21,7 +21,6 @@ from os import mkdir, path, remove, walk
 from shutil import copyfile, copytree, make_archive, rmtree
 from subprocess import run
 from tempfile import TemporaryDirectory
-from time import sleep
 from uuid import uuid4
 
 import dash
