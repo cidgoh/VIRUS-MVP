@@ -341,6 +341,9 @@ def get_heatmap_strains_axis_fig(data):
         else:
             strain_text = strain
 
+        if data["variants_dict"][strain] != "n/a":
+            strain_text += " (" + data["variants_dict"][strain] + ")"
+
         if strain in data["circulating_strains"]:
             strain_text += "⚠️"
 

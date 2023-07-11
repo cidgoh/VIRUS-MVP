@@ -19,7 +19,6 @@ from json import loads
 from os import path, walk
 from shutil import copytree, make_archive
 from tempfile import TemporaryDirectory
-from time import sleep
 
 import dash
 import dash_bootstrap_components as dbc

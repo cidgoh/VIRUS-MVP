@@ -129,7 +129,7 @@ def get_select_lineages_modal_body(data):
             ])
 
         checkboxes = []
-        for strain in reversed(data["dir_strains"][dir_]):
+        for strain in data["dir_strains"][dir_]:
             checked = strain not in data["hidden_strains"]
             checkbox = dbc.Checkbox(
                 id={"type": "select-lineages-modal-checkbox", "index": strain},
