@@ -179,6 +179,8 @@ def launch_app(_):
         dcc.Store(id="last-heatmap-cell-clicked"),
         dcc.Store(id="last-histogram-point-clicked"),
         dcc.Store(id="positions-jumped-to"),
+        # TODO starting gene should be part of a config file
+        dcc.Store(id="default-starting-gene", data="S"),
         # Used to update certain figures only when necessary
         dcc.Store(id="heatmap-x-len", data=len(data_["heatmap_x_nt_pos"])),
         dcc.Store(id="heatmap-y-strains",
@@ -1185,6 +1187,16 @@ app.clientside_callback(
     ),
     Output("make-histogram-rel-pos-bar-dynamic", "data"),
     Input("heatmap-nt-pos-axis-fig", "figure"),
+    State("data", "data")
+)
+app.clientside_callback(
+    ClientsideFunction(
+        namespace="clientside",
+        function_name="jumpToDefaultStartingGenePos"
+    ),
+    Output("default-starting-gene", "data"),
+    Input("heatmap-gene-bar-fig", "figure"),
+    State("default-starting-gene", "data"),
     State("data", "data")
 )
 app.clientside_callback(

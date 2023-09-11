@@ -146,6 +146,33 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
       return null
     },
     /**
+     * Scrolls the heatmap center fig to the beginning of a specified starting
+     * gene when the application is first launched. Future calls to this fn do
+     * nothing.
+     * @param _ New heatmap gene bar fig is rendered
+     * @param {string} defaultStartingGene Specified default starting gene.
+     *   Always empty string after first call to this fn.
+     * @param {Object} data ``data_parser.get_data`` return value
+     * @return {string} Empty string to quickly exit this fn after first call
+     */
+    jumpToDefaultStartingGenePos: (_, defaultStartingGene, data) => {
+      // Not page launch
+      if (!defaultStartingGene) {
+        return '';
+      }
+
+      const firstXIndex = data.heatmap_x_genes.indexOf(defaultStartingGene)
+      // Specified default gene not in data
+      if (firstXIndex === -1) {
+        return '';
+      }
+
+      const scrollProportion = firstXIndex / (data.heatmap_x_genes.length - 1);
+      const heatmapCenterDivEl = $('#heatmap-center-div')[0]
+      heatmapCenterDivEl.scrollLeft = scrollProportion * heatmapCenterDivEl.scrollWidth
+      return '';
+    },
+    /**
      * Scroll the first column of a gene in the heatmap into view after a user
      * clicks the corresponding gene in the bar under the histogram.
      * @param {Object} clickData ``last-histogram-point-clicked`` in-browser var
