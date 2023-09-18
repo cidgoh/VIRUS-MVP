@@ -619,7 +619,7 @@ def get_heatmap_aa_pos_axis_fig(data):
                      tickvals=data["heatmap_x_tickvals"],
                      ticktext=tick_text,
                      ticklabelposition="outside",
-                     )
+                     tickangle=90)
     ret.update_yaxes(fixedrange=True,
                      visible=False,
                      zeroline=True)
@@ -655,7 +655,8 @@ def get_heatmap_nt_pos_axis_fig(data):
                      tickvals=data["heatmap_x_tickvals"],
                      ticktext=list(dict.fromkeys(data["heatmap_x_nt_pos"])),
                      side="top",
-                     ticklabelposition="outside")
+                     ticklabelposition="outside",
+                     tickangle=90)
     ret.update_yaxes(fixedrange=True,
                      visible=False,
                      zeroline=True)
