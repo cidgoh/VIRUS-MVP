@@ -1038,9 +1038,6 @@ def update_heatmap_sample_size_axis_fig(_, get_data_args, last_data_mtime):
 def update_heatmap_gene_bar_fig(_, get_data_args, last_data_mtime):
     """Update heatmap gene bar fig.
 
-    We need to update style because width might have changed due to
-    added nt positions in data.
-
     :param _: Heatmap cells fig updated
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
@@ -1055,6 +1052,33 @@ def update_heatmap_gene_bar_fig(_, get_data_args, last_data_mtime):
     gene_bar_fig = heatmap_generator.get_heatmap_gene_bar_fig(data)
     gene_bar_style = {"width": data["heatmap_cells_fig_width"]}
     return gene_bar_fig, gene_bar_style
+
+
+@app.callback(
+    Output("heatmap-nsp-bar-fig", "figure"),
+    Output("heatmap-nsp-bar-fig", "style"),
+    Input("heatmap-x-len", "data"),
+    State("get-data-args", "data"),
+    State("last-data-mtime", "data"),
+    prevent_initial_call=True
+)
+def update_heatmap_nsp_bar_fig(_, get_data_args, last_data_mtime):
+    """Update heatmap nsp bar fig.
+
+    :param _: Heatmap cells fig updated
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
+    :return: New heatmap gene bar fig and style
+    :rtype: (plotly.graph_objects.Figure, dict)
+    """
+    # Current ``get_data`` return val
+    data = read_data(get_data_args, last_data_mtime)
+
+    nsp_bar_fig = heatmap_generator.get_heatmap_nsp_bar_fig(data)
+    nsp_bar_style = {"width": data["heatmap_cells_fig_width"]}
+    return nsp_bar_fig, nsp_bar_style
 
 
 @app.callback(
