@@ -19,6 +19,8 @@ USER_SURVEILLANCE_REPORTS_DIR = \
 with open(GENOME_CONFIG_PATH) as fp:
     GENOME_CONFIG_DICT = json.load(fp)
 
+GENOME_LEN = GENOME_CONFIG_DICT["Src"]["end"]
+
 gene_bar_components = \
     [e for e in GENOME_CONFIG_DICT if GENOME_CONFIG_DICT[e]["type"]
      in ["CDS", "five_prime_UTR", "three_prime_UTR", "INTERGENIC"]]

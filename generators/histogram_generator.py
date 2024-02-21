@@ -9,7 +9,7 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from definitions import GENE_COLORS_DICT, GENE_POSITIONS_DICT
+from definitions import GENOME_LEN, GENE_COLORS_DICT, GENE_POSITIONS_DICT
 
 
 def get_histogram_row(data):
@@ -139,8 +139,8 @@ def get_histogram_fig(np_histogram):
         plot_bgcolor="white",
         font={"size": 16},
         # TODO hardcoding genome length here because I'm lazy
-        xaxis1={"visible": False, "range": [1, 29903], "fixedrange": True},
-        xaxis2={"visible": False, "range": [1, 29903], "fixedrange": True},
+        xaxis1={"visible": False, "range": [1, GENOME_LEN], "fixedrange": True},
+        xaxis2={"visible": False, "range": [1, GENOME_LEN], "fixedrange": True},
         yaxis1={"visible": False, "fixedrange": True},
         yaxis2={"visible": False, "fixedrange": True},
         barmode="overlay"
@@ -214,7 +214,7 @@ def get_histogram_gene_bar_obj_list():
     :rtype: list[go.Bar]
     """
     ret = [go.Bar(name="",
-                  x=[29903],
+                  x=[GENOME_LEN],
                   y=["foo"],
                   base=1,
                   orientation="h",
