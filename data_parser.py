@@ -10,7 +10,8 @@ import os
 
 from definitions import (GENE_POSITIONS_DICT, NSP_POSITIONS_DICT,
                          DEFAULT_REFERENCE_HIDDEN_STRAINS,
-                         DEFAULT_REFERENCE_STRAIN_ORDER)
+                         DEFAULT_REFERENCE_STRAIN_ORDER,
+                         FIRST_REGION, LAST_REGION)
 
 
 def map_pos_to_gene(pos):
@@ -624,7 +625,7 @@ def get_heatmap_x_aa_pos(heatmap_x_nt_pos, heatmap_x_genes):
         # Negative index
         _i = -1 - i
         gene = heatmap_x_genes[_i]
-        if gene in {"5'UTR", "3'UTR"}:
+        if gene in {FIRST_REGION, LAST_REGION}:
             ret[_i] = gene
             continue
         if gene == "INTERGENIC":

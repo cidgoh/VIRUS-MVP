@@ -21,6 +21,11 @@ with open(GENOME_CONFIG_PATH) as fp:
 
 GENOME_LEN = GENOME_CONFIG_DICT["Src"]["end"]
 
+FIRST_REGION = {k for k, v in GENOME_CONFIG_DICT.items()
+                if k != "Src" and "start" in v and v["start"] == 1}.pop()
+LAST_REGION = {k for k, v in GENOME_CONFIG_DICT.items()
+                if k != "Src" and "end" in v and v["end"] == GENOME_LEN}.pop()
+
 gene_bar_components = \
     [e for e in GENOME_CONFIG_DICT if GENOME_CONFIG_DICT[e]["type"]
      in ["CDS", "five_prime_UTR", "three_prime_UTR", "INTERGENIC"]]
