@@ -44,8 +44,8 @@ from generators import (heatmap_generator, histogram_generator,
 # contains the visualization that is deployed by this file, when
 # ``app`` is served.
 app = dash.Dash(
-    name="COVID-MVP",
-    title="COVID-MVP",
+    name="VIRUS-MVP",
+    title="VIRUS-MVP",
     assets_folder=ASSETS_DIR,
     # We bring in jQuery for some of the JavaScript
     # callbacks.

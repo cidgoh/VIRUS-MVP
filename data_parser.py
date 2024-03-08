@@ -15,13 +15,11 @@ from definitions import (GENE_POSITIONS_DICT, NSP_POSITIONS_DICT,
 
 
 def map_pos_to_gene(pos):
-    """Map a nucleotide position to a SARS-CoV-2 gene.
-
-    See https://www.ncbi.nlm.nih.gov/nuccore/MN908947.
+    """Map a nucleotide position to a gene.
 
     :param pos: Nucleotide position
     :type pos: int
-    :return: SARS-CoV-2 gene at nucleotide position ``pos``
+    :return: Gene at nucleotide position ``pos``
     :rtype: str
     """
     for gene in GENE_POSITIONS_DICT:
@@ -33,13 +31,13 @@ def map_pos_to_gene(pos):
 
 
 def map_pos_to_nsp(pos):
-    """Map a nucleotide position to a SARS-CoV-2 NSP.
+    """Map a nucleotide position to a NSP.
 
     NSP == non-structural protein
 
     :param pos: Nucleotide position
     :type pos: int
-    :return: SARS-CoV-2 NSP at nucleotide position ``pos``
+    :return: NSP at nucleotide position ``pos``
     :rtype: str
     """
     for nsp in NSP_POSITIONS_DICT:

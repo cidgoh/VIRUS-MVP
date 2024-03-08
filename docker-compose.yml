@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: ./dockerConf/Dockerfile
-    image: covid_mvp_app
+    image: virus_mvp_app
     ports:
       - "8050:8050"
     volumes:
