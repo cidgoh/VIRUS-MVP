@@ -1,4 +1,3 @@
-from csv import DictReader
 import json
 import os
 
@@ -7,9 +6,7 @@ REFERENCE_DATA_DIR = os.path.join(ROOT_DIR, "reference_data")
 USER_DATA_DIR = os.path.join(ROOT_DIR, "user_data")
 ASSETS_DIR = os.path.join(ROOT_DIR, "assets")
 NF_NCOV_VOC_DIR = os.path.join(ROOT_DIR, "nf-ncov-voc")
-GENE_COLORS_PATH = os.path.join(ASSETS_DIR, "gene_colors.json")
-GENE_POSITIONS_PATH = os.path.join(ASSETS_DIR, "gene_positions.json")
-NSP_POSITIONS_PATH = os.path.join(ASSETS_DIR, "nsp_positions.json")
+GENOME_CONFIG_PATH = os.path.join(ASSETS_DIR, "genome_config.json")
 DEFAULT_REFERENCE_HIDDEN_STRAINS_PATH = \
     os.path.join(ASSETS_DIR, "default_reference_hidden_strains.json")
 DEFAULT_REFERENCE_STRAIN_ORDER_PATH = \
@@ -19,14 +16,31 @@ REFERENCE_SURVEILLANCE_REPORTS_DIR = \
 USER_SURVEILLANCE_REPORTS_DIR = \
     os.path.join(ROOT_DIR, "user_surveillance_reports")
 
-with open(GENE_COLORS_PATH) as fp:
-    GENE_COLORS_DICT = json.load(fp)
+with open(GENOME_CONFIG_PATH) as fp:
+    GENOME_CONFIG_DICT = json.load(fp)
 
-with open(GENE_POSITIONS_PATH) as fp:
-    GENE_POSITIONS_DICT = json.load(fp)
+GENOME_LEN = GENOME_CONFIG_DICT["Src"]["end"]
 
-with open(NSP_POSITIONS_PATH) as fp:
-    NSP_POSITIONS_DICT = json.load(fp)
+FIRST_REGION = {k for k, v in GENOME_CONFIG_DICT.items()
+                if k != "Src" and "start" in v and v["start"] == 1}.pop()
+LAST_REGION = {k for k, v in GENOME_CONFIG_DICT.items()
+                if k != "Src" and "end" in v and v["end"] == GENOME_LEN}.pop()
+
+gene_bar_components = \
+    [e for e in GENOME_CONFIG_DICT if GENOME_CONFIG_DICT[e]["type"]
+     in ["CDS", "five_prime_UTR", "three_prime_UTR", "INTERGENIC"]]
+GENE_COLORS_DICT = \
+    {k: GENOME_CONFIG_DICT[k]["color"] for k in gene_bar_components}
+GENE_POSITIONS_DICT = \
+    {k: {x: GENOME_CONFIG_DICT[k][x] for x in ["start", "end"]}
+     for k in gene_bar_components[:-1]}
+
+nsp_bar_components = \
+    [e for e in GENOME_CONFIG_DICT
+     if GENOME_CONFIG_DICT[e]["type"] == "mature_protein_region_of_CDS"]
+NSP_POSITIONS_DICT = \
+    {k: {x: GENOME_CONFIG_DICT[k][x] for x in ["start", "end"]}
+     for k in nsp_bar_components}
 
 with open(DEFAULT_REFERENCE_HIDDEN_STRAINS_PATH) as fp:
     DEFAULT_REFERENCE_HIDDEN_STRAINS = json.load(fp)
