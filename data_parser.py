@@ -316,10 +316,16 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
     :rtype: dict
     """
     # Default view
-    if not hidden_strains:
-        hidden_strains = DEFAULT_REFERENCE_HIDDEN_STRAINS
     if not strain_order:
         strain_order = DEFAULT_REFERENCE_STRAIN_ORDER
+    if not hidden_strains:
+        hidden_strains = DEFAULT_REFERENCE_HIDDEN_STRAINS
+        # Only display top 100 strains
+        more_hidden_strains = \
+            [e for i, e in enumerate(strain_order) if e not in hidden_strains]
+        more_hidden_strains = \
+            [e for i, e in enumerate(more_hidden_strains) if i > 100]
+        hidden_strains += more_hidden_strains
 
     # Faster sort with this obj
     strain_order_dict = {s: i for i, s in enumerate(strain_order)}
