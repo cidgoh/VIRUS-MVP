@@ -117,7 +117,7 @@ def get_select_lineages_modal_body(data):
     :rtype: list
     """
     modal_body = []
-    for dir_ in reversed(data["dir_strains"]):
+    for dir_ in reversed(data["dir_strains_dict"]):
         title = dbc.Row(dbc.Col(os.path.basename(dir_)))
 
         all_none_btns = dbc.ButtonGroup([
@@ -138,7 +138,7 @@ def get_select_lineages_modal_body(data):
             ])
 
         checkboxes = []
-        for strain in data["dir_strains"][dir_]:
+        for strain in data["dir_strains_dict"][dir_]:
             checked = strain not in data["hidden_strains"]
             checkbox = dbc.Checkbox(
                 id={"type": "select-lineages-modal-checkbox", "index": strain},
