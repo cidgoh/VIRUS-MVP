@@ -48,8 +48,8 @@ def map_pos_to_nsp(pos):
     return "n/a"
 
 
-def parse_gvf_sample_group(path):
-    """Parse sample group from gvf file header.
+def parse_gvf_sample_group_name(path):
+    """Parse sample group name from gvf file header.
 
     :param path: Path to gvf file to parse
     :type path: str
@@ -292,7 +292,8 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
     for dir_ in dirs:
         dir_entry_paths = \
             [e.path for e in os.scandir(dir_) if e.path.endswith(".gvf")]
-        dir_entry_strains = [parse_gvf_sample_group(e) for e in dir_entry_paths]
+        dir_entry_strains = \
+            [parse_gvf_sample_group_name(e) for e in dir_entry_paths]
         strain_paths_dict = dict(zip(dir_entry_strains, dir_entry_paths))
         sorted_strain_paths_dict = \
             dict(sorted(strain_paths_dict.items(), key=strain_path_sort_key))
