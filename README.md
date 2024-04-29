@@ -138,7 +138,9 @@ The upload button ![upload_btn] allows you to upload your own genomic data in
 [upload_btn]: screenshots/upload_btn.png
 [3]: test_data/
 
-_You must have Nextflow installed to upload files._
+_You must have Nextflow and Conda installed to upload files._
+
+_Your first upload will take a while. Subsequent uploads will be faster._
 
 #### Downloading data
 
