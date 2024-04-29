@@ -18,9 +18,10 @@ functionality) at https://virusmvp.org/.
 
 ## Installation
 
-### _0. (For users that plan to upload their own data)_ [Install Nextflow][nf]
+### _0. (If uploading your own data)_ Install [Nextflow][nf] & [Conda][conda].
 
 [nf]: https://www.nextflow.io/docs/latest/getstarted.html
+[conda]: https://conda.io/projects/conda/en/latest/user-guide/install/
 
 ### 1. Clone the repository and its submodules
 
