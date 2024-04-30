@@ -82,7 +82,7 @@ def get_select_lineages_toolbar_btn():
         for selecting lineages.
     :rtype: dbc.Button
     """
-    return dbc.Button("Select lineages",
+    return dbc.Button("Select groups",
                       id="open-select-lineages-modal-btn",
                       className="mr-2")
 
@@ -97,7 +97,7 @@ def get_select_lineages_modal():
     :rtype: dbc.Modal
     """
     return dbc.Modal([
-        dbc.ModalHeader("Select lineages"),
+        dbc.ModalHeader("Select sample groups"),
         # Empty at launch; populated when user opens modal
         dbc.ModalBody(None,
                       id="select-lineages-modal-body",
