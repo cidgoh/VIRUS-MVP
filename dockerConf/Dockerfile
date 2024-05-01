@@ -15,5 +15,5 @@ RUN apt-get update -y \
     && chmod +x /start.sh
 
 # https://pythonspeed.com/articles/activate-conda-dockerfile/
-ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "COVID-MVP", "/start.sh"]
+ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "VIRUS-MVP", "/start.sh"]
 EXPOSE 8050

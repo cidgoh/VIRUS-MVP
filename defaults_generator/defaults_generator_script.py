@@ -14,17 +14,18 @@ update the data. This script should not be run by users.
 
 import json
 from csv import DictReader
+from io import TextIOWrapper
 from os import scandir
-from os.path import join
+from urllib.request import urlopen
 
-from definitions import (ROOT_DIR, REFERENCE_DATA_DIR,
+from definitions import (REFERENCE_DATA_DIR,
                          DEFAULT_REFERENCE_HIDDEN_STRAINS_PATH,
                          DEFAULT_REFERENCE_STRAIN_ORDER_PATH)
 
 GROWING_LINEAGES_PATH = \
-    join(ROOT_DIR, "defaults_generator", "GrowingLineages.tsv")
+    "https://covarr-net.github.io/duotang/downloads/GrowingLineages.tsv"
 LAST_120_DAYS_PATH = \
-    join(ROOT_DIR, "defaults_generator", "Last 120 days.tsv")
+    "https://covarr-net.github.io/duotang/downloads/Last%20120%20days.tsv"
 
 
 def main():
@@ -32,7 +33,7 @@ def main():
         sorted({e.name: 0 for e in scandir(REFERENCE_DATA_DIR)})
     default_file_names_table = {}
 
-    with open(GROWING_LINEAGES_PATH) as fp:
+    with TextIOWrapper(urlopen(GROWING_LINEAGES_PATH)) as fp:
         for lineage_dict in DictReader(fp, delimiter="\t"):
             if lineage_dict["region"] != "Canada":
                 continue
@@ -46,7 +47,7 @@ def main():
                     if file_name not in default_file_names_table:
                         default_file_names_table[file_name] = 0
 
-    with open(LAST_120_DAYS_PATH) as fp:
+    with TextIOWrapper(urlopen(LAST_120_DAYS_PATH)) as fp:
         for lineage_dict in DictReader(fp, delimiter="\t"):
             lineage_name = lineage_dict["Lineage"]
             for file_name in reference_file_names_table:

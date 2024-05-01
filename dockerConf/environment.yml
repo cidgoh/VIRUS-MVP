@@ -1,4 +1,4 @@
-name: COVID-MVP
+name: VIRUS-MVP
 channels:
   - conda-forge
   - bioconda

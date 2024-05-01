@@ -17,7 +17,8 @@ run faster.
 """
 from base64 import b64decode
 from json import loads
-from os import mkdir, path, remove, walk
+from os import path, remove, walk
+from pathlib import Path
 from shutil import copyfile, copytree, make_archive, rmtree
 from subprocess import run
 from tempfile import TemporaryDirectory
@@ -44,8 +45,8 @@ from generators import (heatmap_generator, histogram_generator,
 # contains the visualization that is deployed by this file, when
 # ``app`` is served.
 app = dash.Dash(
-    name="COVID-MVP",
-    title="COVID-MVP",
+    name="VIRUS-MVP",
+    title="VIRUS-MVP",
     assets_folder=ASSETS_DIR,
     # We bring in jQuery for some of the JavaScript
     # callbacks.
@@ -358,6 +359,8 @@ def update_show_clade_defining(switches_value):
 @app.callback(
     Output("new-upload", "data"),
     Output("upload-loading", "children"),
+    Output("upload-file", "contents"),
+    Output("upload-file", "filename"),
     Input("upload-file", "contents"),
     Input("upload-file", "filename"),
     State("get-data-args", "data"),
@@ -397,17 +400,22 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
     # Current ``get_data`` return val
     old_data = read_data(get_data_args, last_data_mtime)
 
+    posix_path = Path(filename)
+    sample_name = posix_path.stem
+    # https://stackoverflow.com/a/35188296
+    ext = "".join(posix_path.suffixes)[1:]
+
     # TODO more thorough validation, maybe once we finalize data
-    #  standards.
-    new_strain, ext = filename.rsplit(".", 1)
-    if ext not in {"vcf", "fasta"}:
+    # standards.
+    accepted_exts = {"VCF", "fasta", "fa", "fna", "fa.gz", "fna.gz", "fasta.gz"}
+    if ext not in accepted_exts:
         status = "error"
-        msg = "Filename must end in \".vcf\" or \".fasta\"."
-    elif new_strain in old_data["all_strains"]:
+        msg = "Accepted file extensions: %s" % accepted_exts
+    elif sample_name in old_data["all_strains"]:
         status = "error"
         msg = "Filename must not conflict with existing variant."
     else:
-        # # Dash splits MIME type and the actual str with a comma
+        # Dash splits MIME type and the actual str with a comma
         _, base64_str = file_contents.split(",")
         # Run pipeline, but output contents into temporary dir. Then
         # copy appropriate output file to relevant dir.
@@ -418,33 +426,22 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
                 fp.write(b64decode(base64_str).decode("utf-8"))
             run(["nextflow", "run", "main.nf", "-profile", "conda",
                  "--prefix", rand_prefix, "--mode", "user",
-                 "--userfile", user_file, "--outdir", dir_name],
+                 "--viral_aligner", "minimap2", "--skip_postprocessing", "true",
+                 "--skip_posting", "true", "skip_harmonize", "true",
+                 "--seq", user_file, "--outdir", dir_name],
                 cwd=NF_NCOV_VOC_DIR)
-            results_path = path.join(dir_name, rand_prefix)
+            results_path = path.join(dir_name, rand_prefix, "VARIANTANNOTATION")
 
-            gvf_file = \
-                path.join(results_path, "annotation_vcfTogvf",
-                          "%s.qc.sorted.variants.filtered.SNPEFF.annotated.gvf"
-                          % new_strain)
-            copyfile(gvf_file, path.join(USER_DATA_DIR, new_strain + ".gvf"))
-
-            reports_dir = path.join(USER_SURVEILLANCE_REPORTS_DIR, new_strain)
-            if path.exists(reports_dir):
-                rmtree(reports_dir)
-            mkdir(reports_dir)
-            copytree(path.join(results_path, "surveillance_surveillancePDF"),
-                     path.join(reports_dir, "PDF"))
-            copytree(path.join(results_path,
-                               "surveillance_surveillanceRawTsv"),
-                     path.join(reports_dir, "TSV"))
+            gvf_file = path.join(results_path, "%s_annotated.gvf" % sample_name)
+            copyfile(gvf_file, path.join(USER_DATA_DIR, sample_name + ".gvf"))
         status = "ok"
         msg = "%s uploaded successfully." % filename
     new_upload_data = {"filename": filename,
                        "msg": msg,
                        "status": status,
-                       "strain": new_strain}
+                       "strain": sample_name}
     upload_component = toolbar_generator.get_file_upload_component()
-    return new_upload_data, upload_component
+    return new_upload_data, upload_component, "", ""
 
 
 @app.callback(
@@ -797,7 +794,6 @@ def update_deleted_strain(_, strain_to_del):
     :type strain_to_del: str
     """
     remove(path.join(USER_DATA_DIR, strain_to_del + ".gvf"))
-    rmtree(path.join(USER_SURVEILLANCE_REPORTS_DIR, strain_to_del))
     return strain_to_del
 
 
@@ -1038,9 +1034,6 @@ def update_heatmap_sample_size_axis_fig(_, get_data_args, last_data_mtime):
 def update_heatmap_gene_bar_fig(_, get_data_args, last_data_mtime):
     """Update heatmap gene bar fig.
 
-    We need to update style because width might have changed due to
-    added nt positions in data.
-
     :param _: Heatmap cells fig updated
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
@@ -1055,6 +1048,33 @@ def update_heatmap_gene_bar_fig(_, get_data_args, last_data_mtime):
     gene_bar_fig = heatmap_generator.get_heatmap_gene_bar_fig(data)
     gene_bar_style = {"width": data["heatmap_cells_fig_width"]}
     return gene_bar_fig, gene_bar_style
+
+
+@app.callback(
+    Output("heatmap-nsp-bar-fig", "figure"),
+    Output("heatmap-nsp-bar-fig", "style"),
+    Input("heatmap-x-len", "data"),
+    State("get-data-args", "data"),
+    State("last-data-mtime", "data"),
+    prevent_initial_call=True
+)
+def update_heatmap_nsp_bar_fig(_, get_data_args, last_data_mtime):
+    """Update heatmap nsp bar fig.
+
+    :param _: Heatmap cells fig updated
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
+    :return: New heatmap gene bar fig and style
+    :rtype: (plotly.graph_objects.Figure, dict)
+    """
+    # Current ``get_data`` return val
+    data = read_data(get_data_args, last_data_mtime)
+
+    nsp_bar_fig = heatmap_generator.get_heatmap_nsp_bar_fig(data)
+    nsp_bar_style = {"width": data["heatmap_cells_fig_width"]}
+    return nsp_bar_fig, nsp_bar_style
 
 
 @app.callback(

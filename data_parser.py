@@ -10,17 +10,16 @@ import os
 
 from definitions import (GENE_POSITIONS_DICT, NSP_POSITIONS_DICT,
                          DEFAULT_REFERENCE_HIDDEN_STRAINS,
-                         DEFAULT_REFERENCE_STRAIN_ORDER)
+                         DEFAULT_REFERENCE_STRAIN_ORDER,
+                         FIRST_REGION, LAST_REGION)
 
 
 def map_pos_to_gene(pos):
-    """Map a nucleotide position to a SARS-CoV-2 gene.
-
-    See https://www.ncbi.nlm.nih.gov/nuccore/MN908947.
+    """Map a nucleotide position to a gene.
 
     :param pos: Nucleotide position
     :type pos: int
-    :return: SARS-CoV-2 gene at nucleotide position ``pos``
+    :return: Gene at nucleotide position ``pos``
     :rtype: str
     """
     for gene in GENE_POSITIONS_DICT:
@@ -32,13 +31,13 @@ def map_pos_to_gene(pos):
 
 
 def map_pos_to_nsp(pos):
-    """Map a nucleotide position to a SARS-CoV-2 NSP.
+    """Map a nucleotide position to a NSP.
 
     NSP == non-structural protein
 
     :param pos: Nucleotide position
     :type pos: int
-    :return: SARS-CoV-2 NSP at nucleotide position ``pos``
+    :return: NSP at nucleotide position ``pos``
     :rtype: str
     """
     for nsp in NSP_POSITIONS_DICT:
@@ -49,189 +48,139 @@ def map_pos_to_nsp(pos):
     return "n/a"
 
 
-def get_sorted_gvf_dir_strains(dir_, strain_order_dict):
-    """Get a list of all strains, hidden and visible, from ``dir_``.
+def parse_gvf_sample_name(path):
+    """Parse sample group name from gvf file header.
 
-    This is used to keep a list of all strains handy. i.e., in the
-    select lineages modal.
-
-    :param dir_: Path to directory to parse
-    :type dir_: str
-    @param strain_order_dict: Dict with strains as keys, and order as
-        vals.
-    @type strain_order_dict: dict[str, int]
-    @return: Sorted list of all strains from ``dir_``
-    @rtype: list[str]
+    :param path: Path to gvf file to parse
+    :type path: str
+    :return: Gvf file sample group
+    :rtype: str
     """
-    dir_entries = [e for e in os.scandir(dir_) if e.path.endswith(".gvf")]
-
-    first_rows = []
-    for entry in dir_entries:
-        with open(entry.path, encoding="utf-8") as fp:
-            reader = csv.DictReader(islice(fp, 3, None), delimiter="\t")
-            first_rows.append(next(reader))
-    attr_dict_list = [e["#attributes"].split(";")[:-1] for e in first_rows]
-    attr_dict_list = [[x.split("=", 1) for x in e] for e in attr_dict_list]
-    attr_dict_list = [{k: v for k, v in e} for e in attr_dict_list]
-    strain_list = [e["viral_lineage"] for e in attr_dict_list]
-
-    filenames_list = [e.name.rsplit(".", 1)[0] for e in dir_entries]
-
-    unsorted_ret = \
-        [x if x != "n/a" else y for x, y in zip(strain_list, filenames_list)]
-
-    def strain_sort_key(strain):
-        if strain in strain_order_dict:
-            return strain_order_dict[strain], strain
-        else:
-            return len(strain_order_dict), strain
-
-    sorted_ret = [e for e in sorted(unsorted_ret, key=strain_sort_key)]
-
-    return sorted_ret
+    with open(path, encoding="utf-8") as fp:
+        # Skip first two lines
+        next(fp)
+        next(fp)
+        # "##sample-description sample_desc=x;sample_group=y;"
+        sample_desc = fp.readline()
+        # "sample_desc=x;sample_group=y"
+        sample_desc_vals_str = sample_desc.split()[1].strip(";")
+        # [["sample_desc", "x"], ["sample_group", "y"]]
+        sample_desc_vals_list = \
+            [e.split("=") for e in sample_desc_vals_str.split(";")]
+        # {"sample_desc": "x", "sample_group": "y"}
+        return dict(sample_desc_vals_list)["sample_group"]
 
 
-def parse_gvf_dir(dir_, hidden_strains):
-    """Parse a directory with gvf files for relevant data.
+def parse_gvf_sample_variants(path):
+    """Parse gvf file variant data relevant to viz.
 
-    This supplies ``get_data`` with the relevant information it needs
-    from gvf files to generate the data used in visualizations.
-
-    This function only parses gvf files for strains that are not
-    hidden.
-
-    :param dir_: Path to directory to parse
-    :type dir_: str
-    :param hidden_strains: List of strains from the dirs that the user
-        does not want to display in the heatmap and table.
-    :type hidden_strains: list[str]
-    :return: Relevant strain data from gvf files used by ``get_data``
+    :param path: Path to gvf file to parse
+    :type path: str
+    :return: Relevant variant data from gvf files used by viz
     :rtype: dict
     """
-    ret = {}
+    with open(path, encoding="utf-8") as fp:
+        # Skip gvf header rows
+        reader = csv.DictReader(islice(fp, 4, None), delimiter="\t")
 
-    dir_entries = [e for e in os.scandir(dir_) if e.path.endswith(".gvf")]
-    first_rows = []
-    for entry in dir_entries:
-        with open(entry.path, encoding="utf-8") as fp:
-            reader = csv.DictReader(islice(fp, 3, None), delimiter="\t")
-            first_rows.append(next(reader))
-    filter_list = [e["#attributes"].split(";")[:-1] for e in first_rows]
-    filter_list = [[x.split("=", 1) for x in e] for e in filter_list]
-    filter_list = [{k: v for k, v in e} for e in filter_list]
-    filter_list = \
-        [e["viral_lineage"] not in hidden_strains for e in filter_list]
-    visible_entries = list(compress(dir_entries, filter_list))
+        parsing_first_row = True
 
-    for entry in visible_entries:
-        filename = entry.name.rsplit(".", 1)[0]
-        with open(entry.path, encoding="utf-8") as fp:
-            # Skip gvf header rows
-            reader = csv.DictReader(islice(fp, 3, None), delimiter="\t")
+        for row in reader:
+            attrs_first_split = row["#attributes"].split(";")[:-1]
+            attrs_second_split = \
+                [x.split("=", 1) for x in attrs_first_split]
+            attrs = {k: v for k, v in attrs_second_split}
 
-            parsing_first_row = True
+            if parsing_first_row:
+                # Default values
+                variant = None
+                variant_type = None
+                status = None
+                sample_size = attrs["sample_size"]
 
-            for row in reader:
-                attrs_first_split = row["#attributes"].split(";")[:-1]
-                attrs_second_split = \
-                    [x.split("=", 1) for x in attrs_first_split]
-                attrs = {k: v for k, v in attrs_second_split}
+                if "variant" in attrs:
+                    variant = attrs["variant"]
 
-                if parsing_first_row:
-                    # Default values
-                    strain = filename
-                    variant = None
-                    variant_type = None
-                    status = None
-                    sample_size = attrs["sample_size"]
+                if "variant_type" in attrs:
+                    variant_type = attrs["variant_type"]
+                if "status" in attrs:
+                    status = attrs["status"]
 
-                    if "viral_lineage" in attrs:
-                        strain = attrs["viral_lineage"]
-                    if "variant" in attrs:
-                        variant = attrs["variant"]
+                ret = {
+                    "mutations": {},
+                    "variant": variant,
+                    "variant_type": variant_type,
+                    "status": status,
+                    "sample_size": sample_size
+                }
 
-                    if "variant_type" in attrs:
-                        variant_type = attrs["variant_type"]
-                    if "status" in attrs:
-                        status = attrs["status"]
+                parsing_first_row = False
 
-                    # User uploaded files
-                    if strain == "n/a":
-                        strain = filename
+            pos = row["#start"]
+            if pos not in ret["mutations"]:
+                ret["mutations"][pos] = []
 
-                    ret[strain] = {
-                        "mutations": {},
-                        "variant": variant,
-                        "variant_type": variant_type,
-                        "status": status,
-                        "sample_size": sample_size
-                    }
+            mutation_name = attrs["Name"]
+            cond = attrs["alias"] not in {"n/a", mutation_name}
+            mutation_alias = attrs["alias"] if cond else ""
+            alt = attrs["Variant_seq"]
 
-                    parsing_first_row = False
+            mutation_dict = {}
+            for existing_dict in ret["mutations"][pos]:
+                cond1 = existing_dict["mutation_name"] == mutation_name
+                cond2 = existing_dict["alt"] == alt
+                if cond1 and cond2:
+                    mutation_dict = existing_dict
+                    break
 
-                pos = row["#start"]
-                if pos not in ret[strain]["mutations"]:
-                    ret[strain]["mutations"][pos] = []
+            if not mutation_dict:
+                mutation_dict = {
+                    "ref": attrs["Reference_seq"],
+                    "alt": alt,
+                    "gene": attrs["vcf_gene"],
+                    "ao": float(attrs["ao"]),
+                    "dp": float(attrs["dp"]),
+                    "multi_aa_name": attrs["multi_aa_name"],
+                    "clade_defining":
+                        attrs["clade_defining"] == "True",
+                    "hidden_cell": False,
+                    "mutation_name": mutation_name,
+                    "mutation_alias": mutation_alias,
+                    "functions": {}
+                }
 
-                mutation_name = attrs["Name"]
-                alt = attrs["Variant_seq"]
+                alt_freq = mutation_dict["ao"] / mutation_dict["dp"]
+                mutation_dict["alt_freq"] = str(round(alt_freq, 4))
 
-                mutation_dict = {}
-                for existing_dict in ret[strain]["mutations"][pos]:
-                    cond1 = existing_dict["mutation_name"] == mutation_name
-                    cond2 = existing_dict["alt"] == alt
-                    if cond1 and cond2:
-                        mutation_dict = existing_dict
-                        break
+                mutation_type = row["#type"]
+                if mutation_type == "ins":
+                    mutation_dict["mutation_type"] = "insertion"
+                elif mutation_type == "del":
+                    mutation_dict["mutation_type"] = "deletion"
+                else:
+                    mutation_dict["mutation_type"] = mutation_type
 
-                if not mutation_dict:
-                    mutation_dict = {
-                        "ref": attrs["Reference_seq"],
-                        "alt": alt,
-                        "gene": attrs["vcf_gene"],
-                        "ao": float(attrs["ao"]),
-                        "dp": float(attrs["dp"]),
-                        "multi_aa_name": attrs["multi_aa_name"],
-                        "clade_defining":
-                            attrs["clade_defining"] == "True",
-                        "hidden_cell": False,
-                        "mutation_name": mutation_name,
-                        "functions": {}
-                    }
+                ret["mutations"][pos].append(mutation_dict)
 
-                    alt_freq = mutation_dict["ao"]/mutation_dict["dp"]
-                    mutation_dict["alt_freq"] = str(round(alt_freq, 4))
+            fn_dict = mutation_dict["functions"]
+            fn_category = attrs["function_category"].strip('"')
+            if not fn_category:
+                continue
+            if fn_category not in fn_dict:
+                fn_dict[fn_category] = {}
 
-                    mutation_type = row["#type"]
-                    if mutation_type == "ins":
-                        mutation_dict["mutation_type"] = "insertion"
-                    elif mutation_type == "del":
-                        mutation_dict["mutation_type"] = "deletion"
-                    else:
-                        mutation_dict["mutation_type"] = mutation_type
-
-                    ret[strain]["mutations"][pos].append(mutation_dict)
-
-                fn_dict = mutation_dict["functions"]
-                fn_category = attrs["function_category"].strip('"')
-                if not fn_category:
-                    continue
-                if fn_category not in fn_dict:
-                    fn_dict[fn_category] = {}
-
-                fn_desc = attrs["function_description"].strip('"')
-                fn_source = attrs["source"].strip('"')
-                fn_citation = attrs["citation"].strip('"')
-                fn_dict[fn_category][fn_desc] = \
-                    {"source": fn_source, "citation": fn_citation}
-
+            fn_desc = attrs["function_description"].strip('"')
+            fn_source = attrs["source"].strip('"')
+            fn_citation = attrs["citation"].strip('"')
+            fn_dict[fn_category][fn_desc] = \
+                {"source": fn_source, "citation": fn_citation}
     return ret
 
 
 def filter_parsed_mutations_by_clade_defining(parsed_mutations):
     """Hide non-clade defining mutations from parsed gvf mutations.
 
-    :param parsed_mutations: ``parse_gvf_dir`` return "mutations" value
+    :param parsed_mutations: ``parse_gvf_sample_variants`` ret "mutations" vals
     :type parsed_mutations: dict
     :return: ``parsed_gvf_dirs`` with non-clade defining mutations
         labeled as hidden.
@@ -250,7 +199,7 @@ def filter_parsed_mutations_by_freq(parsed_mutations, min_mutation_freq,
                                     max_mutation_freq):
     """Hide mutations of specific frequencies from parsed gvf file.
 
-    :param parsed_mutations: ``parse_gvf_dir`` return "mutations" value
+    :param parsed_mutations: ``parse_gvf_sample_variants`` ret "mutations" vals
     :type parsed_mutations: dict
     :param min_mutation_freq: Minimum mutation frequency required to
         not hide mutations.
@@ -314,31 +263,48 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
     :rtype: dict
     """
     # Default view
-    if not hidden_strains:
-        hidden_strains = DEFAULT_REFERENCE_HIDDEN_STRAINS
     if not strain_order:
         strain_order = DEFAULT_REFERENCE_STRAIN_ORDER
+    if not hidden_strains:
+        hidden_strains = DEFAULT_REFERENCE_HIDDEN_STRAINS
+        # Only display top 100 strains
+        more_hidden_strains = \
+            [e for i, e in enumerate(strain_order) if e not in hidden_strains]
+        more_hidden_strains = \
+            [e for i, e in enumerate(more_hidden_strains) if i > 100]
+        hidden_strains += more_hidden_strains
+
+    # Faster obj to work with
+    hidden_strains_set = set(hidden_strains)
 
     # Faster sort with this obj
     strain_order_dict = {s: i for i, s in enumerate(strain_order)}
 
-    def strain_sort_key(strain):
+    def strain_path_sort_key(strain_path):
+        strain = strain_path[0]
         if strain in strain_order_dict:
             return strain_order_dict[strain], strain
         else:
             return len(strain_order_dict), strain
 
-    dir_strains = {}
+    dir_strains_dict = {}
     parsed_gvf_dirs = {}
     for dir_ in dirs:
-        dir_strains[dir_] = get_sorted_gvf_dir_strains(dir_, strain_order_dict)
-        unsorted_parsed_gvf_dir = parse_gvf_dir(dir_, hidden_strains)
-        unsorted_items = unsorted_parsed_gvf_dir.items()
-        sorted_items = sorted(unsorted_items,
-                              key=lambda item: strain_sort_key(item[0]))
+        dir_entry_paths = \
+            [e.path for e in os.scandir(dir_) if e.path.endswith(".gvf")]
+        dir_entry_strains = \
+            [parse_gvf_sample_name(e) for e in dir_entry_paths]
+        strain_paths_dict = dict(zip(dir_entry_strains, dir_entry_paths))
+        sorted_strain_paths_dict = \
+            dict(sorted(strain_paths_dict.items(), key=strain_path_sort_key))
+        dir_strains_dict[dir_] = list(sorted_strain_paths_dict.keys())
+        visible_sorted_strain_paths_dict = \
+            {k: v for k, v in sorted_strain_paths_dict.items()
+             if k not in hidden_strains_set}
         # Heatmap displays rows in reverse
-        sorted_items = reversed(sorted_items)
-        parsed_gvf_dir = {k: v for k, v in sorted_items}
+        reversed_items = reversed(visible_sorted_strain_paths_dict.items())
+        parsed_gvf_dir = \
+            {s: parse_gvf_sample_variants(p) for s, p in reversed_items}
         parsed_gvf_dirs = {**parsed_gvf_dirs, **parsed_gvf_dir}
 
     parsed_mutations = \
@@ -385,8 +351,8 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
             get_tables(visible_parsed_mutations),
         "histogram_x":
             get_histogram_x(visible_parsed_mutations),
-        "dir_strains":
-            dir_strains,
+        "dir_strains_dict":
+            dir_strains_dict,
         "hidden_strains":
             hidden_strains,
         "voc_strains":
@@ -398,7 +364,7 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
         "variants_dict":
             variants_dict,
         "all_strains":
-            [i for v in dir_strains.values() for i in v],
+            [i for v in dir_strains_dict.values() for i in v],
         "mutation_freq_slider_vals":
             mutation_freq_slider_vals,
         "insertions_x":
@@ -428,8 +394,8 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
             get_heatmap_x_genes(intra_col_mutation_pos_dict),
         "heatmap_x_nsps":
             get_heatmap_x_nsps(intra_col_mutation_pos_dict),
-        "mutation_name_dict":
-            get_mutation_name_dict(visible_parsed_mutations)
+        "jump_to_info_dict":
+            get_jump_to_info_dict(visible_parsed_mutations)
     }
     ret["heatmap_x_tickvals"] = \
         get_heatmap_x_tickvals(ret["heatmap_cells_tickvals"])
@@ -441,7 +407,7 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
         min(10*40, ret["heatmap_cells_fig_height"])
     ret["heatmap_cells_fig_width"] = len(ret["heatmap_x_nt_pos"]) * 36
     ret["jump_to_dropdown_search_options"] = \
-        get_jump_to_dropdown_search_options(ret["mutation_name_dict"])
+        get_jump_to_dropdown_search_options(ret["jump_to_info_dict"])
 
     return ret
 
@@ -614,14 +580,14 @@ def get_heatmap_x_aa_pos(heatmap_x_nt_pos, heatmap_x_genes):
     """
     gene_start_positions = \
         {k: GENE_POSITIONS_DICT[k]["start"] for k in GENE_POSITIONS_DICT}
-    last_gene_seen = "3' UTR"
+    last_gene_seen = "3'UTR"
     ret = ["" for _ in heatmap_x_nt_pos]
     # Iterate through nt pos in reverse
     for i, pos in enumerate(reversed(heatmap_x_nt_pos)):
         # Negative index
         _i = -1 - i
         gene = heatmap_x_genes[_i]
-        if gene in {"5' UTR", "3' UTR"}:
+        if gene in {FIRST_REGION, LAST_REGION}:
             ret[_i] = gene
             continue
         if gene == "INTERGENIC":
@@ -765,16 +731,18 @@ def get_heatmap_hover_text(parsed_mutations, intra_col_mutation_pos_dict):
     return ret
 
 
-def get_mutation_name_dict(parsed_mutations):
-    """Get dict containing strain and nt pos of mutations.
+def get_jump_to_info_dict(parsed_mutations):
+    """Get dict containing info needed for "jump to" modal fns.
 
-    For each unique mutation, we assign the top-left most strain and
-    pos seen in the heatmap with the corresponding mutation.
+    The keys in this dict are mutation names. The values are:
+      * mutation alias
+      * top-left most strain seen in heatmap with mutation
+      * top-right most strain seen in heatmap with mutation
 
     :param parsed_mutations: A dictionary containing multiple merged
         ``get_parsed_gvf_dir`` return "mutations" values.
     :type parsed_mutations: dict
-    :return: Dict with mutation names and their strains/positions
+    :return: Dict with info needed for "jump to" modal fns
     :type: dict
     """
     ret = {}
@@ -782,23 +750,29 @@ def get_mutation_name_dict(parsed_mutations):
         for nt_pos in parsed_mutations[strain]:
             for mutation in parsed_mutations[strain][nt_pos]:
                 mutation_name = mutation["mutation_name"]
+                mutation_alias = mutation["mutation_alias"]
                 hidden = mutation["hidden_cell"]
                 if mutation_name and not hidden and mutation_name not in ret:
-                    ret[mutation_name] = {"strain": strain, "nt_pos": nt_pos}
+                    ret[mutation_name] = {"strain": strain,
+                                          "nt_pos": nt_pos,
+                                          "mutation_alias": mutation_alias}
     return ret
 
 
-def get_jump_to_dropdown_search_options(mutation_name_dict):
-    """List of dash bootstrap options corresponding to mutation dict.
+def get_jump_to_dropdown_search_options(jump_to_info_dict):
+    """List of dash bootstrap opts for "jump to" modal.
 
-    @param mutation_name_dict: ``get_mutation_name_dict`` ret val
-    @type mutation_name_dict: dict
+    @param jump_to_info_dict: ``get_jump_to_info_dict`` ret val
+    @type jump_to_info_dict: dict
     @return: List of dicts with a label and val key
     @rtype: list
     """
     ret = []
-    for mutation_name in mutation_name_dict:
-        ret.append({"label": mutation_name, "value": mutation_name})
+    for mutation_name in jump_to_info_dict:
+        alias = jump_to_info_dict[mutation_name]["mutation_alias"]
+        alias_suffix = " (%s)" % alias if alias else ""
+        ret.append({"label": mutation_name + alias_suffix,
+                    "value": mutation_name})
     return ret
 
 
