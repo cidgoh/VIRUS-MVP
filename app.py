@@ -40,8 +40,8 @@ from generators import (heatmap_generator, histogram_generator,
 # contains the visualization that is deployed by this file, when
 # ``app`` is served.
 app = dash.Dash(
-    name="COVID-MVP",
-    title="COVID-MVP",
+    name="VIRUS-MVP",
+    title="VIRUS-MVP",
     assets_folder=ASSETS_DIR,
     # We bring in jQuery for some of the JavaScript
     # callbacks.
@@ -812,9 +812,6 @@ def update_heatmap_sample_size_axis_fig(_, get_data_args, last_data_mtime):
 )
 def update_heatmap_gene_bar_fig(_, get_data_args, last_data_mtime):
     """Update heatmap gene bar fig.
-
-    We need to update style because width might have changed due to
-    added nt positions in data.
 
     :param _: Heatmap cells fig updated
     :param get_data_args: Args for ``get_data``

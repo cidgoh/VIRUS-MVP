@@ -55,7 +55,7 @@ def get_heatmap_row(data):
                     # Space for voc and voi legend
                     dbc.Row(
                         dbc.Col(
-                            "Variants",
+                            "Sample groups",
                             className="text-right h5",
                             style={"padding-top": 105, "padding-right": 15}
                         ),

@@ -219,8 +219,8 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
     jumpToHeatmapPosAfterSelectingMutationName: (_, val, data) => {
       if (!val) return null;
 
-      const nt_pos = data['mutation_name_dict'][val]['nt_pos'];
-      const strain = data['mutation_name_dict'][val]['strain'];
+      const nt_pos = data['jump_to_info_dict'][val]['nt_pos'];
+      const strain = data['jump_to_info_dict'][val]['strain'];
 
       $('#heatmap-center-div')[0].scrollLeft =
           $('#heatmap-nt-pos-axis-fig')[0].offsetWidth;
