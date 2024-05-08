@@ -424,7 +424,7 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
             rand_prefix = "u" + str(uuid4())
             with open(user_file, "w") as fp:
                 fp.write(b64decode(base64_str).decode("utf-8"))
-            run(["nextflow", "run", "main.nf", "-profile", "conda",
+            run(["nextflow", "run", "main.nf", "-profile", "singularity",
                  "--prefix", rand_prefix, "--mode", "user",
                  "--viral_aligner", "minimap2", "--skip_postprocessing", "true",
                  "--skip_posting", "true", "skip_harmonize", "true",

@@ -18,5 +18,5 @@ RUN mkdir "cache_directory" \
 ENV PATH="${PATH}:/app/.local/bin"
 
 # https://pythonspeed.com/articles/activate-conda-dockerfile/
-ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "VIRUS-MVP", "./dockerConf/start.sh"]
+ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "VIRUS-MVP", "/app/dockerConf/start.sh"]
 EXPOSE 8050
