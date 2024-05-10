@@ -10,4 +10,7 @@ services:
     ports:
       - "8050:8050"
     volumes:
-      - .:/app
+      - ./reference_data:/app/reference_data
+      - ./reference_surveillance_reports:/app/reference_surveillance_reports
+      - ./user_data:/app/user_data
+      - ./user_surveillance_reports:/app/user_surveillance_reports
