@@ -3,14 +3,19 @@ version: '3'
 services:
   app:
     tty: true
+    container_name: virus_mvp_app
     build:
       context: .
       dockerfile: ./dockerConf/Dockerfile
+      args:
+        WORKDIR: $PWD
     image: virus_mvp_app
     ports:
       - "8050:8050"
     volumes:
-      - ./reference_data:/app/reference_data
-      - ./reference_surveillance_reports:/app/reference_surveillance_reports
-      - ./user_data:/app/user_data
-      - ./user_surveillance_reports:/app/user_surveillance_reports
+      - /var/run/docker.sock:/var/run/docker.sock
+      - $PWD/nf-ncov-voc:$PWD/nf-ncov-voc
+      - ./reference_data:$PWD/reference_data
+      - ./reference_surveillance_reports:$PWD/reference_surveillance_reports
+      - ./user_data:$PWD/user_data
+      - ./user_surveillance_reports:$PWD/user_surveillance_reports

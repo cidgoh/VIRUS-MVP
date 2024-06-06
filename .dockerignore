@@ -8,9 +8,3 @@
 !data_parser.py
 !definitions.py
 !requirements.txt
-!nf-ncov-voc
-
-nf-ncov-voc/.nextflow
-nf-ncov-voc/results
-nf-ncov-voc/work
-nf-ncov-voc/.nextflow.log*
