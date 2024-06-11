@@ -70,6 +70,9 @@ It is a relatively simple setup.
 
 `$ docker-compose up`
 
+**Warning:** our docker setup bind mounts the host socket to the container. You
+should use a socket proxy prior to deployment.
+
 **One currently unresolved issue:** If you upload a file while the application
 is deployed through Docker, and then later attempt to upload a file while the
 application is deployed locally, the application will likely run into
