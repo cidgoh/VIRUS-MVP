@@ -1,4 +1,5 @@
 #!/bin/sh
+. venv/bin/activate
 
 set -o errexit
 

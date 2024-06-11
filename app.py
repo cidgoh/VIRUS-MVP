@@ -19,7 +19,7 @@ from base64 import b64decode
 from json import loads
 from os import path, remove, walk
 from pathlib import Path
-from shutil import copyfile, copytree, make_archive, rmtree
+from shutil import copyfile, copytree, make_archive
 from subprocess import run
 from tempfile import TemporaryDirectory
 from uuid import uuid4
@@ -419,12 +419,12 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
         _, base64_str = file_contents.split(",")
         # Run pipeline, but output contents into temporary dir. Then
         # copy appropriate output file to relevant dir.
-        with TemporaryDirectory() as dir_name:
+        with TemporaryDirectory(dir=NF_NCOV_VOC_DIR) as dir_name:
             user_file = path.join(dir_name, filename)
             rand_prefix = "u" + str(uuid4())
             with open(user_file, "w") as fp:
                 fp.write(b64decode(base64_str).decode("utf-8"))
-            run(["nextflow", "run", "main.nf", "-profile", "conda",
+            run(["nextflow", "run", "main.nf", "-profile", "docker",
                  "--prefix", rand_prefix, "--mode", "user",
                  "--viral_aligner", "minimap2", "--skip_postprocessing", "true",
                  "--skip_posting", "true", "skip_harmonize", "true",
