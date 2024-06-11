@@ -18,38 +18,67 @@ functionality) at https://virusmvp.org/.
 
 ## Installation
 
-### _0. (If uploading your own data)_ Install [Nextflow][nf] & [Conda][conda].
+### _0. (If uploading your own data)_ Install [Nextflow][nf] and/or [Docker][docker].
+If you plan to run the app locally, you need local installations of both
+Nextflow and Docker for file uploads.
+
+If you plan to run the app inside a Docker container, you only need Docker.
 
 [nf]: https://www.nextflow.io/docs/latest/getstarted.html
-[conda]: https://conda.io/projects/conda/en/latest/user-guide/install/
+[docker]: https://docs.docker.com/get-docker/
 
 ### 1. Clone the repository and its submodules
 
 `$ git clone git@github.com:cidgoh/VIRUS-MVP.git --recurse-submodules`
 
-### 2. Create a virtual environment
+### 2. Setup a virtual environment
+You can use either [venv][venv] or [Conda][conda] for this step.
 
-We use [Conda](https://docs.conda.io/en/latest/), but you can use
-[venv](https://docs.python.org/3/library/venv.html).
+#### Using [venv][venv]:
+
+`$ python3 -m venv myenv`
+
+`$ source myenv/bin/activate`
+
+`(myenv) $ pip install -r requirements.txt`
+
+#### Using [Conda][conda]:
 
 `$ conda create --name=VIRUS-MVP`
 
-### 3. Activate the environment
-
 `$ conda activate VIRUS-MVP`
-
-### 4. Install requirements
 
 `(VIRUS-MVP) $ pip install -r requirements.txt`
 
-### 5. Run the application
+[venv]: https://docs.python.org/3/library/venv.html
+[conda]: https://docs.conda.io/en/latest/
 
-If you do not run the application from the root directory,
-some of the JavaScript assets will not be compiled.
+### 3. Run the application
 
-`(VIRUS-MVP) $ python app.py`
+`(myenv) $ python app.py`
 
 Go to http://0.0.0.0:8050/.
+
+_Note: if you do not run the application from the root directory, some of the
+JavaScript assets will not be compiled._
+
+### _4. (If running the application through Docker)_
+
+It is a relatively simple setup.
+
+`$ docker-compose build`
+
+`$ docker-compose up`
+
+**One currently unresolved issue:** If you upload a file while the application
+is deployed through Docker, and then later attempt to upload a file while the
+application is deployed locally, the application will likely run into
+permission issues related to the _nf-ncov-voc_ cache. You can fix this by
+removing all cache files in the `nf-ncov-voc/` directory:
+
+`$ rm -r results work .nextflow .nextflow.log* capsule  framework  plugins  secrets  tmp`
+
+You may have to use `sudo`.
 
 ## Usage
 
