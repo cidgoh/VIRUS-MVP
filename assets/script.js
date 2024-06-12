@@ -1,14 +1,15 @@
 window.dash_clientside = Object.assign({}, window.dash_clientside, {
   clientside: {
-    /**
+    /**TODO
      * Make the checkboxes in the select lineage modal draggable within their
      * respective form groups, using the JQuery UI sortable plugin.
+     * @param _ Select lineages modal was opened.
      * @param {Array<Object>} idArray Dash pattern matching id values for
      *  checkboxes in select lineages modal.
      * @return {Boolean} ``true`` if we successfully made the checkboxes
      *  draggable.
      */
-    makeSelectLineagesModalCheckboxesDraggable: (idArray) => {
+    makeSelectLineagesModalCheckboxesDraggable: (_, idArray) => {
       // This function responds to all changes in the select lineages modal
       // body. But the checkboxes disappear when the modal is closed, so we
       // should do nothing when that happens.
