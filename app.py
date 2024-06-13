@@ -137,7 +137,7 @@ def launch_app(_):
     # Some default vals
     get_data_args = {
         "show_clade_defining": False,
-        "hidden_strains": [],
+        "hidden_strains": None,
         "strain_order": [],
         "min_mutation_freq": None,
         "max_mutation_freq": None
