@@ -52,7 +52,7 @@ app = dash.Dash(
     # callbacks.
     external_scripts=[
         "https://code.jquery.com/jquery-2.2.4.min.js",
-        "https://code.jquery.com/ui/1.12.1/jquery-ui.min.js",
+        "https://code.jquery.com/ui/1.11.4/jquery-ui.min.js",
     ],
     # We can use bootstrap CSS.
     # https://bit.ly/3tMqY0W for details.

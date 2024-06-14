@@ -1,6 +1,6 @@
 window.dash_clientside = Object.assign({}, window.dash_clientside, {
   clientside: {
-    /**TODO
+    /**
      * Make the checkboxes in the select lineage modal draggable within their
      * respective form groups, using the JQuery UI sortable plugin.
      * @param _ Select lineages modal was opened.
