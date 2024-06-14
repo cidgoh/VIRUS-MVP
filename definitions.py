@@ -1,11 +1,17 @@
+import csv
 import json
 import os
+
+import numpy as np
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 REFERENCE_DATA_DIR = os.path.join(ROOT_DIR, "reference_data")
 USER_DATA_DIR = os.path.join(ROOT_DIR, "user_data")
 ASSETS_DIR = os.path.join(ROOT_DIR, "assets")
 NF_NCOV_VOC_DIR = os.path.join(ROOT_DIR, "nf-ncov-voc")
+POKAY_FUNCTIONAL_ANNOTATIONS_TSV_PATH = \
+    os.path.join(NF_NCOV_VOC_DIR, "assets", "virus_functionalAnnotation",
+                 "NC_045512.2", "Pokay_functionalAnnotation_SARSCoV2_v1.0.tsv")
 GENOME_CONFIG_PATH = os.path.join(ASSETS_DIR, "genome_config.json")
 DEFAULT_REFERENCE_HIDDEN_STRAINS_PATH = \
     os.path.join(ASSETS_DIR, "default_reference_hidden_strains.json")
@@ -47,3 +53,8 @@ with open(DEFAULT_REFERENCE_HIDDEN_STRAINS_PATH) as fp:
 
 with open(DEFAULT_REFERENCE_STRAIN_ORDER_PATH) as fp:
     DEFAULT_REFERENCE_STRAIN_ORDER = json.load(fp)
+
+with open(POKAY_FUNCTIONAL_ANNOTATIONS_TSV_PATH) as fp:
+    reader = csv.DictReader(fp, delimiter="\t")
+    POKAY_FUNCTION_CATEGORIES = \
+        list(sorted({e["mutation functional effect category"] for e in reader}))
