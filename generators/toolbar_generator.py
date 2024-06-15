@@ -30,12 +30,13 @@ def get_toolbar_row(data):
                             type="circle"
                         ),
                         get_file_download_component(),
+                        get_filter_btn(),
                         get_jump_to_btn(),
                         get_legend_toggle_component()
                     ],
                     className="pl-4 pl-xl-5"
                 ),
-                width=7
+                width=8
             ),
             dbc.Col(
                 [
@@ -61,11 +62,11 @@ def get_toolbar_row(data):
                 id="mutation-freq-slider-col",
                 width=2
             ),
-            dbc.Col(
-                get_clade_defining_mutations_switch_form_group(),
-                className="my-auto pl-xl-5",
-                width=2
-            ),
+            # dbc.Col(
+            #     get_clade_defining_mutations_switch_form_group(),
+            #     className="my-auto pl-xl-5",
+            #     width=2
+            # ),
             get_select_lineages_modal(data),
             get_confirm_strain_del_modal(),
             get_jump_to_modal()
@@ -254,6 +255,16 @@ def get_file_download_component():
                    id="download-file-btn"),
         dcc.Download(id="download-file-data"),
     ], className="mr-2")
+
+
+def get_filter_btn():
+    """TODO"""
+    icon = html.I(className="bi-funnel-fill", style={"font-size": 16})
+    return dbc.Button(icon,
+                      color="secondary",
+                      outline=True,
+                      id="filter-btn",
+                      className="mr-2")
 
 
 def get_jump_to_btn():
