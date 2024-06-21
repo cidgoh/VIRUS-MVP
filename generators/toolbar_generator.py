@@ -69,6 +69,7 @@ def get_toolbar_row(data):
             # ),
             get_select_lineages_modal(data),
             get_confirm_strain_del_modal(),
+            get_filter_modal(),
             get_jump_to_modal()
         ],
         className="mt-3 ml-xl-3"
@@ -265,6 +266,32 @@ def get_filter_btn():
                       outline=True,
                       id="filter-btn",
                       className="mr-2")
+
+
+def get_filter_modal():
+    """TODO"""
+    return dbc.Modal([
+        dbc.ModalHeader("Filter mutations"),
+        dbc.ModalBody(
+            dbc.Row(
+                dbc.Col(
+                    "Hello world!"
+                )
+            ),
+            id="filter-modal-body"
+        ),
+        dbc.ModalFooter(
+            dbc.ButtonGroup([
+                dbc.Button("Cancel",
+                           className="mr-1",
+                           color="secondary",
+                           id="filter-modal-cancel-btn"),
+                dbc.Button("Jump",
+                           color="primary",
+                           id="filter-modal-ok-btn")
+            ])
+        )
+    ], id="filter-modal")
 
 
 def get_jump_to_btn():

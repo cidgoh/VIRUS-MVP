@@ -746,6 +746,22 @@ def toggle_confirm_strain_del_modal(strain_to_del, _, __):
 
 
 @app.callback(
+    Output("filter-modal", "is_open"),
+    Input("filter-btn", "n_clicks"),
+    Input("filter-modal-ok-btn", "n_clicks"),
+    Input("filter-modal-cancel-btn", "n_clicks"),
+    prevent_initial_call=True
+)
+def toggle_filter_modal(_, __, ___):
+    """TODO"""
+    ctx = dash.callback_context.triggered[0]["prop_id"]
+    if ctx == "filter-btn.n_clicks":
+        return True
+    else:
+        return False
+
+
+@app.callback(
     Output("jump-to-modal", "is_open"),
     Output("jump-to-modal-dropdown-search", "options"),
     Input("jump-to-btn", "n_clicks"),
