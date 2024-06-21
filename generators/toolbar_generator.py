@@ -6,7 +6,7 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 
-from definitions import USER_DATA_DIR
+from definitions import POKAY_FUNCTION_CATEGORIES, USER_DATA_DIR
 
 
 def get_toolbar_row(data):
@@ -267,12 +267,23 @@ def get_filter_modal():
     """TODO"""
     return dbc.Modal([
         dbc.ModalHeader("Filter mutations"),
-        dbc.ModalBody(
+        dbc.ModalBody([
             dbc.Row(
                 dbc.Col(
                     get_clade_defining_mutations_switch_form_group(),
                 ),
             ),
+            html.Hr(),
+            dbc.Row(
+                dbc.Col([
+                    dbc.Label("Functions", html_for="fns-dropdown"),
+                    dcc.Dropdown(
+                        id="fns-dropdown",
+                        options=[{"label": e, "value": e}
+                                 for e in POKAY_FUNCTION_CATEGORIES],
+                        multi=True)
+                ])
+            )],
             id="filter-modal-body"
         ),
         dbc.ModalFooter(
