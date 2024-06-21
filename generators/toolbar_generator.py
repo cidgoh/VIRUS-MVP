@@ -62,11 +62,6 @@ def get_toolbar_row(data):
                 id="mutation-freq-slider-col",
                 width=2
             ),
-            # dbc.Col(
-            #     get_clade_defining_mutations_switch_form_group(),
-            #     className="my-auto pl-xl-5",
-            #     width=2
-            # ),
             get_select_lineages_modal(data),
             get_confirm_strain_del_modal(),
             get_filter_modal(),
@@ -275,8 +270,8 @@ def get_filter_modal():
         dbc.ModalBody(
             dbc.Row(
                 dbc.Col(
-                    "Hello world!"
-                )
+                    get_clade_defining_mutations_switch_form_group(),
+                ),
             ),
             id="filter-modal-body"
         ),
@@ -286,7 +281,7 @@ def get_filter_modal():
                            className="mr-1",
                            color="secondary",
                            id="filter-modal-cancel-btn"),
-                dbc.Button("Jump",
+                dbc.Button("Ok",
                            color="primary",
                            id="filter-modal-ok-btn")
             ])

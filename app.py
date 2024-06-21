@@ -337,11 +337,13 @@ def read_data(get_data_args, last_data_mtime):
 
 @app.callback(
     Output("show-clade-defining", "data"),
-    Input("clade-defining-mutations-switch", "value"),
+    Input("filter-modal-ok-btn", "n_clicks"),
+    State("clade-defining-mutations-switch", "value"),
+    State("show-clade-defining", "data"),
     prevent_initial_call=True
 )
-def update_show_clade_defining(switches_value):
-    """Update ``show_clade_defining`` variable in dcc.Store.
+def update_show_clade_defining(_, switches_value, old_show_clade_defining):
+    """Update ``show_clade_defining`` variable in dcc.Store.TODO
 
     This should be set to True when the clade defining mutations switch
     is switched on, and False when it is turned off. It is None at
@@ -353,7 +355,10 @@ def update_show_clade_defining(switches_value):
     :return: True if clade defining mutations switch is switched on
     :rtype: bool
     """
-    return len(switches_value) > 0
+    new_show_clade_defining = len(switches_value) > 0
+    if new_show_clade_defining == old_show_clade_defining:
+        raise PreventUpdate
+    return new_show_clade_defining
 
 
 @app.callback(
