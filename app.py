@@ -19,7 +19,7 @@ from base64 import b64decode
 from json import loads
 from os import path, remove, walk
 from pathlib import Path
-from shutil import copyfile, copytree, make_archive, rmtree
+from shutil import copyfile, copytree, make_archive
 from subprocess import run
 from tempfile import TemporaryDirectory
 from uuid import uuid4
@@ -52,7 +52,7 @@ app = dash.Dash(
     # callbacks.
     external_scripts=[
         "https://code.jquery.com/jquery-2.2.4.min.js",
-        "https://code.jquery.com/ui/1.12.1/jquery-ui.min.js",
+        "https://code.jquery.com/ui/1.11.4/jquery-ui.min.js",
     ],
     # We can use bootstrap CSS.
     # https://bit.ly/3tMqY0W for details.
@@ -137,7 +137,7 @@ def launch_app(_):
     # Some default vals
     get_data_args = {
         "show_clade_defining": False,
-        "hidden_strains": [],
+        "hidden_strains": None,
         "strain_order": [],
         "min_mutation_freq": None,
         "max_mutation_freq": None
@@ -419,12 +419,12 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
         _, base64_str = file_contents.split(",")
         # Run pipeline, but output contents into temporary dir. Then
         # copy appropriate output file to relevant dir.
-        with TemporaryDirectory() as dir_name:
+        with TemporaryDirectory(dir=NF_NCOV_VOC_DIR) as dir_name:
             user_file = path.join(dir_name, filename)
             rand_prefix = "u" + str(uuid4())
             with open(user_file, "w") as fp:
                 fp.write(b64decode(base64_str).decode("utf-8"))
-            run(["nextflow", "run", "main.nf", "-profile", "conda",
+            run(["nextflow", "run", "main.nf", "-profile", "docker",
                  "--prefix", rand_prefix, "--mode", "user",
                  "--viral_aligner", "minimap2", "--skip_postprocessing", "true",
                  "--skip_posting", "true", "skip_harmonize", "true",
@@ -590,24 +590,39 @@ def update_hidden_strains(_, deleted_strain, checkbox_ids, checkbox_vals,
 
 
 @app.callback(
-    Output("select-lineages-modal", "is_open"),
     Output("select-lineages-modal-body", "children"),
+    Input("get-data-args", "data"),
+    State("last-data-mtime", "data"),
+    prevent_initial_call=True
+)
+def update_select_lineages_modal_body(get_data_args, last_data_mtime):
+    """Populate select lineages modal body.
+
+    This is triggered behind the scenes without opening the modal, and
+    whenever the data is updated.
+
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
+    :return: Content representing the select lineages modal body
+    :rtype: list[dbc.FormGroup]
+    """
+    data = read_data(get_data_args, last_data_mtime)
+    return toolbar_generator.get_select_lineages_modal_body(data)
+
+
+@app.callback(
+    Output("select-lineages-modal", "is_open"),
     Output("select-lineages-modal-loading", "children"),
     Input("open-select-lineages-modal-btn", "n_clicks"),
     Input("select-lineages-ok-btn", "n_clicks"),
     Input("select-lineages-cancel-btn", "n_clicks"),
     Input("deleted-strain", "data"),
-    State("get-data-args", "data"),
-    State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def toggle_select_lineages_modal(_, __, ___, ____, get_data_args,
-                                 last_data_mtime):
+def toggle_select_lineages_modal(_, __, ___, ____):
     """Open or close select lineages modal.
-
-    Not only is this function in charge of opening or closing the
-    select lineages modal, it is also in charge of dynamically
-    populating the select lineages modal body when the modal is opened.
 
     This is a little slow to open, so we return
     ``select-lineages-modal-loading`` to add a spinner.
@@ -616,28 +631,18 @@ def toggle_select_lineages_modal(_, __, ___, ____, get_data_args,
     :param __: OK button in select lineages modal was clicked
     :param ___: Cancel button in select lineages modal was clicked
     :param ____: OK button in confirm strain deletion modal was clicked
-    :param get_data_args: Args for ``get_data``
-    :type get_data_args: dict
-    :param last_data_mtime: Last mtime across all data files
-    :type last_data_mtime: float
     :return: Boolean representing whether the select lineages modal is
-        open or closed, content representing the select lineages
-        modal body, and ``select-lineages-modal-loading`` children.
-    :rtype: (bool, list[dbc.FormGroup])
+        open or closed, and ``select-lineages-modal-loading`` children.
+    :rtype: (bool, bool)
     """
-    # Current ``get_data`` return val
-    data = read_data(get_data_args, last_data_mtime)
-
     ctx = dash.callback_context
     triggered_prop_id = ctx.triggered[0]["prop_id"]
     # We only open the modal when the select lineages modal btn in the
     # toolbar is clicked.
     if triggered_prop_id == "open-select-lineages-modal-btn.n_clicks":
-        modal_body = toolbar_generator.get_select_lineages_modal_body(data)
-        return True, modal_body, None
+        return True, None
     else:
-        # No need to populate modal body if the modal is closed
-        return False, None, None
+        return False, None
 
 
 @app.callback(
@@ -1410,7 +1415,8 @@ app.clientside_callback(
         function_name="makeSelectLineagesModalCheckboxesDraggable"
     ),
     Output("make-select-lineages-modal-checkboxes-draggable", "data"),
-    Input({"type": "select-lineages-modal-checklist", "index": ALL}, "id"),
+    Input("select-lineages-modal", "is_open"),
+    State({"type": "select-lineages-modal-checklist", "index": ALL}, "id"),
     prevent_initial_call=True
 )
 app.clientside_callback(

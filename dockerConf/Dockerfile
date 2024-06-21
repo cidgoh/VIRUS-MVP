@@ -1,19 +1,27 @@
-FROM continuumio/miniconda3
+FROM python:latest
 
-WORKDIR /app
+ARG WORKDIR
 
-COPY ./dockerConf/environment.yml /environment.yml
-COPY ./dockerConf/start.sh /start.sh
+WORKDIR $WORKDIR
 
-RUN apt-get update -y \
-    && apt-get install default-jre -y \
+COPY . .
+COPY --from=docker:20.10 /usr/local/bin/docker .local/bin/
+
+RUN mkdir "cache_directory" \
+    && mkdir -p ".local/bin" \
+    && apt-get update -y \
+    && apt-get install openjdk-17-jre-headless -y \
+    && curl -s https://github.com/nextflow-io/nextflow/releases/download/v24.04.1/nextflow-24.04.1-all \
     && wget -qO- https://get.nextflow.io | bash \
     && chmod +x nextflow \
-    && mv /app/nextflow /usr/local/bin \
-    && conda env create -f /environment.yml \
-    && sed -i 's/\r$//g' /start.sh \
-    && chmod +x /start.sh
+    && mv nextflow .local/bin \
+    && python -m venv venv \
+    && . venv/bin/activate \
+    && pip install -r requirements.txt \
+    && sed -i 's/\r$//g' ./dockerConf/start.sh \
+    && chmod +x ./dockerConf/start.sh
 
-# https://pythonspeed.com/articles/activate-conda-dockerfile/
-ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "VIRUS-MVP", "/start.sh"]
+ENV PATH="$PATH:/$WORKDIR/.local/bin"
+
+ENTRYPOINT ["./dockerConf/start.sh"]
 EXPOSE 8050
