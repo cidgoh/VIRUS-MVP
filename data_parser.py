@@ -195,6 +195,18 @@ def filter_parsed_mutations_by_clade_defining(parsed_mutations):
     return ret
 
 
+def filter_parsed_mutations_by_fns(parsed_mutations, filtered_fns):
+    """TODO"""
+    ret = deepcopy(parsed_mutations)
+    filtered_fns_set = set(filtered_fns)
+    for strain in parsed_mutations:
+        for pos in parsed_mutations[strain]:
+            for i, mutation in enumerate(parsed_mutations[strain][pos]):
+                if not set(mutation["functions"]) & filtered_fns_set:
+                    ret[strain][pos][i]["hidden_cell"] = True
+    return ret
+
+
 def filter_parsed_mutations_by_freq(parsed_mutations, min_mutation_freq,
                                     max_mutation_freq):
     """Hide mutations of specific frequencies from parsed gvf file.
@@ -327,6 +339,11 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
     if show_clade_defining:
         visible_parsed_mutations = \
             filter_parsed_mutations_by_clade_defining(visible_parsed_mutations)
+
+    if filtered_fns:
+        visible_parsed_mutations = \
+            filter_parsed_mutations_by_fns(visible_parsed_mutations,
+                                           filtered_fns)
 
     mutation_freq_slider_vals = \
         get_mutation_freq_slider_vals(visible_parsed_mutations)
