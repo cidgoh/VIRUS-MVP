@@ -224,7 +224,7 @@ def filter_parsed_mutations_by_freq(parsed_mutations, min_mutation_freq,
 
 
 def get_data(dirs, show_clade_defining=False, hidden_strains=None,
-             strain_order=None, min_mutation_freq=None,
+             strain_order=None, filtered_fns=None, min_mutation_freq=None,
              max_mutation_freq=None):
     """Get relevant data for Plotly visualizations in this application.
 

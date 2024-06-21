@@ -281,6 +281,8 @@ def get_filter_modal():
                         id="fns-dropdown",
                         options=[{"label": e, "value": e}
                                  for e in POKAY_FUNCTION_CATEGORIES],
+                        # Prevent init condition where val is None
+                        value=[],
                         multi=True)
                 ])
             )],
