@@ -225,7 +225,7 @@ def launch_app(_):
 )
 def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
                          strain_order, filtered_fns, mutation_freq_vals):
-    """Update ``get-data-args`` variables in dcc.Store.TODO
+    """Update ``get-data-args`` variables in dcc.Store.
 
     This is a central callback. Updating ``get-data-args`` triggers a
     change to the ``get-data-args`` variable in dcc.Store, which
@@ -249,6 +249,8 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     :param strain_order: ``getStrainOrder`` return value from
         ``script.js``.
     :type strain_order: list[str]
+    :param filtered_fns: ``update_filtered_fns`` return
+    :type filtered_fns: list[str]
     :param mutation_freq_vals: Position of handles in mutation freq
         slider.
     :type mutation_freq_vals: list[int|float]
@@ -348,7 +350,7 @@ def read_data(get_data_args, last_data_mtime):
     prevent_initial_call=True
 )
 def update_show_clade_defining(_, switches_value, old_show_clade_defining):
-    """Update ``show_clade_defining`` variable in dcc.Store.TODO
+    """Update ``show_clade_defining`` variable in dcc.Store.
 
     This should be set to True when the clade defining mutations switch
     is switched on, and False when it is turned off. It is None at
@@ -357,8 +359,11 @@ def update_show_clade_defining(_, switches_value, old_show_clade_defining):
     :param switches_value: ``[1]`` if the clade defining mutation
         switch is switched on, and ``[]`` if it is not.
     :type switches_value: list
+    :param old_show_clade_defining: Current status of switch
+    :type old_show_clade_defining: bool
     :return: True if clade defining mutations switch is switched on
     :rtype: bool
+    :raise PreventUpdate: Clade defining switch val did not change
     """
     new_show_clade_defining = len(switches_value) > 0
     if new_show_clade_defining == old_show_clade_defining:
@@ -607,7 +612,21 @@ def update_hidden_strains(_, deleted_strain, checkbox_ids, checkbox_vals,
     prevent_initial_call=True
 )
 def update_filtered_fns(_, new_fns, old_fns):
-    """TODO"""
+    """Update ``filtered-fns`` variable in dcc.Store.
+
+    When the OK button is clicked in the mutation filtering modal, the
+    values from the fns dropdown are returned.
+
+    :param _: Ok btn in filtering modal clicked
+    :param new_fns: Vals from filtering modal fns dropdown after user
+        clicked Ok btn.
+    :type new_fns: list[str]
+    :param old_fns: Current ``filtered-fns`` value
+    :type old_fns: list[str]
+    :return: Fns to filter mutation visibility by
+    :rtype: list[str]
+    :raise PreventUpdate: List of fns to filter by did not change
+    """
     if new_fns == old_fns:
         raise PreventUpdate
     return new_fns
@@ -777,7 +796,17 @@ def toggle_confirm_strain_del_modal(strain_to_del, _, __):
     prevent_initial_call=True
 )
 def toggle_filter_modal(_, __, ___):
-    """TODO"""
+    """Open or close modal for filtering mutations.
+
+    This modal opens when a user clicks the filter btn on the toolbar.
+    It closes when the user clicks the cancel or ok btn in the modal.
+
+    :param _: User clicked btn in toolbar for opening modal
+    :param __: User clicked ok btn in modal
+    :param ___: User clicked cancel btn in modal
+    :return: Whether modal is open
+    :rtype: bool
+    """
     ctx = dash.callback_context.triggered[0]["prop_id"]
     if ctx == "filter-btn.n_clicks":
         return True

@@ -254,7 +254,11 @@ def get_file_download_component():
 
 
 def get_filter_btn():
-    """TODO"""
+    """Returns button for opening mutation filtering modal.
+
+    :return: Dash Bootstrap Components button with appropriate label
+    :rtype: dbc.Button
+    """
     icon = html.I(className="bi-funnel-fill", style={"font-size": 16})
     return dbc.Button(icon,
                       color="secondary",
@@ -264,7 +268,14 @@ def get_filter_btn():
 
 
 def get_filter_modal():
-    """TODO"""
+    """Returns modal for filtering mutations.
+
+    This modal is initially closed.
+
+    :return: Initially closed Dash Bootstrap Components modal for
+        filtering mutations.
+    :rtype: dbc.Modal
+    """
     return dbc.Modal([
         dbc.ModalHeader("Filter mutations"),
         dbc.ModalBody([

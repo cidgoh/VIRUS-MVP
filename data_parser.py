@@ -196,7 +196,18 @@ def filter_parsed_mutations_by_clade_defining(parsed_mutations):
 
 
 def filter_parsed_mutations_by_fns(parsed_mutations, filtered_fns):
-    """TODO"""
+    """Hide mutations from parsed gvf mutations that lack specific fns.
+
+    Mutation just needs one of the specified fns to remain visible.
+
+    :param parsed_mutations: ``parse_gvf_sample_variants`` ret "mutations" vals
+    :type parsed_mutations: dict
+    :param filtered_fns: Specific fns required for mutation visibility
+    :type filtered_fns: list[str]
+    :return: ``parsed_gvf_dirs`` with mutations lacking specified fns
+        labeled as hidden.
+    :rtype: dict
+    """
     ret = deepcopy(parsed_mutations)
     filtered_fns_set = set(filtered_fns)
     for strain in parsed_mutations:
@@ -264,6 +275,9 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
     :param strain_order: Order of strains from the dirs that the user
         wants to display in the heatmap.
     :type strain_order: list[str]
+    :param filtered_fns: Specified fns used to filter mutation
+        visibility.
+    :type filtered_fns: list[str]
     :param min_mutation_freq: Set mutations with a lower frequency than
         this as hidden.
     :type min_mutation_freq: int|float
