@@ -58,7 +58,7 @@ def get_toolbar_row(data):
                 className="my-auto pl-xl-5",
                 width=2
             ),
-            get_select_lineages_modal(),
+            get_select_lineages_modal(data),
             get_jump_to_modal()
         ],
         className="mt-3 ml-xl-3"
@@ -78,11 +78,13 @@ def get_select_lineages_toolbar_btn():
                       className="mr-2")
 
 
-def get_select_lineages_modal():
+def get_select_lineages_modal(data):
     """Returns select lineages modal.
 
-    This modal is initially closed, and the body is empty.
+    This modal is initially closed.
 
+    :param data: ``get_data`` return value
+    :type data: dict
     :return: Initially closed Dash Bootstrap Components modal for
         selecting lineages.
     :rtype: dbc.Modal
@@ -90,7 +92,7 @@ def get_select_lineages_modal():
     return dbc.Modal([
         dbc.ModalHeader("Select sample groups"),
         # Empty at launch; populated when user opens modal
-        dbc.ModalBody(None,
+        dbc.ModalBody(get_select_lineages_modal_body(data),
                       id="select-lineages-modal-body",
                       style={"height": "50vh", "overflowY": "scroll"}),
         dbc.ModalFooter(get_select_lineages_modal_footer())

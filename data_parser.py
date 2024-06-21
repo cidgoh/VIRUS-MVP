@@ -248,7 +248,7 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
     :type show_clade_defining: bool
     :param hidden_strains: List of strains from the dirs that the user
         does not want to display in the heatmap and table.
-    :type hidden_strains: list[str]
+    :type hidden_strains: None | list[str]
     :param strain_order: Order of strains from the dirs that the user
         wants to display in the heatmap.
     :type strain_order: list[str]
@@ -265,7 +265,7 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
     # Default view
     if not strain_order:
         strain_order = DEFAULT_REFERENCE_STRAIN_ORDER
-    if not hidden_strains:
+    if hidden_strains is None:
         hidden_strains = DEFAULT_REFERENCE_HIDDEN_STRAINS
         # Only display top 100 strains
         more_hidden_strains = \

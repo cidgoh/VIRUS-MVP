@@ -1,0 +1,10 @@
+*
+
+!assets
+!bin
+!dockerConf
+!generators
+!app.py
+!data_parser.py
+!definitions.py
+!requirements.txt

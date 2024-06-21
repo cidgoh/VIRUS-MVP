@@ -47,7 +47,7 @@ app = dash.Dash(
     # callbacks.
     external_scripts=[
         "https://code.jquery.com/jquery-2.2.4.min.js",
-        "https://code.jquery.com/ui/1.12.1/jquery-ui.min.js",
+        "https://code.jquery.com/ui/1.11.4/jquery-ui.min.js",
     ],
     # We can use bootstrap CSS.
     # https://bit.ly/3tMqY0W for details.
@@ -132,7 +132,7 @@ def launch_app(_):
     # Some default vals
     get_data_args = {
         "show_clade_defining": False,
-        "hidden_strains": [],
+        "hidden_strains": None,
         "strain_order": [],
         "min_mutation_freq": None,
         "max_mutation_freq": None
@@ -452,22 +452,38 @@ def update_hidden_strains(_, checkbox_ids, checkbox_vals, get_data_args,
 
 
 @app.callback(
-    Output("select-lineages-modal", "is_open"),
     Output("select-lineages-modal-body", "children"),
+    Input("get-data-args", "data"),
+    State("last-data-mtime", "data"),
+    prevent_initial_call=True
+)
+def update_select_lineages_modal_body(get_data_args, last_data_mtime):
+    """Populate select lineages modal body.
+
+    This is triggered behind the scenes without opening the modal, and
+    whenever the data is updated.
+
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
+    :return: Content representing the select lineages modal body
+    :rtype: list[dbc.FormGroup]
+    """
+    data = read_data(get_data_args, last_data_mtime)
+    return toolbar_generator.get_select_lineages_modal_body(data)
+
+
+@app.callback(
+    Output("select-lineages-modal", "is_open"),
     Output("select-lineages-modal-loading", "children"),
     Input("open-select-lineages-modal-btn", "n_clicks"),
     Input("select-lineages-ok-btn", "n_clicks"),
     Input("select-lineages-cancel-btn", "n_clicks"),
-    State("get-data-args", "data"),
-    State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def toggle_select_lineages_modal(_, __, ___, get_data_args, last_data_mtime):
+def toggle_select_lineages_modal(_, __, ___):
     """Open or close select lineages modal.
-
-    Not only is this function in charge of opening or closing the
-    select lineages modal, it is also in charge of dynamically
-    populating the select lineages modal body when the modal is opened.
 
     This is a little slow to open, so we return
     ``select-lineages-modal-loading`` to add a spinner.
@@ -475,28 +491,18 @@ def toggle_select_lineages_modal(_, __, ___, get_data_args, last_data_mtime):
     :param _: Select lineages button in toolbar was clicked
     :param __: OK button in select lineages modal was clicked
     :param ___: Cancel button in select lineages modal was clicked
-    :param get_data_args: Args for ``get_data``
-    :type get_data_args: dict
-    :param last_data_mtime: Last mtime across all data files
-    :type last_data_mtime: float
     :return: Boolean representing whether the select lineages modal is
-        open or closed, content representing the select lineages
-        modal body, and ``select-lineages-modal-loading`` children.
-    :rtype: (bool, list[dbc.FormGroup])
+        open or closed, and ``select-lineages-modal-loading`` children.
+    :rtype: (bool, bool)
     """
-    # Current ``get_data`` return val
-    data = read_data(get_data_args, last_data_mtime)
-
     ctx = dash.callback_context
     triggered_prop_id = ctx.triggered[0]["prop_id"]
     # We only open the modal when the select lineages modal btn in the
     # toolbar is clicked.
     if triggered_prop_id == "open-select-lineages-modal-btn.n_clicks":
-        modal_body = toolbar_generator.get_select_lineages_modal_body(data)
-        return True, modal_body, None
+        return True, None
     else:
-        # No need to populate modal body if the modal is closed
-        return False, None, None
+        return False, None
 
 
 @app.callback(
@@ -827,6 +833,33 @@ def update_heatmap_gene_bar_fig(_, get_data_args, last_data_mtime):
     gene_bar_fig = heatmap_generator.get_heatmap_gene_bar_fig(data)
     gene_bar_style = {"width": data["heatmap_cells_fig_width"]}
     return gene_bar_fig, gene_bar_style
+
+
+@app.callback(
+    Output("heatmap-nsp-bar-fig", "figure"),
+    Output("heatmap-nsp-bar-fig", "style"),
+    Input("heatmap-x-len", "data"),
+    State("get-data-args", "data"),
+    State("last-data-mtime", "data"),
+    prevent_initial_call=True
+)
+def update_heatmap_nsp_bar_fig(_, get_data_args, last_data_mtime):
+    """Update heatmap nsp bar fig.
+
+    :param _: Heatmap cells fig updated
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
+    :return: New heatmap gene bar fig and style
+    :rtype: (plotly.graph_objects.Figure, dict)
+    """
+    # Current ``get_data`` return val
+    data = read_data(get_data_args, last_data_mtime)
+
+    nsp_bar_fig = heatmap_generator.get_heatmap_nsp_bar_fig(data)
+    nsp_bar_style = {"width": data["heatmap_cells_fig_width"]}
+    return nsp_bar_fig, nsp_bar_style
 
 
 @app.callback(
@@ -1162,7 +1195,8 @@ app.clientside_callback(
         function_name="makeSelectLineagesModalCheckboxesDraggable"
     ),
     Output("make-select-lineages-modal-checkboxes-draggable", "data"),
-    Input({"type": "select-lineages-modal-checklist", "index": ALL}, "id"),
+    Input("select-lineages-modal", "is_open"),
+    State({"type": "select-lineages-modal-checklist", "index": ALL}, "id"),
     prevent_initial_call=True
 )
 app.clientside_callback(
