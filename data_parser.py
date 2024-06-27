@@ -164,7 +164,7 @@ def parse_gvf_sample_variants(path):
 
             fn_dict = mutation_dict["functions"]
             fn_category = attrs["function_category"].strip('"')
-            if not fn_category:
+            if not fn_category or fn_category == "n/a":
                 continue
             if fn_category not in fn_dict:
                 fn_dict[fn_category] = {}
