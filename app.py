@@ -25,10 +25,9 @@ from tempfile import TemporaryDirectory
 from uuid import uuid4
 
 import dash
+from dash import dcc, ALL, MATCH, ClientsideFunction, Input, Output, State
+from dash_auth import BasicAuth
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-from dash.dependencies import (ALL, MATCH, ClientsideFunction, Input, Output,
-                               State)
 from dash.exceptions import PreventUpdate
 from flask_caching import Cache
 
@@ -532,7 +531,7 @@ def toggle_toast(new_upload, _, positions_jumped_to):
     Input("select-lineages-ok-btn", "n_clicks"),
     Input("deleted-strain", "data"),
     State({"type": "select-lineages-modal-checkbox", "index": ALL}, "id"),
-    State({"type": "select-lineages-modal-checkbox", "index": ALL}, "checked"),
+    State({"type": "select-lineages-modal-checkbox", "index": ALL}, "value"),
     State("get-data-args", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
@@ -679,11 +678,11 @@ def toggle_all_strains_in_select_all_lineages_modal(_, __, checkbox_rows):
     if triggered_prop_id_type == "select-lineages-modal-all-btn":
         for i in range(len(ret)):
             ret[i]["props"]["children"][0]["props"]\
-                ["children"]["props"]["checked"] = True
+                ["children"]["props"]["value"] = True
     else:
         for i in range(len(ret)):
             ret[i]["props"]["children"][0]["props"]\
-                ["children"]["props"]["checked"] = False
+                ["children"]["props"]["value"] = False
     return ret
 
 

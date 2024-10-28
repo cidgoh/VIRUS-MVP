@@ -86,7 +86,7 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
           checkboxDivs = e2.find(':checkbox')
         }
         for (const checkboxDiv of checkboxDivs) {
-          ret.push(checkboxDiv.className)
+          ret.push(JSON.parse(checkboxDiv.id).index)
         }
       }
       // Do not update if strain order reflects current strain order. We check

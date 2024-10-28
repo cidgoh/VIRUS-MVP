@@ -2,9 +2,8 @@
 
 import os
 
+from dash import dcc, html
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
 
 from definitions import USER_DATA_DIR
 
@@ -33,7 +32,7 @@ def get_toolbar_row(data):
                         get_jump_to_btn(),
                         get_legend_toggle_component()
                     ],
-                    className="pl-4 pl-xl-5"
+                    className="ps-4 ps-xl-5"
                 ),
                 width=7
             ),
@@ -63,14 +62,14 @@ def get_toolbar_row(data):
             ),
             dbc.Col(
                 get_clade_defining_mutations_switch_form_group(),
-                className="my-auto pl-xl-5",
+                className="my-auto ps-xl-5",
                 width=2
             ),
             get_select_lineages_modal(data),
             get_confirm_strain_del_modal(),
             get_jump_to_modal()
         ],
-        className="mt-3 ml-xl-3"
+        className="mt-3 ms-xl-3"
     )
     return ret
 
@@ -84,7 +83,8 @@ def get_select_lineages_toolbar_btn():
     """
     return dbc.Button("Select groups",
                       id="open-select-lineages-modal-btn",
-                      className="mr-2")
+                      className="me-2",
+                      color="secondary")
 
 
 def get_select_lineages_modal(data):
@@ -144,10 +144,7 @@ def get_select_lineages_modal_body(data):
             checked = strain not in data["hidden_strains"]
             checkbox = dbc.Checkbox(
                 id={"type": "select-lineages-modal-checkbox", "index": strain},
-                # Kinda lame classname, but makes it faster to extract
-                # strain in JS.
-                className=strain,
-                checked=checked
+                value=checked
             )
             cols = [
                 dbc.Col(checkbox, width=1),
@@ -192,7 +189,7 @@ def get_select_lineages_modal_footer():
     """
     return dbc.ButtonGroup([
         dbc.Button("Ok",
-                   className="mr-1",
+                   className="me-1",
                    color="success",
                    id="select-lineages-ok-btn"),
         dbc.Button("Cancel",
@@ -236,7 +233,7 @@ def get_file_upload_component():
     return dcc.Upload(
         dbc.Button(icon, color="success", outline=True),
         id="upload-file",
-        className="mr-1"
+        className="me-1"
     )
 
 
@@ -253,7 +250,7 @@ def get_file_download_component():
                    outline=True,
                    id="download-file-btn"),
         dcc.Download(id="download-file-data"),
-    ], className="mr-2")
+    ], className="me-2")
 
 
 def get_jump_to_btn():
@@ -267,7 +264,7 @@ def get_jump_to_btn():
                       color="secondary",
                       outline=True,
                       id="jump-to-btn",
-                      className="mr-2")
+                      className="me-2")
 
 
 def get_jump_to_modal():
@@ -296,7 +293,7 @@ def get_jump_to_modal():
         dbc.ModalFooter(
             dbc.ButtonGroup([
                 dbc.Button("Cancel",
-                           className="mr-1",
+                           className="me-1",
                            color="secondary",
                            id="jump-to-modal-cancel-btn"),
                 dbc.Button("Jump",
@@ -370,9 +367,9 @@ def get_clade_defining_mutations_switch_form_group():
 
     :return: Dash Bootstrap Components form group with clade defining
         mutations switch.
-    :rtype: dbc.FormGroup
+    :rtype: dbc.Row
     """
-    ret = dbc.FormGroup([
+    ret = dbc.Row(dbc.Col([
         dbc.Checklist(
             options=[{
                 "label": "Clade defining",
@@ -382,6 +379,6 @@ def get_clade_defining_mutations_switch_form_group():
             id="clade-defining-mutations-switch",
             switch=True
         )],
-        className="mb-0 pl-xl-2"
-    )
+        className="mb-0 ps-xl-2"
+    ))
     return ret

@@ -2,9 +2,8 @@
 
 import math
 
+from dash import dcc, html
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
 import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -26,8 +25,7 @@ def get_histogram_row(data):
                 dbc.Row(
                     get_histogram_top_row(data),
                     id="histogram-top-row-div",
-                    className="mt-3",
-                    no_gutters=True
+                    className="mt-3 g-0"
                 ),
                 dbc.Row(
                     dbc.Col(
@@ -38,10 +36,10 @@ def get_histogram_row(data):
                         ),
                         width={"offset": 1, "size": 10}
                     ),
-                    no_gutters=True
+                    className="g-0"
                 )
             ]
-        ), no_gutters=True)
+        ), className="g-0")
 
 
 def get_histogram_top_row(data):

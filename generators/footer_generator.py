@@ -1,7 +1,7 @@
 """Functions for generating footer view."""
 
+from dash import html
 import dash_bootstrap_components as dbc
-import dash_html_components as html
 
 
 def get_footer_row_div(cidgoh_logo_path):
@@ -37,7 +37,7 @@ def get_footer_row_div(cidgoh_logo_path):
                     target="_blank",
                     rel="noopener noreferrer"
                 ),
-                className="ml-2",
+                className="ms-2",
                 width=2,
                 xl=1
             ),

@@ -1,8 +1,7 @@
 """Functions for generating legend view."""
 
+from dash import dcc, html
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
 import plotly.graph_objects as go
 
 
@@ -33,7 +32,7 @@ def get_legend_rows():
             [
                 dbc.Col(
                     get_axes_description(),
-                    className="border-top border-bottom border-left "
+                    className="border-top border-bottom border-start "
                               "border-dark "
                               "p-1",
                     width={"offset": 1, "size": 7}
@@ -44,7 +43,7 @@ def get_legend_rows():
                         figure=get_single_genome_legend_fig(),
                         config={"displayModeBar": False},
                     ),
-                    className="border-top border-bottom border-left "
+                    className="border-top border-bottom border-start "
                               "border-dark p-0",
                     width=1
                 ),
@@ -63,30 +62,29 @@ def get_legend_rows():
                         figure=get_recorded_functions_legend_fig(),
                         config={"displayModeBar": False},
                     ),
-                    className="border-top border-bottom border-right "
+                    className="border-top border-bottom border-end "
                               "border-dark p-0",
                     width=1
                 )
             ],
-            className="mt-2",
-            no_gutters=True
+            className="mt-2 g-0"
         ),
         dbc.Row(
             dbc.Col(html.B("You can zoom out of your browser to view more "
                            "cells at a time--the visualization will scale."),
-                    className="border-bottom border-left border-right "
+                    className="border-bottom border-start border-end "
                               "border-dark p-1",
                     width={"offset": 1, "size": 10}),
-            no_gutters=True
+            className="g-0"
         ),
         dbc.Row(
             dbc.Col(html.B("Click on a gene/region in the bar below the "
                            "histogram to automatically scroll to the "
                            "beginning of that gene/region in the heatmap."),
-                    className="border-bottom border-left border-right "
+                    className="border-bottom border-start border-end "
                               "border-dark p-1",
                     width={"offset": 1, "size": 10}),
-            no_gutters=True
+            className="g-0"
         )
     ]
     return ret

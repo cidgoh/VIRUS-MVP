@@ -8,8 +8,7 @@ using the Plotly scatter object, and making it look like a heatmap.
 """
 
 import dash_bootstrap_components as dbc
-import dash_html_components as html
-import dash_core_components as dcc
+from dash import dcc, html
 import plotly.graph_objects as go
 
 from definitions import GENE_COLORS_DICT
@@ -56,11 +55,11 @@ def get_heatmap_row(data):
                     dbc.Row(
                         dbc.Col(
                             "Sample groups",
-                            className="text-right h5",
+                            className="text-end h5",
                             style={"padding-top": 105, "padding-right": 15}
                         ),
-                        style={"height": 130},
-                        no_gutters=True
+                        className="g-0",
+                        style={"height": 130}
                     ),
                     # Space for y-axis fig; hackeyness for scrolling
                     # https://stackoverflow.com/a/49278385/11472358
@@ -99,7 +98,7 @@ def get_heatmap_row(data):
                                 }
                             )
                         ),
-                        no_gutters=True
+                        className="g-0"
                     )
                 ],
                 width=2,
@@ -118,7 +117,7 @@ def get_heatmap_row(data):
                                        "width": heatmap_cells_fig_width}
                             )
                         ),
-                        no_gutters=True
+                        className="g-0"
                     ),
                     # Protein bar above heatmap
                     dbc.Row(
@@ -131,7 +130,7 @@ def get_heatmap_row(data):
                                        "width": heatmap_cells_fig_width}
                             )
                         ),
-                        no_gutters=True
+                        className="g-0",
                     ),
                     # Nucleotide position axis
                     dbc.Row(
@@ -187,7 +186,7 @@ def get_heatmap_row(data):
                                 }
                             )
                         ),
-                        no_gutters=True
+                        className="g-0"
                     ),
                     # Amino acid axis
                     dbc.Row(
@@ -200,11 +199,11 @@ def get_heatmap_row(data):
                                        "width": heatmap_cells_fig_width}
                             )
                         ),
-                        no_gutters=True
+                        className="g-0"
                     ),
                 ],
                 id="heatmap-center-div",
-                className="pl-4",
+                className="ps-4",
                 width=8,
                 style={"overflowX": "scroll"}
             ),
@@ -217,8 +216,8 @@ def get_heatmap_row(data):
                             className="h5 font-italic",
                             style={"padding-top": 105, "padding-left": 15}
                         ),
-                        style={"height": 130},
-                        no_gutters=True
+                        className="g-0",
+                        style={"height": 130}
                     ),
                     # Space for sample size axis; some hackeyness for
                     # scrolling
@@ -262,7 +261,7 @@ def get_heatmap_row(data):
                                 }
                             )
                         ),
-                        no_gutters=True
+                        className="g-0"
                     )
                 ],
                 width=1
@@ -276,8 +275,8 @@ def get_heatmap_row(data):
                             className="h5",
                             style={"padding-top": 75}
                         ),
-                        style={"height": 100},
-                        no_gutters=True
+                        className="g-0",
+                        style={"height": 100}
                     ),
                     # Space for colorbar fig
                     dbc.Row(
@@ -288,7 +287,7 @@ def get_heatmap_row(data):
                                 config={"displayModeBar": False},
                             )
                         ),
-                        no_gutters=True
+                        className="g-0"
                     )
                 ],
                 width=1,
@@ -296,8 +295,7 @@ def get_heatmap_row(data):
             ),
             get_mutation_details_modal()
         ],
-        no_gutters=True,
-        className="mt-3"
+        className="mt-3 g-0"
     )
     return ret
 
@@ -919,9 +917,9 @@ def get_mutation_details_modal_body(mutation_fns):
     """
     outer_list_group = []
     for fn_category in mutation_fns:
-        inner_list_group = [dbc.ListGroupItemHeading(fn_category)]
+        inner_list_group = [dbc.ListGroupItem(html.H5(fn_category))]
         for fn_desc in mutation_fns[fn_category]:
-            inner_list_group.append(dbc.ListGroupItemText(fn_desc))
+            inner_list_group.append(dbc.ListGroupItem(fn_desc))
             fn_source = mutation_fns[fn_category][fn_desc]["source"]
             fn_citation = mutation_fns[fn_category][fn_desc]["citation"]
             a = html.A(fn_citation,
@@ -929,7 +927,7 @@ def get_mutation_details_modal_body(mutation_fns):
                        target="_blank",
                        # https://bit.ly/3qQjB7Y
                        rel="noopener noreferrer")
-            inner_list_group.append(dbc.ListGroupItemText(a))
+            inner_list_group.append(dbc.ListGroupItem(a))
         outer_list_group.append(dbc.ListGroupItem(inner_list_group))
     ret = dbc.ListGroup(outer_list_group)
     return ret
