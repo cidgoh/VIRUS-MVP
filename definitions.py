@@ -3,7 +3,7 @@ import os
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 REFERENCE_DATA_DIR = os.path.join(ROOT_DIR, "reference_data")
-USER_DATA_DIR = os.path.join(ROOT_DIR, "user_data")
+USER_DATA_DIRS = os.path.join(ROOT_DIR, "user_data")
 ASSETS_DIR = os.path.join(ROOT_DIR, "assets")
 NF_NCOV_VOC_DIR = os.path.join(ROOT_DIR, "nf-ncov-voc")
 GENOME_CONFIG_PATH = os.path.join(ASSETS_DIR, "genome_config.json")
@@ -13,7 +13,7 @@ DEFAULT_REFERENCE_STRAIN_ORDER_PATH = \
     os.path.join(ASSETS_DIR, "default_reference_strain_order.json")
 REFERENCE_SURVEILLANCE_REPORTS_DIR = \
     os.path.join(ROOT_DIR, "reference_surveillance_reports")
-USER_SURVEILLANCE_REPORTS_DIR = \
+USER_SURVEILLANCE_REPORTS_DIRS = \
     os.path.join(ROOT_DIR, "user_surveillance_reports")
 
 with open(GENOME_CONFIG_PATH) as fp:

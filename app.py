@@ -17,7 +17,7 @@ run faster.
 """
 from base64 import b64decode
 from json import loads
-from os import path, remove, walk
+from os import makedirs, path, remove, walk
 from pathlib import Path
 from shutil import copyfile, copytree, make_archive
 from subprocess import run
@@ -29,12 +29,13 @@ from dash import dcc, ALL, MATCH, ClientsideFunction, Input, Output, State
 from dash_auth import BasicAuth
 import dash_bootstrap_components as dbc
 from dash.exceptions import PreventUpdate
+from flask import request
 from flask_caching import Cache
 
 from data_parser import get_data
-from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR,
+from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIRS,
                          NF_NCOV_VOC_DIR, REFERENCE_SURVEILLANCE_REPORTS_DIR,
-                         USER_SURVEILLANCE_REPORTS_DIR)
+                         USER_SURVEILLANCE_REPORTS_DIRS)
 from generators import (heatmap_generator, histogram_generator,
                         legend_generator, table_generator, toast_generator,
                         toolbar_generator, footer_generator)
@@ -67,6 +68,13 @@ app = dash.Dash(
 )
 # server instance used for gunicorn deployment
 server = app.server
+
+# TODO
+USER_PWD = {
+    "foo": "bar",
+    "ham": "spam",
+}
+BasicAuth(app, USER_PWD, secret_key="foobar")
 
 # Cache specifications
 cache = Cache(server, config={
@@ -133,17 +141,28 @@ def launch_app(_):
     this callback. The ultimate purpose of this is to replace the blank
     loading screen when the app is first loaded.
     """
+    username = request.authorization["username"]
+    user_data_dir = \
+        path.join(USER_DATA_DIRS, username)
+    user_surveillance_reports_dir = \
+        path.join(USER_SURVEILLANCE_REPORTS_DIRS, username)
+    if not path.exists(user_data_dir):
+        makedirs(user_data_dir)
+    if not path.exists(user_surveillance_reports_dir):
+        makedirs(user_surveillance_reports_dir)
+
     # Some default vals
     get_data_args = {
         "show_clade_defining": False,
         "hidden_strains": None,
         "strain_order": [],
         "min_mutation_freq": None,
-        "max_mutation_freq": None
+        "max_mutation_freq": None,
+        "user_data_dir": user_data_dir
     }
     last_data_mtime = max([
         max(path.getmtime(root) for root, _, _ in walk(REFERENCE_DATA_DIR)),
-        max(path.getmtime(root) for root, _, _ in walk(USER_DATA_DIR))
+        max(path.getmtime(root) for root, _, _ in walk(user_data_dir))
     ])
     data_ = read_data(get_data_args, last_data_mtime)
 
@@ -200,7 +219,11 @@ def launch_app(_):
         dcc.Store(id="make-select-lineages-modal-checkboxes-draggable"),
         dcc.Store(id="make-histogram-rel-pos-bar-dynamic"),
         dcc.Store(id="allow-jumps-from-histogram"),
-        dcc.Store(id="link-heatmap-cells-y-scrolling")
+        dcc.Store(id="link-heatmap-cells-y-scrolling"),
+        dcc.Store(id="user-data-dir",
+                  data=user_data_dir),
+        dcc.Store(id="user-surveillance-reports-dir",
+                  data=user_surveillance_reports_dir)
     ], None
 
 
@@ -217,11 +240,15 @@ def launch_app(_):
         Input("strain-order", "data"),
         Input("mutation-freq-slider", "value")
     ],
+    state=[
+        # Should not be updated after page launch, so use state
+        State("user-data-dir", "data")
+    ],
     prevent_initial_call=True
 )
 def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
-                         strain_order, mutation_freq_vals):
-    """Update ``get-data-args`` variables in dcc.Store.
+                         strain_order, mutation_freq_vals, user_data_dir):
+    """Update ``get-data-args`` variables in dcc.Store.TODO
 
     This is a central callback. Updating ``get-data-args`` triggers a
     change to the ``get-data-args`` variable in dcc.Store, which
@@ -277,13 +304,14 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
         "hidden_strains": hidden_strains,
         "strain_order": strain_order,
         "min_mutation_freq": min_mutation_freq,
-        "max_mutation_freq": max_mutation_freq
+        "max_mutation_freq": max_mutation_freq,
+        "user_data_dir": user_data_dir
     }
 
     # Update ``last-data-mtime`` too
     last_data_mtime = max([
         max(path.getmtime(root) for root, _, _ in walk(REFERENCE_DATA_DIR)),
-        max(path.getmtime(root) for root, _, _ in walk(USER_DATA_DIR))
+        max(path.getmtime(root) for root, _, _ in walk(user_data_dir))
     ])
 
     # We call ``read_data`` here, so it gets cached. Otherwise, the
@@ -324,7 +352,7 @@ def read_data(get_data_args, last_data_mtime):
     :type last_data_mtime: float
     """
     ret = get_data(
-        [REFERENCE_DATA_DIR, USER_DATA_DIR],
+        [REFERENCE_DATA_DIR, get_data_args["user_data_dir"]],
         show_clade_defining=get_data_args["show_clade_defining"],
         hidden_strains=get_data_args["hidden_strains"],
         strain_order=get_data_args["strain_order"],
@@ -364,10 +392,12 @@ def update_show_clade_defining(switches_value):
     Input("upload-file", "filename"),
     State("get-data-args", "data"),
     State("last-data-mtime", "data"),
+    State("user-data-dir", "data"),
     prevent_initial_call=True
 )
-def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
-    """Update ``new_upload`` variable in dcc.Store.
+def update_new_upload(file_contents, filename, get_data_args, last_data_mtime,
+                      user_data_dir):
+    """Update ``new_upload`` variable in dcc.Store.TODO
 
     If a valid file is uploaded, it will be written to ``user_data``.
     But regardless of whether a valid file is uploaded, this function
@@ -432,7 +462,7 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
             results_path = path.join(dir_name, rand_prefix, "VARIANTANNOTATION")
 
             gvf_file = path.join(results_path, "%s_annotated.gvf" % sample_name)
-            copyfile(gvf_file, path.join(USER_DATA_DIR, sample_name + ".gvf"))
+            copyfile(gvf_file, path.join(user_data_dir, sample_name + ".gvf"))
         status = "ok"
         msg = "%s uploaded successfully." % filename
     new_upload_data = {"filename": filename,
@@ -446,10 +476,11 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
 @app.callback(
     Output("download-file-data", "data"),
     Input("download-file-btn", "n_clicks"),
+    State("user-surveillance-reports-dir", "data"),
     prevent_initial_call=True
 )
-def trigger_download(_):
-    """Send download file when user clicks download btn.
+def trigger_download(_, user_surveillance_reports_dir):
+    """Send download file when user clicks download btn.TODO
 
     This is a zip object of surveillance reports.
 
@@ -461,7 +492,7 @@ def trigger_download(_):
         reports_path = path.join(dir_name, "surveillance_reports")
         copytree(REFERENCE_SURVEILLANCE_REPORTS_DIR,
                  path.join(reports_path, "reference_surveillance_reports"))
-        copytree(USER_SURVEILLANCE_REPORTS_DIR,
+        copytree(user_surveillance_reports_dir,
                  path.join(reports_path, "user_surveillance_reports"))
         make_archive(reports_path, "zip", reports_path)
         return dcc.send_file(reports_path + ".zip")
@@ -783,10 +814,11 @@ def toggle_jump_to_modal(_, __, ___, get_data_args, last_data_mtime):
     Output("deleted-strain", "data"),
     Input("confirm-strain-del-modal-ok-btn", "n_clicks"),
     State("strain-to-del", "data"),
+    State("user-data-dir", "data"),
     prevent_initial_call=True
 )
-def update_deleted_strain(_, strain_to_del):
-    """Update ``deleted-strain`` var.
+def update_deleted_strain(_, strain_to_del, user_data_dir):
+    """Update ``deleted-strain`` var.TODO
 
     This happens after a user clicks the OK btn in the confirm strain
     deletion modal.
@@ -797,7 +829,7 @@ def update_deleted_strain(_, strain_to_del):
     :param strain_to_del: Strain corresponding to del btn user clicked
     :type strain_to_del: str
     """
-    remove(path.join(USER_DATA_DIR, strain_to_del + ".gvf"))
+    remove(path.join(user_data_dir, strain_to_del + ".gvf"))
     return strain_to_del
 
 
