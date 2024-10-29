@@ -15,6 +15,7 @@ REFERENCE_SURVEILLANCE_REPORTS_DIR = \
     os.path.join(ROOT_DIR, "reference_surveillance_reports")
 USER_SURVEILLANCE_REPORTS_DIRS = \
     os.path.join(ROOT_DIR, "user_surveillance_reports")
+USER_PWD_PATH = os.path.join(ROOT_DIR, "users.json")
 
 with open(GENOME_CONFIG_PATH) as fp:
     GENOME_CONFIG_DICT = json.load(fp)
@@ -47,3 +48,6 @@ with open(DEFAULT_REFERENCE_HIDDEN_STRAINS_PATH) as fp:
 
 with open(DEFAULT_REFERENCE_STRAIN_ORDER_PATH) as fp:
     DEFAULT_REFERENCE_STRAIN_ORDER = json.load(fp)
+
+with open(USER_PWD_PATH) as fp:
+    USER_PWD_DICT = json.load(fp)

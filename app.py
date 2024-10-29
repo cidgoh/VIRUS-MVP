@@ -35,7 +35,7 @@ from flask_caching import Cache
 from data_parser import get_data
 from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIRS,
                          NF_NCOV_VOC_DIR, REFERENCE_SURVEILLANCE_REPORTS_DIR,
-                         USER_SURVEILLANCE_REPORTS_DIRS)
+                         USER_SURVEILLANCE_REPORTS_DIRS, USER_PWD_DICT)
 from generators import (heatmap_generator, histogram_generator,
                         legend_generator, table_generator, toast_generator,
                         toolbar_generator, footer_generator)
@@ -69,12 +69,7 @@ app = dash.Dash(
 # server instance used for gunicorn deployment
 server = app.server
 
-# TODO
-USER_PWD = {
-    "foo": "bar",
-    "ham": "spam",
-}
-BasicAuth(app, USER_PWD, secret_key="foobar")
+BasicAuth(app, USER_PWD_DICT, secret_key="foobar")
 
 # Cache specifications
 cache = Cache(server, config={
