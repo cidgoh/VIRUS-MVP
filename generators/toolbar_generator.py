@@ -6,7 +6,7 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 
-from definitions import USER_DATA_DIR
+from definitions import REFERENCE_DATA_DIR
 
 
 def get_toolbar_row(data):
@@ -153,7 +153,7 @@ def get_select_lineages_modal_body(data):
                 dbc.Col(checkbox, width=1),
                 dbc.Col(strain)
             ]
-            if dir_ == USER_DATA_DIR:
+            if dir_ != REFERENCE_DATA_DIR:
                 cols.append(
                     dbc.Col(
                         dbc.Badge("Delete",
