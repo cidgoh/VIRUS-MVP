@@ -120,7 +120,7 @@ def parse_gvf_sample_variants(path):
             if pos not in ret["mutations"]:
                 ret["mutations"][pos] = []
 
-            mutation_name = attrs["Name"]
+            mutation_name = attrs["original_mutation_description"]
             cond = attrs["alias"] not in {"n/a", mutation_name}
             mutation_alias = attrs["alias"] if cond else ""
             alt = attrs["Variant_seq"]
@@ -163,14 +163,14 @@ def parse_gvf_sample_variants(path):
                 ret["mutations"][pos].append(mutation_dict)
 
             fn_dict = mutation_dict["functions"]
-            fn_category = attrs["function_category"].strip('"')
+            fn_category = attrs["measured_variant_functional_effect"].strip('"')
             if not fn_category or fn_category == "n/a":
                 continue
             if fn_category not in fn_dict:
                 fn_dict[fn_category] = {}
 
-            fn_desc = attrs["function_description"].strip('"')
-            fn_source = attrs["source"].strip('"')
+            fn_desc = attrs["variant_functional_effect_description"].strip('"')
+            fn_source = attrs["URL"].strip('"')
             fn_citation = attrs["citation"].strip('"')
             fn_dict[fn_category][fn_desc] = \
                 {"source": fn_source, "citation": fn_citation}
