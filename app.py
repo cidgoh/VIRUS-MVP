@@ -446,6 +446,7 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
 
 @app.callback(
     Output("download-file-data", "data"),
+    Output("download-loading", "children"),
     Input("download-file-btn", "n_clicks"),
     State("get-data-args", "data"),
     State("last-data-mtime", "data"),
@@ -484,7 +485,8 @@ def trigger_download(_, get_data_args, last_data_mtime):
                  path.join(reports_path, "user_surveillance_reports"),
                  ignore=ignore_fn)
         make_archive(reports_path, "zip", reports_path)
-        return dcc.send_file(reports_path + ".zip")
+        download_component = toolbar_generator.get_file_download_component()
+        return dcc.send_file(reports_path + ".zip"), download_component
 
 
 @app.callback(
