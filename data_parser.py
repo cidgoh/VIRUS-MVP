@@ -7,6 +7,7 @@ from copy import deepcopy
 import csv
 from itertools import compress, islice
 import os
+from pathlib import Path
 
 from definitions import (GENE_POSITIONS_DICT, NSP_POSITIONS_DICT,
                          DEFAULT_REFERENCE_HIDDEN_STRAINS,
@@ -288,12 +289,17 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
             return len(strain_order_dict), strain
 
     dir_strains_dict = {}
+    strain_filenames_dict = {}
     parsed_gvf_dirs = {}
     for dir_ in dirs:
         dir_entry_paths = \
             [e.path for e in os.scandir(dir_) if e.path.endswith(".gvf")]
         dir_entry_strains = \
             [parse_gvf_sample_name(e) for e in dir_entry_paths]
+        dir_entry_filenames = [Path(e).stem for e in dir_entry_paths]
+        strain_filenames_dict = \
+            {**strain_filenames_dict,
+             **dict(zip(dir_entry_strains, dir_entry_filenames))}
         strain_paths_dict = dict(zip(dir_entry_strains, dir_entry_paths))
         sorted_strain_paths_dict = \
             dict(sorted(strain_paths_dict.items(), key=strain_path_sort_key))
@@ -353,6 +359,8 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
             get_histogram_x(visible_parsed_mutations),
         "dir_strains_dict":
             dir_strains_dict,
+        "strain_filenames_dict":
+            strain_filenames_dict,
         "hidden_strains":
             hidden_strains,
         "voc_strains":

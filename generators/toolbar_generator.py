@@ -29,7 +29,11 @@ def get_toolbar_row(data):
                             id="upload-loading",
                             type="circle"
                         ),
-                        get_file_download_component(),
+                        dcc.Loading(
+                            get_file_download_component(),
+                            id="download-loading",
+                            type="circle"
+                        ),
                         get_jump_to_btn(),
                         get_legend_toggle_component()
                     ],
