@@ -21,7 +21,11 @@ def get_toolbar_row(data):
                 dbc.ButtonGroup(
                     [
                         get_select_lineages_toolbar_btn(),
-                        get_file_download_component(),
+                        dcc.Loading(
+                            get_file_download_component(),
+                            id="download-loading",
+                            type="circle"
+                        ),
                         get_jump_to_btn(),
                         get_legend_toggle_component()
                     ],

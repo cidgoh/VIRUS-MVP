@@ -17,6 +17,7 @@ run faster.
 """
 from json import loads
 from os import path, walk
+from pathlib import Path
 from shutil import copytree, make_archive
 from tempfile import TemporaryDirectory
 
@@ -340,24 +341,43 @@ def update_show_clade_defining(switches_value):
 
 @app.callback(
     Output("download-file-data", "data"),
+    Output("download-loading", "children"),
     Input("download-file-btn", "n_clicks"),
+    State("get-data-args", "data"),
+    State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def trigger_download(_):
+def trigger_download(_, get_data_args, last_data_mtime):
     """Send download file when user clicks download btn.
 
-    This is a zip object of surveillance reports.
+    This is a zip object of surveillance reports for visible strains.
 
     :param _: Unused input variable that monitors when download btn is
         clicked.
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
     :return: Fires dash function that triggers file download
     """
+    # Ignores non-visible strains during `copytree`
+    def ignore_fn(dir_, contents):
+        if dir_ == REFERENCE_SURVEILLANCE_REPORTS_DIR:
+            return []
+        data = read_data(get_data_args, last_data_mtime)
+        visible_strains = data["heatmap_y_strains"]
+        visible_filenames = \
+            {data["strain_filenames_dict"][e] for e in visible_strains}
+        return [e for e in contents if Path(e).stem not in visible_filenames]
+
     with TemporaryDirectory() as dir_name:
         reports_path = path.join(dir_name, "surveillance_reports")
         copytree(REFERENCE_SURVEILLANCE_REPORTS_DIR,
-                 path.join(reports_path, "reference_surveillance_reports"))
+                 path.join(reports_path, "reference_surveillance_reports"),
+                 ignore=ignore_fn)
         make_archive(reports_path, "zip", reports_path)
-        return dcc.send_file(reports_path + ".zip")
+        download_component = toolbar_generator.get_file_download_component()
+        return dcc.send_file(reports_path + ".zip"), download_component
 
 
 @app.callback(
