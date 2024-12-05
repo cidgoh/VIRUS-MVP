@@ -1,19 +1,8 @@
 [
-  "KP.1.2.gvf",
-  "KP.2.1.gvf",
-  "KP.2.2.gvf",
-  "KP.2.3.1.gvf",
-  "KP.2.3.2.gvf",
-  "KP.2.3.3.gvf",
-  "KP.2.3.4.gvf",
-  "KP.2.3.5.gvf",
-  "KP.2.3.gvf",
-  "KP.2.gvf",
-  "MA.1.gvf",
-  "MC.2.1.gvf",
-  "MC.2.gvf",
-  "MC.3.gvf",
-  "MC.4.gvf",
-  "MC.6.gvf",
-  "MC.7.gvf"
+  "KP.1.2",
+  "KP.2",
+  "KP.2.1",
+  "MA.1",
+  "MC.3",
+  "MC.7"
 ]
