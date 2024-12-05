@@ -27,11 +27,33 @@ GROWING_LINEAGES_PATH = \
 LAST_120_DAYS_PATH = \
     "https://covarr-net.github.io/duotang/downloads/Last%20120%20days.tsv"
 
+def parse_gvf_sample_name(path):
+    """Parse sample group name from gvf file header.
+
+    :param path: Path to gvf file to parse
+    :type path: str
+    :return: Gvf file sample group
+    :rtype: str
+    """
+    with open(path, encoding="utf-8") as fp:
+        # Skip first two lines
+        next(fp)
+        next(fp)
+        # "##sample-description sample_desc=x;sample_group=y;"
+        sample_desc = fp.readline()
+        # "sample_desc=x;sample_group=y"
+        sample_desc_vals_str = sample_desc.split()[1].strip(";")
+        # [["sample_desc", "x"], ["sample_group", "y"]]
+        sample_desc_vals_list = \
+            [e.split("=") for e in sample_desc_vals_str.split(";")]
+        # {"sample_desc": "x", "sample_group": "y"}
+        return dict(sample_desc_vals_list)["sample_group"]
 
 def main():
-    reference_file_names_table = \
-        sorted({e.name: 0 for e in scandir(REFERENCE_DATA_DIR)})
-    default_file_names_table = {}
+    reference_strains_table = sorted(
+        {parse_gvf_sample_name(e.path): 0 for e in scandir(REFERENCE_DATA_DIR)}
+    )
+    default_strains_table = {}
 
     with TextIOWrapper(urlopen(GROWING_LINEAGES_PATH)) as fp:
         for lineage_dict in DictReader(fp, delimiter="\t"):
@@ -41,32 +63,27 @@ def main():
             if lineage_name.endswith("*"):
                 prefix_cond = lineage_name[:-1]
             else:
-                prefix_cond = lineage_name + "_"
-            for file_name in reference_file_names_table:
-                if file_name.startswith(prefix_cond):
-                    if file_name not in default_file_names_table:
-                        default_file_names_table[file_name] = 0
+                prefix_cond = lineage_name
+            for strain in reference_strains_table:
+                if strain.startswith(prefix_cond):
+                    if strain not in default_strains_table:
+                        default_strains_table[strain] = 0
 
     with TextIOWrapper(urlopen(LAST_120_DAYS_PATH)) as fp:
         for lineage_dict in DictReader(fp, delimiter="\t"):
             lineage_name = lineage_dict["Lineage"]
-            for file_name in reference_file_names_table:
-                if file_name.startswith(lineage_name + "_"):
-                    if file_name not in default_file_names_table:
-                        default_file_names_table[file_name] = 0
+            for strain in reference_strains_table:
+                if strain.startswith(lineage_name):
+                    if strain not in default_strains_table:
+                        default_strains_table[strain] = 0
 
-    default_hidden_file_names = [e for e in reference_file_names_table
-                                 if e not in default_file_names_table]
-    # Super hackey; could break if naming format changes
-    default_hidden_strains = \
-        [e.split("_")[0] for e in default_hidden_file_names]
+    default_hidden_strains = [e for e in reference_strains_table
+                              if e not in default_strains_table]
     with open(DEFAULT_REFERENCE_HIDDEN_STRAINS_PATH, "w") as fp:
         json.dump(default_hidden_strains, fp, indent=2)
 
-    default_file_names_order = \
-        [e for e in default_file_names_table] + default_hidden_strains
-    # Super hackey; could break if naming format changes
-    default_strain_order = [e.split("_")[0] for e in default_file_names_order]
+    default_strain_order = \
+        [e for e in default_strains_table] + default_hidden_strains
     with open(DEFAULT_REFERENCE_STRAIN_ORDER_PATH, "w") as fp:
         json.dump(default_strain_order, fp, indent=2)
 
