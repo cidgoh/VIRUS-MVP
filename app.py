@@ -362,13 +362,17 @@ def trigger_download(_, get_data_args, last_data_mtime):
     """
     # Ignores non-visible strains during `copytree`
     def ignore_fn(dir_, contents):
-        if dir_ == REFERENCE_SURVEILLANCE_REPORTS_DIR:
-            return []
-        data = read_data(get_data_args, last_data_mtime)
-        visible_strains = data["heatmap_y_strains"]
-        visible_filenames = \
-            {data["strain_filenames_dict"][e] for e in visible_strains}
-        return [e for e in contents if Path(e).stem not in visible_filenames]
+        reference_nested_dir = \
+            str(Path(dir_).parent) == REFERENCE_SURVEILLANCE_REPORTS_DIR
+        if reference_nested_dir:
+            data = read_data(get_data_args, last_data_mtime)
+            visible_strains = data["heatmap_y_strains"]
+            visible_filenames = \
+                {data["strain_filenames_dict"][e] for e in visible_strains}
+            return [e for e in contents
+                    if Path(e).stem not in visible_filenames]
+        # All other conditions, ignore nothing
+        return []
 
     with TemporaryDirectory() as dir_name:
         reports_path = path.join(dir_name, "surveillance_reports")
