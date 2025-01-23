@@ -17,9 +17,9 @@ run faster.
 """
 from base64 import b64decode
 from json import loads
-from os import path, remove, walk
+from os import mkdir, path, remove, walk
 from pathlib import Path
-from shutil import copyfile, copytree, make_archive
+from shutil import copyfile, copytree, make_archive, rmtree
 from subprocess import run
 from tempfile import TemporaryDirectory
 from uuid import uuid4
@@ -426,14 +426,25 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
                 fp.write(b64decode(base64_str).decode("utf-8"))
             run(["nextflow", "run", "main.nf", "-profile", "docker",
                  "--prefix", rand_prefix, "--mode", "user",
-                 "--viral_aligner", "minimap2", "--skip_postprocessing", "true",
+                 "--skip_variantannotation", "--skip_postprocessing", "true",
                  "--skip_posting", "true", "skip_harmonize", "true",
                  "--seq", user_file, "--outdir", dir_name],
                 cwd=NF_NCOV_VOC_DIR)
-            results_path = path.join(dir_name, rand_prefix, "VARIANTANNOTATION")
 
-            gvf_file = path.join(results_path, "%s_annotated.gvf" % sample_name)
-            copyfile(gvf_file, path.join(USER_DATA_DIR, sample_name + ".gvf"))
+            data_path = path.join(dir_name, rand_prefix, "FUNCTIONALANNOTATION")
+            gvf_file = path.join(data_path, "%s.annotated.gvf" % sample_name)
+            copyfile(gvf_file,
+                     path.join(USER_DATA_DIR, sample_name + ".gvf"))
+
+            reports_dir = path.join(USER_SURVEILLANCE_REPORTS_DIR, sample_name)
+            if path.exists(reports_dir):
+                rmtree(reports_dir)
+            mkdir(reports_dir)
+            surveillance_path = path.join(dir_name, rand_prefix, "SURVEILLANCE")
+            copytree(path.join(surveillance_path, "PDF"),
+                     path.join(reports_dir, "PDF"))
+            copytree(path.join(surveillance_path, "TSV"),
+                     path.join(reports_dir, "TSV"))
         status = "ok"
         msg = "%s uploaded successfully." % filename
     new_upload_data = {"filename": filename,
@@ -467,14 +478,19 @@ def trigger_download(_, get_data_args, last_data_mtime):
     """
     # Ignores non-visible strains during `copytree`
     def ignore_fn(dir_, contents):
-        if dir_ in (REFERENCE_SURVEILLANCE_REPORTS_DIR,
-                    USER_SURVEILLANCE_REPORTS_DIR):
-            return []
-        data = read_data(get_data_args, last_data_mtime)
-        visible_strains = data["heatmap_y_strains"]
-        visible_filenames = \
-            {data["strain_filenames_dict"][e] for e in visible_strains}
-        return [e for e in contents if Path(e).stem not in visible_filenames]
+        reference_nested_dir = \
+            str(Path(dir_).parent) == REFERENCE_SURVEILLANCE_REPORTS_DIR
+        user_dir = \
+            dir_ == USER_SURVEILLANCE_REPORTS_DIR
+        if reference_nested_dir or user_dir:
+            data = read_data(get_data_args, last_data_mtime)
+            visible_strains = data["heatmap_y_strains"]
+            visible_filenames = \
+                {data["strain_filenames_dict"][e] for e in visible_strains}
+            return [e for e in contents
+                    if Path(e).stem not in visible_filenames]
+        # All other conditions, ignore nothing
+        return []
 
     with TemporaryDirectory() as dir_name:
         reports_path = path.join(dir_name, "surveillance_reports")
@@ -805,9 +821,11 @@ def toggle_jump_to_modal(_, __, ___, get_data_args, last_data_mtime):
     Output("deleted-strain", "data"),
     Input("confirm-strain-del-modal-ok-btn", "n_clicks"),
     State("strain-to-del", "data"),
+    State("get-data-args", "data"),
+    State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def update_deleted_strain(_, strain_to_del):
+def update_deleted_strain(_, strain_to_del, get_data_args, last_data_mtime):
     """Update ``deleted-strain`` var.
 
     This happens after a user clicks the OK btn in the confirm strain
@@ -818,8 +836,19 @@ def update_deleted_strain(_, strain_to_del):
     :param _: User clicked the OK btn
     :param strain_to_del: Strain corresponding to del btn user clicked
     :type strain_to_del: str
+    :param get_data_args: Args for ``get_data``
+    :type get_data_args: dict
+    :param last_data_mtime: Last mtime across all data files
+    :type last_data_mtime: float
+    :return: Name of deleted strains
+    :rtype: str
     """
-    remove(path.join(USER_DATA_DIR, strain_to_del + ".gvf"))
+    # Current ``get_data`` return val
+    data = read_data(get_data_args, last_data_mtime)
+
+    strain_to_del_filename = data["strain_filenames_dict"][strain_to_del]
+    remove(path.join(USER_DATA_DIR, strain_to_del_filename + ".gvf"))
+    rmtree(path.join(USER_SURVEILLANCE_REPORTS_DIR, strain_to_del_filename))
     return strain_to_del
 
 
