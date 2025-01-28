@@ -21,11 +21,6 @@ with open(GENOME_CONFIG_PATH) as fp:
 
 GENOME_LEN = GENOME_CONFIG_DICT["Src"]["end"]
 
-FIRST_REGION = {k for k, v in GENOME_CONFIG_DICT.items()
-                if k != "Src" and "start" in v and v["start"] == 1}.pop()
-LAST_REGION = {k for k, v in GENOME_CONFIG_DICT.items()
-                if k != "Src" and "end" in v and v["end"] == GENOME_LEN}.pop()
-
 gene_bar_components = \
     [e for e in GENOME_CONFIG_DICT if GENOME_CONFIG_DICT[e]["type"]
      in ["CDS", "five_prime_UTR", "three_prime_UTR", "INTERGENIC"]]
@@ -34,6 +29,20 @@ GENE_COLORS_DICT = \
 GENE_POSITIONS_DICT = \
     {k: {x: GENOME_CONFIG_DICT[k][x] for x in ["start", "end"]}
      for k in gene_bar_components[:-1]}
+
+first_component = min(GENE_POSITIONS_DICT,
+                   key=lambda k: GENE_POSITIONS_DICT[k]["start"])
+if GENE_POSITIONS_DICT[first_component]["start"] == 1:
+    FIRST_REGION = [1, GENE_POSITIONS_DICT[first_component]["end"]]
+else:
+    FIRST_REGION = [1, GENE_POSITIONS_DICT[first_component]["start"]-1]
+
+last_component = max(GENE_POSITIONS_DICT,
+                  key=lambda k: GENE_POSITIONS_DICT[k]["end"])
+if GENE_POSITIONS_DICT[last_component]["end"] == GENOME_LEN:
+    LAST_REGION = [GENE_POSITIONS_DICT[last_component]["start"], GENOME_LEN]
+else:
+    LAST_REGION = [GENE_POSITIONS_DICT[last_component]["end"]+1, GENOME_LEN]
 
 nsp_bar_components = \
     [e for e in GENOME_CONFIG_DICT
