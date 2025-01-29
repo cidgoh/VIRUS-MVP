@@ -588,15 +588,18 @@ def get_heatmap_x_aa_pos(heatmap_x_nt_pos, heatmap_x_genes):
     """
     gene_start_positions = \
         {k: GENE_POSITIONS_DICT[k]["start"] for k in GENE_POSITIONS_DICT}
-    last_gene_seen = "3'UTR"
+    last_gene_seen = heatmap_x_genes[-1]
     ret = ["" for _ in heatmap_x_nt_pos]
     # Iterate through nt pos in reverse
     for i, pos in enumerate(reversed(heatmap_x_nt_pos)):
         # Negative index
         _i = -1 - i
         gene = heatmap_x_genes[_i]
-        if gene in {FIRST_REGION, LAST_REGION}:
-            ret[_i] = gene
+        if FIRST_REGION[0] <= int(pos) <= FIRST_REGION[1]:
+            ret[_i] = ""
+            continue
+        if LAST_REGION[0] <= int(pos) <= LAST_REGION[1]:
+            ret[_i] = ""
             continue
         if gene == "INTERGENIC":
             last_gene_start_pos = gene_start_positions[last_gene_seen]
