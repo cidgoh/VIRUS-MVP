@@ -139,6 +139,7 @@ def launch_app(_):
         "show_clade_defining": False,
         "hidden_strains": None,
         "strain_order": [],
+        "selected_gene": None,
         "min_mutation_freq": None,
         "max_mutation_freq": None
     }
@@ -184,6 +185,7 @@ def launch_app(_):
         dcc.Store(id="new-upload"),
         dcc.Store(id="hidden-strains", data=get_data_args["hidden_strains"]),
         dcc.Store(id="strain-order", data=get_data_args["strain_order"]),
+        dcc.Store(id="selected-gene", data=get_data_args["selected_gene"]),
         dcc.Store(id="last-heatmap-cell-clicked"),
         dcc.Store(id="last-histogram-point-clicked"),
         dcc.Store(id="strain-to-del"),
@@ -216,13 +218,14 @@ def launch_app(_):
         Input("new-upload", "data"),
         Input("hidden-strains", "data"),
         Input("strain-order", "data"),
+        Input("selected-gene", "data"),
         Input("mutation-freq-slider", "value")
     ],
     prevent_initial_call=True
 )
 def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
-                         strain_order, mutation_freq_vals):
-    """Update ``get-data-args`` variables in dcc.Store.
+                         strain_order, selected_gene, mutation_freq_vals):
+    """Update ``get-data-args`` variables in dcc.Store.TODO
 
     This is a central callback. Updating ``get-data-args`` triggers a
     change to the ``get-data-args`` variable in dcc.Store, which
@@ -277,6 +280,7 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
         "show_clade_defining": show_clade_defining,
         "hidden_strains": hidden_strains,
         "strain_order": strain_order,
+        "selected_gene": selected_gene,
         "min_mutation_freq": min_mutation_freq,
         "max_mutation_freq": max_mutation_freq
     }
@@ -329,6 +333,7 @@ def read_data(get_data_args, last_data_mtime):
         show_clade_defining=get_data_args["show_clade_defining"],
         hidden_strains=get_data_args["hidden_strains"],
         strain_order=get_data_args["strain_order"],
+        selected_gene=get_data_args["selected_gene"],
         min_mutation_freq=get_data_args["min_mutation_freq"],
         max_mutation_freq=get_data_args["max_mutation_freq"]
     )
