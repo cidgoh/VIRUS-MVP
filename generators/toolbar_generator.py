@@ -6,7 +6,7 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 
-from definitions import USER_DATA_DIR
+from definitions import GENE_POSITIONS_DICT, USER_DATA_DIR
 
 
 def get_toolbar_row(data):
@@ -35,6 +35,7 @@ def get_toolbar_row(data):
                             type="circle"
                         ),
                         get_jump_to_btn(),
+                        get_select_gene_dropdown(),
                         get_legend_toggle_component()
                     ],
                     className="pl-4 pl-xl-5"
@@ -272,6 +273,19 @@ def get_jump_to_btn():
                       outline=True,
                       id="jump-to-btn",
                       className="mr-2")
+
+
+def get_select_gene_dropdown():
+    """TODO"""
+    # Use empty str instead of None here. Works well downstream
+    opts = [{"label": "All", "value": ""}]
+    opts += [{"label": e, "value": e} for e in GENE_POSITIONS_DICT]
+    ret = dbc.Select(options=opts,
+                     placeholder="All",
+                     style={"width": "5rem"},
+                     id="select-gene-dropdown",
+                     className="mr-2")
+    return ret
 
 
 def get_jump_to_modal():

@@ -96,11 +96,6 @@ def parse_gvf_sample_variants(path, selected_gene):
                 [x.split("=", 1) for x in attrs_first_split]
             attrs = {k: v for k, v in attrs_second_split}
 
-            pos = row["#start"]
-            if selected_gene:
-                if not selected_gene_start <= int(pos) <= selected_gene_end:
-                    continue
-
             if parsing_first_row:
                 # Default values
                 variant = None
@@ -126,6 +121,10 @@ def parse_gvf_sample_variants(path, selected_gene):
 
                 parsing_first_row = False
 
+            pos = row["#start"]
+            if selected_gene:
+                if not selected_gene_start <= int(pos) <= selected_gene_end:
+                    continue
             if pos not in ret["mutations"]:
                 ret["mutations"][pos] = []
 

@@ -35,7 +35,7 @@ from flask_caching import Cache
 from data_parser import get_data
 from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR,
                          NF_NCOV_VOC_DIR, REFERENCE_SURVEILLANCE_REPORTS_DIR,
-                         USER_SURVEILLANCE_REPORTS_DIR)
+                         USER_SURVEILLANCE_REPORTS_DIR, GENE_POSITIONS_DICT)
 from generators import (heatmap_generator, histogram_generator,
                         legend_generator, table_generator, toast_generator,
                         toolbar_generator, footer_generator)
@@ -820,6 +820,19 @@ def toggle_jump_to_modal(_, __, ___, get_data_args, last_data_mtime):
         return True, data["jump_to_dropdown_search_options"]
     else:
         return False, []
+
+
+@app.callback(
+    Output("selected-gene", "data"),
+    Input("select-gene-dropdown", "value"),
+    prevent_initial_call=True
+)
+def update_selected_gene(selected_gene):
+    """TODO"""
+    if selected_gene == "":
+        return None
+    else:
+        return selected_gene
 
 
 @app.callback(
