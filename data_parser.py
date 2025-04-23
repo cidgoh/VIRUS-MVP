@@ -72,8 +72,8 @@ def parse_gvf_sample_name(path):
         return dict(sample_desc_vals_list)["sample_group"]
 
 
-def parse_gvf_sample_variants(path):
-    """Parse gvf file variant data relevant to viz.
+def parse_gvf_sample_variants(path, selected_gene):
+    """Parse gvf file variant data relevant to viz.TODO
 
     :param path: Path to gvf file to parse
     :type path: str
@@ -86,11 +86,20 @@ def parse_gvf_sample_variants(path):
 
         parsing_first_row = True
 
+        if selected_gene:
+            selected_gene_start = GENE_POSITIONS_DICT[selected_gene]["start"]
+            selected_gene_end = GENE_POSITIONS_DICT[selected_gene]["end"]
+
         for row in reader:
             attrs_first_split = row["#attributes"].split(";")[:-1]
             attrs_second_split = \
                 [x.split("=", 1) for x in attrs_first_split]
             attrs = {k: v for k, v in attrs_second_split}
+
+            pos = row["#start"]
+            if selected_gene:
+                if not selected_gene_start <= int(pos) <= selected_gene_end:
+                    continue
 
             if parsing_first_row:
                 # Default values
@@ -117,7 +126,6 @@ def parse_gvf_sample_variants(path):
 
                 parsing_first_row = False
 
-            pos = row["#start"]
             if pos not in ret["mutations"]:
                 ret["mutations"][pos] = []
 
@@ -309,8 +317,9 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
              if k not in hidden_strains_set}
         # Heatmap displays rows in reverse
         reversed_items = reversed(visible_sorted_strain_paths_dict.items())
+        sg = selected_gene
         parsed_gvf_dir = \
-            {s: parse_gvf_sample_variants(p) for s, p in reversed_items}
+            {s: parse_gvf_sample_variants(p, sg) for s, p in reversed_items}
         parsed_gvf_dirs = {**parsed_gvf_dirs, **parsed_gvf_dir}
 
     parsed_mutations = \
