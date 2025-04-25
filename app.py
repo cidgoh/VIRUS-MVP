@@ -957,9 +957,14 @@ def route_data_heatmap_x_update(get_data_args, old_heatmap_x_nt_pos,
     # Current ``get_data`` return val
     data = read_data(get_data_args, last_data_mtime)
 
-    if old_heatmap_x_nt_pos == data["heatmap_x_nt_pos"]:
-        raise PreventUpdate
-    return data["heatmap_x_nt_pos"]
+    new_heatmap_x_nt_pos = data["heatmap_x_nt_pos"]
+    if old_heatmap_x_nt_pos and new_heatmap_x_nt_pos:
+        cond1 = old_heatmap_x_nt_pos[0] == new_heatmap_x_nt_pos[0]
+        cond2 = old_heatmap_x_nt_pos[-1] == new_heatmap_x_nt_pos[-1]
+        cond3 = len(old_heatmap_x_nt_pos) == len(new_heatmap_x_nt_pos)
+        if cond1 and cond2 and cond3:
+            raise PreventUpdate
+    return new_heatmap_x_nt_pos
 
 
 @app.callback(
