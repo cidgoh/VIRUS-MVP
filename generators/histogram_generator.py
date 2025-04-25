@@ -196,8 +196,11 @@ def get_np_histogram(data):
     :rtype: tuple
     """
     np_input = [int(x) for x in data["histogram_x"]]
-    np_last_bin = int(math.ceil(max(np_input) / 100)) * 100
-    ret = np.histogram(np_input, bins=range(0, np_last_bin+1, 100))
+    if np_input:
+        np_last_bin = int(math.ceil(max(np_input) / 100)) * 100
+        ret = np.histogram(np_input, bins=range(0, np_last_bin+1, 100))
+    else:
+        ret = np.histogram(np_input, bins=range(0, 100))
     return ret
 
 

@@ -596,7 +596,7 @@ def get_heatmap_x_aa_pos(heatmap_x_nt_pos, heatmap_x_genes):
     """
     gene_start_positions = \
         {k: GENE_POSITIONS_DICT[k]["start"] for k in GENE_POSITIONS_DICT}
-    last_gene_seen = heatmap_x_genes[-1]
+    last_gene_seen = heatmap_x_genes[-1] if heatmap_x_genes else []
     ret = ["" for _ in heatmap_x_nt_pos]
     # Iterate through nt pos in reverse
     for i, pos in enumerate(reversed(heatmap_x_nt_pos)):

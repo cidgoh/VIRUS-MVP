@@ -364,12 +364,16 @@ def get_mutation_freq_slider(data):
             "label": str_val,
             "style": {"display": "none"}
         }
-    marks[min_val]["label"] = "Freq=" + marks[min_val]["label"]
-    if len(marks) > 1:
-        marks[min_val]["style"].pop("display")
-        marks[max_val]["style"].pop("display")
+    if marks:
+        marks[min_val]["label"] = "Freq=" + marks[min_val]["label"]
+        if len(marks) > 1:
+            marks[min_val]["style"].pop("display")
+            marks[max_val]["style"].pop("display")
+        else:
+            marks[min_val]["style"].pop("display")
     else:
-        marks[min_val]["style"].pop("display")
+        min_val = 0
+        max_val = 1
     return dcc.RangeSlider(id="mutation-freq-slider",
                            className="p-0",
                            min=min_val,

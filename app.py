@@ -194,9 +194,8 @@ def launch_app(_):
         # TODO starting gene should be part of a config file
         dcc.Store(id="default-starting-gene", data="S"),
         # Used to update certain figures only when necessary
-        dcc.Store(id="heatmap-x-len", data=len(data_["heatmap_x_nt_pos"])),
-        dcc.Store(id="heatmap-y-strains",
-                  data=len(data_["heatmap_y_strains"])),
+        dcc.Store(id="heatmap-x-nt-pos", data=data_["heatmap_x_nt_pos"]),
+        dcc.Store(id="heatmap-y-strains", data=data_["heatmap_y_strains"]),
         # Used to integrate some JS callbacks. The data values are
         # meaningless, we just need outputs to perform all clientside
         # functions.
@@ -928,15 +927,15 @@ def toggle_legend_collapse(_, is_open):
 
 
 @app.callback(
-    Output("heatmap-x-len", "data"),
+    Output("heatmap-x-nt-pos", "data"),
     Input("get-data-args", "data"),
-    State("heatmap-x-len", "data"),
+    State("heatmap-x-nt-pos", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def route_data_heatmap_x_update(get_data_args, old_heatmap_x_len,
+def route_data_heatmap_x_update(get_data_args, old_heatmap_x_nt_pos,
                                 last_data_mtime):
-    """Update ``heatmap-x-len`` dcc variable when needed.
+    """Update ``heatmap-x-len`` dcc variable when needed.TODO
 
     This serves as a useful trigger for figs that only need to be
     updated when heatmap x coords change. We use the length of
@@ -958,9 +957,9 @@ def route_data_heatmap_x_update(get_data_args, old_heatmap_x_len,
     # Current ``get_data`` return val
     data = read_data(get_data_args, last_data_mtime)
 
-    if old_heatmap_x_len == len(data["heatmap_x_nt_pos"]):
+    if old_heatmap_x_nt_pos == data["heatmap_x_nt_pos"]:
         raise PreventUpdate
-    return len(data["heatmap_x_nt_pos"])
+    return data["heatmap_x_nt_pos"]
 
 
 @app.callback(
@@ -1099,7 +1098,7 @@ def update_heatmap_sample_size_axis_fig(_, get_data_args, last_data_mtime):
 @app.callback(
     Output("heatmap-gene-bar-fig", "figure"),
     Output("heatmap-gene-bar-fig", "style"),
-    Input("heatmap-x-len", "data"),
+    Input("heatmap-x-nt-pos", "data"),
     State("get-data-args", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
@@ -1126,7 +1125,7 @@ def update_heatmap_gene_bar_fig(_, get_data_args, last_data_mtime):
 @app.callback(
     Output("heatmap-nsp-bar-fig", "figure"),
     Output("heatmap-nsp-bar-fig", "style"),
-    Input("heatmap-x-len", "data"),
+    Input("heatmap-x-nt-pos", "data"),
     State("get-data-args", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
@@ -1153,7 +1152,7 @@ def update_heatmap_nsp_bar_fig(_, get_data_args, last_data_mtime):
 @app.callback(
     Output("heatmap-nt-pos-axis-fig", "figure"),
     Output("heatmap-nt-pos-axis-fig", "style"),
-    Input("heatmap-x-len", "data"),
+    Input("heatmap-x-nt-pos", "data"),
     State("get-data-args", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
@@ -1183,7 +1182,7 @@ def update_heatmap_nt_pos_axis_fig(_, get_data_args, last_data_mtime):
 @app.callback(
     Output("heatmap-aa-pos-axis-fig", "figure"),
     Output("heatmap-aa-pos-axis-fig", "style"),
-    Input("heatmap-x-len", "data"),
+    Input("heatmap-x-nt-pos", "data"),
     State("get-data-args", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
