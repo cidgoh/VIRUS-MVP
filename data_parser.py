@@ -421,7 +421,8 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
         max(10*40, len(ret["heatmap_y_strains"]) * 40)
     ret["heatmap_cells_container_height"] = \
         min(10*40, ret["heatmap_cells_fig_height"])
-    ret["heatmap_cells_fig_width"] = len(ret["heatmap_x_nt_pos"]) * 36
+    ret["heatmap_cells_fig_width"] = \
+        max(10*36, len(ret["heatmap_x_nt_pos"]) * 36)
     ret["jump_to_dropdown_search_options"] = \
         get_jump_to_dropdown_search_options(ret["jump_to_info_dict"])
 
