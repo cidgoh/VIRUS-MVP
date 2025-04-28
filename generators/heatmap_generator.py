@@ -213,9 +213,9 @@ def get_heatmap_row(data):
                     # Empty space above sample size axis
                     dbc.Row(
                         dbc.Col(
-                            "N",
-                            className="h5 font-italic",
-                            style={"padding-top": 105, "padding-left": 15}
+                            "# samples",
+                            className="h5",
+                            style={"padding-top": 105}
                         ),
                         style={"height": 130},
                         no_gutters=True
