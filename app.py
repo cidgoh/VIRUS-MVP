@@ -1218,10 +1218,11 @@ def update_heatmap_aa_pos_axis_fig(_, get_data_args, last_data_mtime):
     Output("histogram-top-row-div", "children"),
     Input("get-data-args", "data"),
     State("last-data-mtime", "data"),
+    State("selected-gene", "data"),
     prevent_initial_call=True
 )
-def update_histogram(get_data_args, last_data_mtime):
-    """Update histogram top row div.
+def update_histogram(get_data_args, last_data_mtime, selected_gene):
+    """Update histogram top row div.TODO
 
     When the ``data`` variable in the dcc.Store is updated, the top row
     in the histogram view is updated to reflect the new data. This
@@ -1235,7 +1236,7 @@ def update_histogram(get_data_args, last_data_mtime):
     :rtype: plotly.graph_objects.Figure
     """
     data = read_data(get_data_args, last_data_mtime)
-    return histogram_generator.get_histogram_top_row(data)
+    return histogram_generator.get_histogram_top_row(data, selected_gene)
 
 
 @app.callback(
