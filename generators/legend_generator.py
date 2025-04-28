@@ -16,7 +16,7 @@ def get_legend_collapse():
     ret = dbc.Collapse(
         get_legend_rows(),
         id="legend-collapse",
-        is_open=False
+        is_open=True
     )
     return ret
 
