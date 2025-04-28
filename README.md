@@ -10,4 +10,6 @@ visualizing segmented genomes, such as influenza.
 
 This branch is a work-in-progress.
 
-TODO screenshots
+![select_gene]
+
+[select_gene]: screenshots/select_gene.gif
