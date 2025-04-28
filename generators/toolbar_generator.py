@@ -255,7 +255,9 @@ def get_file_download_component():
             color="primary",
             children=[
                 dbc.DropdownMenuItem("Surveillance reports",
-                                     id="download-file-btn")
+                                     id="download-surveillance-files-btn"),
+                dbc.DropdownMenuItem("Mutation index JSON",
+                                     id="download-mutation-index-btn")
             ]
         ),
         dcc.Download(id="download-file-data"),
