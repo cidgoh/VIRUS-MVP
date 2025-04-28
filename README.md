@@ -10,6 +10,20 @@ visualizing segmented genomes, such as influenza.
 
 This branch is a work-in-progress.
 
-![select_gene]
+## ORF1A
 
-[select_gene]: screenshots/select_gene.gif
+![orf1a]
+
+[orf1a]: screenshots/orf1a.png
+
+## S
+
+![s]
+
+[s]: screenshots/s.png
+
+## E
+
+![e]
+
+[e]: screenshots/e.png
