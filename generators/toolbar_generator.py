@@ -35,7 +35,7 @@ def get_toolbar_row(data):
                             type="circle"
                         ),
                         get_jump_to_btn(),
-                        get_legend_toggle_component()
+                        get_help_dropdown_menu()
                     ],
                     className="pl-4 pl-xl-5"
                 ),
@@ -315,15 +315,16 @@ def get_jump_to_modal():
     ], id="jump-to-modal")
 
 
-def get_legend_toggle_component():
-    """Get dash component for toggling heatmap legend.
-
-    :return: Dash Bootstrap Components button with appropriate label
-    :rtype: dbc.Button
-    """
-    return dbc.Button("HELP",
-                      color="info",
-                      id="toggle-legend-btn")
+def get_help_dropdown_menu():
+    """TODO"""
+    return dbc.DropdownMenu(
+        label="HELP",
+        color="info",
+        children=[
+            dbc.DropdownMenuItem("Toggle legend",
+                                 id="toggle-legend-btn")
+        ]
+    )
 
 
 def get_mutation_freq_slider(data):
