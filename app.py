@@ -27,6 +27,7 @@ from uuid import uuid4
 import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
+import dash_html_components as html
 from dash.dependencies import (ALL, MATCH, ClientsideFunction, Input, Output,
                                State)
 from dash.exceptions import PreventUpdate
@@ -38,7 +39,7 @@ from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR,
                          USER_SURVEILLANCE_REPORTS_DIR)
 from generators import (heatmap_generator, histogram_generator,
                         legend_generator, table_generator, toast_generator,
-                        toolbar_generator, footer_generator)
+                        toolbar_generator, run_info_generator, footer_generator)
 
 
 # This is the only global variable Dash plays nice with, and it
@@ -159,8 +160,13 @@ def launch_app(_):
         heatmap_generator.get_heatmap_row(data_),
         # Bootstrap row containing histogram
         histogram_generator.get_histogram_row(data_),
-        # Bootstrap row containing table
-        table_generator.get_table_row_div(data_),
+        # TODO deactivating this for now; maybe later?
+        # # Bootstrap row containing table
+        # table_generator.get_table_row_div(data_),
+        # Bootstrap row containing run info
+        html.Hr(),
+        run_info_generator.get_run_info_row(),
+        html.Hr(),
         # Bootstrap row containing footer
         footer_generator.get_footer_row_div(
             app.get_asset_url("cidgoh_logo.png")
@@ -460,11 +466,12 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
     Output("download-loading", "children"),
     Input("download-surveillance-files-btn", "n_clicks"),
     Input("download-mutation-index-btn", "n_clicks"),
+    Input("download-mutation-index-link", "n_clicks"),
     State("get-data-args", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def trigger_download(_, __, get_data_args, last_data_mtime):
+def trigger_download(_, __, ___, get_data_args, last_data_mtime):
     """Send download file when user clicks a download btn.
 
     This is either a zip object of surveillance reports for visible
@@ -474,6 +481,8 @@ def trigger_download(_, __, get_data_args, last_data_mtime):
         clicked.
     :param __: Unused input variable that monitors when download btn is
         clicked.
+    :param ___: Unused input variable that monitors when download link
+        is clicked.
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
     :param last_data_mtime: Last mtime across all data files
@@ -510,15 +519,13 @@ def trigger_download(_, __, get_data_args, last_data_mtime):
             make_archive(reports_path, "zip", reports_path)
             download_component = toolbar_generator.get_file_download_component()
             return dcc.send_file(reports_path + ".zip"), download_component
-    elif trigger == "download-mutation-index-btn.n_clicks":
+    else:
         # Current ``get_data`` return val
         data = read_data(get_data_args, last_data_mtime)
         content = dumps(data["mutation_index_dict"])
         filename = "mutation_index.json"
         download_component = toolbar_generator.get_file_download_component()
         return {"content": content, "filename": filename}, download_component
-    else:
-        raise PreventUpdate
 
 
 @app.callback(
@@ -1447,6 +1454,9 @@ def update_table(get_data_args, click_data, last_data_mtime):
         selected strain.
     :rtype: plotly.graph_objects.Figure
     """
+    # TODO deactivating this for now; maybe return later
+    raise PreventUpdate
+
     # Current ``get_data`` return val
     data = read_data(get_data_args, last_data_mtime)
 
