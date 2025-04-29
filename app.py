@@ -16,7 +16,7 @@ I have unparallelized some callbacks, which allows certain callbacks to
 run faster.
 """
 from base64 import b64decode
-from json import loads
+from json import dumps, loads
 from os import mkdir, path, remove, walk
 from pathlib import Path
 from shutil import copyfile, copytree, make_archive, rmtree
@@ -458,17 +458,21 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
 @app.callback(
     Output("download-file-data", "data"),
     Output("download-loading", "children"),
-    Input("download-file-btn", "n_clicks"),
+    Input("download-surveillance-files-btn", "n_clicks"),
+    Input("download-mutation-index-btn", "n_clicks"),
     State("get-data-args", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def trigger_download(_, get_data_args, last_data_mtime):
-    """Send download file when user clicks download btn.
+def trigger_download(_, __, get_data_args, last_data_mtime):
+    """Send download file when user clicks a download btn.
 
-    This is a zip object of surveillance reports for visible strains.
+    This is either a zip object of surveillance reports for visible
+    strains, or JSON of non-hidden strains mutation index.
 
     :param _: Unused input variable that monitors when download btn is
+        clicked.
+    :param __: Unused input variable that monitors when download btn is
         clicked.
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
@@ -476,33 +480,45 @@ def trigger_download(_, get_data_args, last_data_mtime):
     :type last_data_mtime: float
     :return: Fires dash function that triggers file download
     """
-    # Ignores non-visible strains during `copytree`
-    def ignore_fn(dir_, contents):
-        reference_nested_dir = \
-            str(Path(dir_).parent) == REFERENCE_SURVEILLANCE_REPORTS_DIR
-        user_dir = \
-            dir_ == USER_SURVEILLANCE_REPORTS_DIR
-        if reference_nested_dir or user_dir:
-            data = read_data(get_data_args, last_data_mtime)
-            visible_strains = data["heatmap_y_strains"]
-            visible_filenames = \
-                {data["strain_filenames_dict"][e] for e in visible_strains}
-            return [e for e in contents
-                    if Path(e).stem not in visible_filenames]
-        # All other conditions, ignore nothing
-        return []
+    trigger = dash.callback_context.triggered[0]["prop_id"]
 
-    with TemporaryDirectory() as dir_name:
-        reports_path = path.join(dir_name, "surveillance_reports")
-        copytree(REFERENCE_SURVEILLANCE_REPORTS_DIR,
-                 path.join(reports_path, "reference_surveillance_reports"),
-                 ignore=ignore_fn)
-        copytree(USER_SURVEILLANCE_REPORTS_DIR,
-                 path.join(reports_path, "user_surveillance_reports"),
-                 ignore=ignore_fn)
-        make_archive(reports_path, "zip", reports_path)
+    if trigger == "download-surveillance-files-btn.n_clicks":
+        # Ignores non-visible strains during `copytree`
+        def ignore_fn(dir_, contents):
+            reference_nested_dir = \
+                str(Path(dir_).parent) == REFERENCE_SURVEILLANCE_REPORTS_DIR
+            user_dir = \
+                dir_ == USER_SURVEILLANCE_REPORTS_DIR
+            if reference_nested_dir or user_dir:
+                data = read_data(get_data_args, last_data_mtime)
+                visible_strains = data["heatmap_y_strains"]
+                visible_filenames = \
+                    {data["strain_filenames_dict"][e] for e in visible_strains}
+                return [e for e in contents
+                        if Path(e).stem not in visible_filenames]
+            # All other conditions, ignore nothing
+            return []
+
+        with TemporaryDirectory() as dir_name:
+            reports_path = path.join(dir_name, "surveillance_reports")
+            copytree(REFERENCE_SURVEILLANCE_REPORTS_DIR,
+                     path.join(reports_path, "reference_surveillance_reports"),
+                     ignore=ignore_fn)
+            copytree(USER_SURVEILLANCE_REPORTS_DIR,
+                     path.join(reports_path, "user_surveillance_reports"),
+                     ignore=ignore_fn)
+            make_archive(reports_path, "zip", reports_path)
+            download_component = toolbar_generator.get_file_download_component()
+            return dcc.send_file(reports_path + ".zip"), download_component
+    elif trigger == "download-mutation-index-btn.n_clicks":
+        # Current ``get_data`` return val
+        data = read_data(get_data_args, last_data_mtime)
+        content = dumps(data["mutation_index_dict"])
+        filename = "mutation_index.json"
         download_component = toolbar_generator.get_file_download_component()
-        return dcc.send_file(reports_path + ".zip"), download_component
+        return {"content": content, "filename": filename}, download_component
+    else:
+        raise PreventUpdate
 
 
 @app.callback(
