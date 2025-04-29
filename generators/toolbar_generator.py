@@ -6,7 +6,7 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 
-from definitions import USER_DATA_DIR
+from definitions import USER_DATA_DIR, README_PATH
 
 
 def get_toolbar_row(data):
@@ -72,7 +72,8 @@ def get_toolbar_row(data):
             ),
             get_select_lineages_modal(data),
             get_confirm_strain_del_modal(),
-            get_jump_to_modal()
+            get_jump_to_modal(),
+            get_readme_modal()
         ],
         className="mt-3 ml-xl-3"
     )
@@ -325,6 +326,10 @@ def get_help_dropdown_menu():
                 "Toggle legend",
                 id="toggle-legend-btn"
             ),
+            dbc.DropdownMenuItem(
+                "README",
+                id="toggle-readme-btn"
+            ),
             html.A(
                 dbc.DropdownMenuItem("Github"),
                 href="https://github.com/cidgoh/VIRUS-MVP",
@@ -334,6 +339,29 @@ def get_help_dropdown_menu():
             )
         ]
     )
+
+
+def get_readme_modal():
+    """TODO need to redo screenshots and make them smaller"""
+    readme_str = ""
+    with open(README_PATH) as fp:
+        readme_str = fp.read()
+    return dbc.Modal(
+        [
+            dbc.ModalHeader("README"),
+            dbc.ModalBody(
+                dcc.Markdown(readme_str)
+            ),
+            dbc.ModalFooter(
+                dbc.Button("Close",
+                           className="mr-1",
+                           color="secondary",
+                           id=""
+                              "readme-modal-close-btn"),
+            ),
+        ],
+        is_open=True,
+        size="xl")
 
 
 def get_mutation_freq_slider(data):

@@ -14,7 +14,7 @@ functionality) at https://virusmvp.org/.
 
 ![app_interface]
 
-[app_interface]: screenshots/app_interface.png
+[app_interface]: assets/screenshots/app_interface.png
 
 ## Installation
 
@@ -88,11 +88,11 @@ You may have to use `sudo`.
 Click the help button ![help_btn] at the top for an in-app explanation of the
 heatmap view.
 
-[help_btn]: screenshots/help_btn.png
+[help_btn]: assets/screenshots/help_btn.png
 
 ![legend]
 
-[legend]: screenshots/legend.png
+[legend]: assets/screenshots/legend.png
 
 ### Heatmap view
 
@@ -119,14 +119,14 @@ lineages with a sample size of one are encoded as follows:
 
 ![heatmap_cells]
 
-[heatmap_cells]: screenshots/heatmap_cells.png
+[heatmap_cells]: assets/screenshots/heatmap_cells.png
 
 Hovering over cells displays detailed mutation information. Clicking cells opens
 a modal with detailed mutation function descriptions, and their citations.
 
 ![scroll_hover_click]
 
-[scroll_hover_click]: screenshots/heatmap_scroll_hover_click.gif
+[scroll_hover_click]: assets/screenshots/heatmap_scroll_hover_click.gif
 
 ### Histogram
 
@@ -135,7 +135,7 @@ lineages every 100 nucleotide positions.
 
 ![histogram_hover_scroll]
 
-[histogram_hover_scroll]: screenshots/histogram_hover_scroll.gif
+[histogram_hover_scroll]: assets/screenshots/histogram_hover_scroll.gif
 
 ### Editing the visualization
 
@@ -145,21 +145,21 @@ visualization.
 Clicking the select lineages btn ![select_lineages_btn] opens a modal that
 allows you to rearrange and hide variants.
 
-[select_lineages_btn]: screenshots/select_lineages_btn.png
+[select_lineages_btn]: assets/screenshots/select_lineages_btn.png
 
 The mutation frequency slider allows you to filter heatmap cells by mutation
 frequency.
 
 ![mutation_freq_slider]
 
-[mutation_freq_slider]: screenshots/mutation_freq_slider.gif
+[mutation_freq_slider]: assets/screenshots/mutation_freq_slider.gif
 
 The clade defining switch allows you to filter in and out heatmap cells
 corresponding to non-clade defining mutations.
 
 ![clade_defining_switch]
 
-[clade_defining_switch]: screenshots/clade_defining_switch.gif
+[clade_defining_switch]: assets/screenshots/clade_defining_switch.gif
 
 #### Uploading data
 
@@ -167,7 +167,7 @@ The upload button ![upload_btn] allows you to upload your own genomic data in
 `FASTA` or `VCF` format.  You can find examples of files users can upload in
 [test_data/][3].
 
-[upload_btn]: screenshots/upload_btn.png
+[upload_btn]: assets/screenshots/upload_btn.png
 [3]: test_data/
 
 _You must have Nextflow and Conda installed to upload files._
@@ -180,7 +180,7 @@ The download button ![download_btn] allows you to download a zip object
 containing surveillance reports for each reference variant. You can find
 examples of these reports in [surveillance_reports/][4].
 
-[download_btn]: screenshots/download_btn.png
+[download_btn]: assets/screenshots/download_btn.png
 [4]: surveillance_reports/
 
 ## [nf-ncov-voc][nf-ncov-voc]

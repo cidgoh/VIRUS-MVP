@@ -15,6 +15,7 @@ REFERENCE_SURVEILLANCE_REPORTS_DIR = \
     os.path.join(ROOT_DIR, "reference_surveillance_reports")
 USER_SURVEILLANCE_REPORTS_DIR = \
     os.path.join(ROOT_DIR, "user_surveillance_reports")
+README_PATH = os.path.join(ROOT_DIR, "README.md")
 
 with open(GENOME_CONFIG_PATH) as fp:
     GENOME_CONFIG_DICT = json.load(fp)
