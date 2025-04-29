@@ -416,6 +416,9 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
     ret["heatmap_cells_fig_width"] = len(ret["heatmap_x_nt_pos"]) * 36
     ret["jump_to_dropdown_search_options"] = \
         get_jump_to_dropdown_search_options(ret["jump_to_info_dict"])
+    ret["mutation_index_dict"] = \
+        {k: parsed_mutations[k] for k in parsed_mutations
+         if k not in hidden_strains_set}
 
     return ret
 
