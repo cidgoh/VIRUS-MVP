@@ -360,7 +360,8 @@ def get_readme_modal():
                               "readme-modal-close-btn"),
             ),
         ],
-        is_open=True,
+        id="readme-modal",
+        scrollable=True,
         size="xl")
 
 

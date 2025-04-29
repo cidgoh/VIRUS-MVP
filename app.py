@@ -834,6 +834,21 @@ def toggle_jump_to_modal(_, __, ___, get_data_args, last_data_mtime):
 
 
 @app.callback(
+    Output("readme-modal", "is_open"),
+    Input("toggle-readme-btn", "n_clicks"),
+    Input("readme-modal-close-btn", "n_clicks"),
+    prevent_initial_call=True
+)
+def toggle_readme_modal(_, __):
+    """TODO"""
+    ctx = dash.callback_context.triggered[0]["prop_id"]
+    if ctx == "toggle-readme-btn.n_clicks":
+        return True
+    else:
+        return False
+
+
+@app.callback(
     Output("deleted-strain", "data"),
     Input("confirm-strain-del-modal-ok-btn", "n_clicks"),
     State("strain-to-del", "data"),
