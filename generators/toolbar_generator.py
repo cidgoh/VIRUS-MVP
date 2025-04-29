@@ -321,8 +321,17 @@ def get_help_dropdown_menu():
         label="HELP",
         color="info",
         children=[
-            dbc.DropdownMenuItem("Toggle legend",
-                                 id="toggle-legend-btn")
+            dbc.DropdownMenuItem(
+                "Toggle legend",
+                id="toggle-legend-btn"
+            ),
+            html.A(
+                dbc.DropdownMenuItem("Github"),
+                href="https://github.com/cidgoh/VIRUS-MVP",
+                target="_blank",
+                # https://bit.ly/3qQjB7Y
+                rel="noopener noreferrer"
+            )
         ]
     )
 
