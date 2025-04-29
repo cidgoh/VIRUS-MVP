@@ -244,9 +244,9 @@ def get_file_upload_component():
 
 
 def get_file_download_component():
-    """Get dash component for download button.TODO
+    """Get dash component for download dropdown menu.
 
-    :return: Dash html div with button and download component inside.
+    :return: Dash html div with dropdown menu and download component
     :rtype: html.Div
     """
     return html.Div([

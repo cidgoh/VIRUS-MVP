@@ -465,11 +465,14 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
     prevent_initial_call=True
 )
 def trigger_download(_, __, get_data_args, last_data_mtime):
-    """Send download file when user clicks download btn.TODO
+    """Send download file when user clicks a download btn.
 
-    This is a zip object of surveillance reports for visible strains.
+    This is either a zip object of surveillance reports for visible
+    strains, or JSON of non-hidden strains mutation index.
 
     :param _: Unused input variable that monitors when download btn is
+        clicked.
+    :param __: Unused input variable that monitors when download btn is
         clicked.
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
