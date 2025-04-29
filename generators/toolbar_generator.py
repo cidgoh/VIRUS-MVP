@@ -271,7 +271,7 @@ def get_jump_to_btn():
         for jumping to mutations.
     :rtype: dbc.Button
     """
-    return dbc.Button("Jump to...",
+    return dbc.Button("Jump to mutation",
                       color="secondary",
                       outline=True,
                       id="jump-to-btn",
