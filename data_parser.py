@@ -421,8 +421,19 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
     return ret
 
 
-def get_full_mutation_index_json(dirs):
-    """TODO"""
+def get_full_mutation_index_dict(dirs):
+    """Get mutation index dict for every lineage.
+
+    `get_data` only processes visible lineages, which savings launch
+    time. But if a user wants to download the full mutation index, we
+    can do the whole process again for every lineage. It will be slow,
+    but that is fine.
+
+    :param dirs: List of paths to folders to obtain data from
+    :type dirs: list[str]
+    :return: Mutation index dict for every gvf file in `dirs`.
+    :rtype: dict
+    """
     parsed_gvf_dirs = {}
     for dir_ in dirs:
         dir_entry_paths = \

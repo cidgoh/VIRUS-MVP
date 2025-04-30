@@ -317,7 +317,11 @@ def get_jump_to_modal():
 
 
 def get_help_dropdown_menu():
-    """TODO"""
+    """Returns dropdown menu for getting help.
+
+    :return: Help dropdown menu
+    :rtype: dbc.DropdownMenu
+    """
     return dbc.DropdownMenu(
         label="HELP",
         color="info",
@@ -342,7 +346,11 @@ def get_help_dropdown_menu():
 
 
 def get_readme_modal():
-    """TODO need to redo screenshots and make them smaller"""
+    """Returns modal for viewing README.
+
+    :return: README modal
+    :rtype: dbc.Modal
+    """
     readme_str = ""
     with open(README_PATH) as fp:
         readme_str = fp.read()

@@ -33,7 +33,7 @@ from dash.dependencies import (ALL, MATCH, ClientsideFunction, Input, Output,
 from dash.exceptions import PreventUpdate
 from flask_caching import Cache
 
-from data_parser import get_data, get_full_mutation_index_json
+from data_parser import get_data, get_full_mutation_index_dict
 from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR,
                          NF_NCOV_VOC_DIR, REFERENCE_SURVEILLANCE_REPORTS_DIR,
                          USER_SURVEILLANCE_REPORTS_DIR)
@@ -524,7 +524,7 @@ def trigger_download(_, __, ___, ____, get_data_args, last_data_mtime):
             return dcc.send_file(reports_path + ".zip"), download_component
     elif trigger == "download-full-mutation-index-link.n_clicks":
         dirs = [REFERENCE_DATA_DIR, USER_DATA_DIR]
-        content = dumps(get_full_mutation_index_json(dirs))
+        content = dumps(get_full_mutation_index_dict(dirs))
         filename = "full_mutation_index.json"
         download_component = toolbar_generator.get_file_download_component()
         return {"content": content, "filename": filename}, download_component
@@ -856,7 +856,13 @@ def toggle_jump_to_modal(_, __, ___, get_data_args, last_data_mtime):
     prevent_initial_call=True
 )
 def toggle_readme_modal(_, __):
-    """TODO"""
+    """Open or close modal for viewing README in app.
+
+    :param _: User clicked btn in toolbar for opening modal
+    :param __: User clicked close btn in modal
+    :return: Whether modal is open
+    :rtype: bool
+    """
     ctx = dash.callback_context.triggered[0]["prop_id"]
     if ctx == "toggle-readme-btn.n_clicks":
         return True
