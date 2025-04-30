@@ -421,6 +421,24 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
     return ret
 
 
+def get_full_mutation_index_json(dirs):
+    """TODO"""
+    parsed_gvf_dirs = {}
+    for dir_ in dirs:
+        dir_entry_paths = \
+            [e.path for e in os.scandir(dir_) if e.path.endswith(".gvf")]
+        dir_entry_strains = \
+            [parse_gvf_sample_name(e) for e in dir_entry_paths]
+        strains_path_zip_obj = zip(dir_entry_strains, dir_entry_paths)
+        parsed_gvf_dir = \
+            {s: parse_gvf_sample_variants(p) for s, p in strains_path_zip_obj}
+        parsed_gvf_dirs = {**parsed_gvf_dirs, **parsed_gvf_dir}
+
+    parsed_mutations = \
+        {k: v["mutations"] for k, v in parsed_gvf_dirs.items()}
+    return parsed_mutations
+
+
 def get_mutation_freq_slider_vals(parsed_mutations):
     """Get the mutation freq slider vals from ``parsed_gvf_dirs``.
 

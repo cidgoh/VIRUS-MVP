@@ -33,7 +33,7 @@ from dash.dependencies import (ALL, MATCH, ClientsideFunction, Input, Output,
 from dash.exceptions import PreventUpdate
 from flask_caching import Cache
 
-from data_parser import get_data
+from data_parser import get_data, get_full_mutation_index_json
 from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR,
                          NF_NCOV_VOC_DIR, REFERENCE_SURVEILLANCE_REPORTS_DIR,
                          USER_SURVEILLANCE_REPORTS_DIR)
@@ -523,7 +523,11 @@ def trigger_download(_, __, ___, ____, get_data_args, last_data_mtime):
             download_component = toolbar_generator.get_file_download_component()
             return dcc.send_file(reports_path + ".zip"), download_component
     elif trigger == "download-full-mutation-index-link.n_clicks":
-        raise PreventUpdate
+        dirs = [REFERENCE_DATA_DIR, USER_DATA_DIR]
+        content = dumps(get_full_mutation_index_json(dirs))
+        filename = "full_mutation_index.json"
+        download_component = toolbar_generator.get_file_download_component()
+        return {"content": content, "filename": filename}, download_component
     else:
         # Current ``get_data`` return val
         data = read_data(get_data_args, last_data_mtime)
