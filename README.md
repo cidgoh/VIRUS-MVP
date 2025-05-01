@@ -169,7 +169,7 @@ which will then be processed by _nf-ncov-voc_ to generate a new GVF file, and
 then rendered onto the heatmap. You can find examples of files users can upload
 in [test_data/][3].
 
-[3]: test_data/
+[3]: https://github.com/cidgoh/VIRUS-MVP/tree/development/test_data
 
 _You must have Nextflow and Conda installed to upload files._
 
@@ -197,6 +197,20 @@ corresponding to non-clade defining mutations.
 ![clade_defining_switch]
 
 [clade_defining_switch]: assets/screenshots/clade_defining_switch.gif
+
+## Future directions
+
+We plan to build an API, which users can call to retrieve a text-based
+representation of the information rendered in VIRUS-MVP. We have begun this
+process by introducing the ability to download a mutation index JSON file, as
+mentioned above.
+
+We also plan to modify the interface for a more intuitive display of segmented
+genomes, such as RSV or Influenza. You can track our progress on the
+[`segmented_demo`][4] branch. Basically, we will provide a dropdown that allows
+users to render discrete segments of the genome, one at a time.
+
+[4]: https://github.com/cidgoh/VIRUS-MVP/tree/segmented_demo
 
 ## [nf-ncov-voc][nf-ncov-voc]
 
