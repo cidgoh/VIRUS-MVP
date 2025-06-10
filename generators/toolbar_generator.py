@@ -35,7 +35,8 @@ def get_toolbar_row(data):
                             type="circle"
                         ),
                         get_jump_to_btn(),
-                        get_help_dropdown_menu()
+                        # TODO deactivating for now; bring back later?
+                        # get_help_dropdown_menu()
                     ],
                     className="pl-4 pl-xl-5"
                 ),
