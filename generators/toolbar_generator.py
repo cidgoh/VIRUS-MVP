@@ -267,12 +267,13 @@ def get_file_download_component():
 
 def get_jump_to_btn():
     """Returns button for opening modal for jumping to mutations.
+    TODO rename references to "Jump to" in code to "Search mutations"
 
     :return: Dash Bootstrap Components button with appropriate label
         for jumping to mutations.
     :rtype: dbc.Button
     """
-    return dbc.Button("Jump to mutation",
+    return dbc.Button("Search mutations",
                       color="secondary",
                       outline=True,
                       id="jump-to-btn",
