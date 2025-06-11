@@ -38,8 +38,9 @@ from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR,
                          NF_NCOV_VOC_DIR, REFERENCE_SURVEILLANCE_REPORTS_DIR,
                          USER_SURVEILLANCE_REPORTS_DIR)
 from generators import (heatmap_generator, histogram_generator,
-                        legend_generator, table_generator, toast_generator,
-                        toolbar_generator, run_info_generator, footer_generator)
+                        legend_generator, navbar_generator, table_generator,
+                        toast_generator, toolbar_generator, run_info_generator,
+                        footer_generator)
 
 
 # This is the only global variable Dash plays nice with, and it
@@ -150,6 +151,10 @@ def launch_app(_):
     data_ = read_data(get_data_args, last_data_mtime)
 
     return [
+        # Bootstrap row containing navbar
+        navbar_generator.get_navbar_row(
+            app.get_asset_url("cidgoh_logo.png")
+        ),
         # Bootstrap collapse containing legend
         legend_generator.get_legend_collapse(),
         # Bootstrap row containing tools
@@ -851,23 +856,25 @@ def toggle_jump_to_modal(_, __, ___, get_data_args, last_data_mtime):
 
 @app.callback(
     Output("readme-modal", "is_open"),
-    Input("toggle-readme-btn", "n_clicks"),
+    # TODO currently deactivated
+    # Input("toggle-readme-btn", "n_clicks"),
+    Input("toggle-readme-link", "n_clicks"),
     Input("readme-modal-close-btn", "n_clicks"),
     prevent_initial_call=True
 )
 def toggle_readme_modal(_, __):
     """Open or close modal for viewing README in app.
 
-    :param _: User clicked btn in toolbar for opening modal
+    :param _: User clicked link in navbar for opening modal
     :param __: User clicked close btn in modal
     :return: Whether modal is open
     :rtype: bool
     """
     ctx = dash.callback_context.triggered[0]["prop_id"]
-    if ctx == "toggle-readme-btn.n_clicks":
-        return True
-    else:
+    if ctx == "readme-modal-close-btn.n_clicks":
         return False
+    else:
+        return True
 
 
 @app.callback(
