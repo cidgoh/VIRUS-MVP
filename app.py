@@ -39,8 +39,7 @@ from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR,
                          USER_SURVEILLANCE_REPORTS_DIR)
 from generators import (heatmap_generator, histogram_generator,
                         legend_generator, navbar_generator, table_generator,
-                        toast_generator, toolbar_generator, run_info_generator,
-                        footer_generator)
+                        toast_generator, toolbar_generator, run_info_generator)
 
 
 # This is the only global variable Dash plays nice with, and it
@@ -171,11 +170,6 @@ def launch_app(_):
         # Bootstrap row containing run info
         html.Hr(),
         run_info_generator.get_run_info_row(),
-        html.Hr(),
-        # Bootstrap row containing footer
-        footer_generator.get_footer_row_div(
-            app.get_asset_url("cidgoh_logo.png")
-        ),
         # These are in-browser variables that Dash can treat as Inputs
         # and Outputs, in addition to more conventional Dash components
         # like HTML divs and Plotly figures. ``get-data-args`` are the

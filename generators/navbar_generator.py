@@ -38,5 +38,5 @@ def get_navbar_row(cidgoh_logo_path):
                         href="https://cidgoh.ca/contact/",
                         target="_blank")
         )
-    ], className="align-items-center bg-light justify-content-end")
-    return dbc.Row(dbc.Col(ret))
+    ], className="align-items-center justify-content-end")
+    return dbc.Row(dbc.Col(ret, className="bg-light"))
