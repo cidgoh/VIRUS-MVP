@@ -4,8 +4,8 @@ Viral lineages and variants continue to pose a significant risk to global public
 
 VIRUS-MVP is an interactive, heatmap-centric web application for visualizing mutational profiles across viral lineages—such as SARS-CoV-2 & MPOX. It integrates results from two upstream components :
 
-- [nf-ncov-voc][nf-ncov-voc] – genomics workflow for variant calling and annotation
-- [Pokay][pokay] – mutation function annotation repository
+- [nf-ncov-voc](https://github.com/cidgoh/nf-ncov-voc) – genomics workflow for variant calling and annotation
+- [Pokay](https://github.com/nodrogluap/pokay) – mutation function annotation repository
 
 You can find deployed versions of this application (without user upload
 functionality) at https://virusmvp.org/.
