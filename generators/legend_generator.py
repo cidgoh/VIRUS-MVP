@@ -80,9 +80,10 @@ def get_legend_rows():
             no_gutters=True
         ),
         dbc.Row(
-            dbc.Col(html.B("Click the \"Search mutations\" button to search "
-                           "for mutations by name, and then automatically "
-                           "scroll the heatmap to a specific mutation."),
+            dbc.Col(html.B("Click the \"Search for mutations\" button to "
+                           "search for mutations by name, and then "
+                           "automatically scroll the heatmap to a specific "
+                           "mutation."),
                     className="border-bottom border-left border-right "
                               "border-dark p-1",
                     width={"offset": 1, "size": 10}),
