@@ -38,9 +38,15 @@ def get_toolbar_row(data):
                         # TODO deactivating for now; bring back later?
                         # get_help_dropdown_menu()
                     ],
-                    className="pl-4 pl-xl-5"
+                    className="pl-4 pl-xl-5 pr-0"
                 ),
-                width=7
+                width="auto"
+            ),
+            dbc.Col(
+                dbc.Input(type="number",
+                          id="jump-to-nt-pos-val",
+                          placeholder="Jump to nucleotide position"),
+                className="px-0"
             ),
             dbc.Col(
                 [

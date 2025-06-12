@@ -232,6 +232,34 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
       xtickEl.scrollIntoView(false, {inline: 'start'});
     },
     /**
+     * Scroll the heatmap to the closest nt pos inputted by user.
+     * @param {Object} inputPos User inputted nt pos val.
+     * @param {Object} data ``data_parser.get_data`` return value
+     */
+    jumpToHeatmapPosAfterNtPosInput: (inputPos, data) => {
+      // New histogram resets click data
+      if (inputPos === null) return;
+
+      let closestNtPosIndex = -1;
+      for (const [i, ntPos] of data['heatmap_x_nt_pos'].entries()) {
+        closestNtPosIndex++;
+        if (Number(ntPos) >= inputPos) break;
+      }
+      const closestNtPos = Number(data['heatmap_x_nt_pos'][closestNtPosIndex]);
+
+      $('#heatmap-center-div')[0].scrollLeft =
+          $('#heatmap-nt-pos-axis-fig')[0].offsetWidth;
+
+      const xtickSelector =
+          `#heatmap-nt-pos-axis-fig g.xtick > text:contains(${closestNtPos})`;
+      const $xticks = $(xtickSelector);
+      const xtickEl = $xticks.filter((e) => {
+        return Number($xticks[e].textContent) === closestNtPos;
+      })[0]
+
+      xtickEl.scrollIntoView(false, {inline: 'start'});
+    },
+    /**
      * Scroll the first row and column of a mutation in the heatmap into view
      * after a user selects a mutation in the modal for jumping to mutations.
      * @param _ User clicked the okay btn in the modal for jumping to
