@@ -71,6 +71,6 @@ def get_run_info_row():
                 ))
             ],
             width={"offset": 1},
-        )
+        ), className="mb-4"
     )
     return ret
