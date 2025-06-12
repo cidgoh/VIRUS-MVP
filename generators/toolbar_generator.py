@@ -258,8 +258,11 @@ def get_file_download_component():
             children=[
                 dbc.DropdownMenuItem("Surveillance reports",
                                      id="download-surveillance-files-btn"),
-                dbc.DropdownMenuItem("Mutation index JSON",
-                                     id="download-mutation-index-btn")
+                dbc.DropdownMenuItem("Visualized mutations index JSON",
+                                     id="download-mutation-index-btn"),
+                dbc.DropdownMenuItem("All mutations index JSON",
+                                     className="text-danger",
+                                     id="download-full-mutation-index-btn")
             ]
         ),
         dcc.Download(id="download-file-data"),

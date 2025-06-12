@@ -466,12 +466,13 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
     Input("download-surveillance-files-btn", "n_clicks"),
     Input("download-mutation-index-btn", "n_clicks"),
     Input("download-mutation-index-link", "n_clicks"),
+    Input("download-full-mutation-index-btn", "n_clicks"),
     Input("download-full-mutation-index-link", "n_clicks"),
     State("get-data-args", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def trigger_download(_, __, ___, ____, get_data_args, last_data_mtime):
+def trigger_download(_, __, ___, ____, _____, get_data_args, last_data_mtime):
     """Send download file when user clicks a download btn.
 
     This is either a zip object of surveillance reports for visible
@@ -483,7 +484,9 @@ def trigger_download(_, __, ___, ____, get_data_args, last_data_mtime):
         clicked.
     :param ___: Unused input variable that monitors when download link
         is clicked.
-    :param ____: Unused input variable that monitors when download link
+    :param ____: Unused input variable that monitors when download btn
+        is clicked.
+    :param _____: Unused input variable that monitors when download link
         is clicked.
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
@@ -521,7 +524,8 @@ def trigger_download(_, __, ___, ____, get_data_args, last_data_mtime):
             make_archive(reports_path, "zip", reports_path)
             download_component = toolbar_generator.get_file_download_component()
             return dcc.send_file(reports_path + ".zip"), download_component
-    elif trigger == "download-full-mutation-index-link.n_clicks":
+    elif trigger in {"download-full-mutation-index-btn.n_clicks",
+                     "download-full-mutation-index-link.n_clicks"}:
         dirs = [REFERENCE_DATA_DIR, USER_DATA_DIR]
         content = dumps(get_full_mutation_index_dict(dirs))
         filename = "full_mutation_index.json"
