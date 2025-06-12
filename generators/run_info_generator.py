@@ -35,8 +35,15 @@ def get_run_info_row():
                      )]
                 ),
                 html.Div(
-                  [html.B("Data acknowledgment: "),
-                   RUN_INFO_DICT["data_acknowledgment"]]
+                    [html.B("Data acknowledgment: "),
+                     RUN_INFO_DICT["data_acknowledgment"],
+                     html.A(
+                         RUN_INFO_DICT["data_acknowledgment_url"],
+                         href=RUN_INFO_DICT["data_acknowledgment_url"],
+                         target="_blank",
+                         # https://bit.ly/3qQjB7Y
+                         rel="noopener noreferrer"
+                     )],
                 ),
                 html.Div(
                     [html.B("Reference genome: "),

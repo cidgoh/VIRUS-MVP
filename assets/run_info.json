@@ -7,6 +7,7 @@
     "reference_description": "SARS-CoV-2 isolate Wuhan-Hu-1, complete genome",
     "data_source_name": "VirusSeq Data Portal",
     "data_source_url": "https://virusseq-dataportal.ca/releases",
-    "data_acknowledgment": "This dataset is provided by the VirusSeq Data Portal, please see detailed acknowledgments at https://virusseq-dataportal.ca/acknowledgements",
+    "data_acknowledgment": "This dataset is provided by the VirusSeq Data Portal, please see detailed acknowledgments at ",
+    "data_acknowledgment_url": "https://virusseq-dataportal.ca/acknowledgements",
     "data_access_date": "2025-04-28"
 }
