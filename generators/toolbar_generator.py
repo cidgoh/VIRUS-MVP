@@ -260,7 +260,8 @@ def get_file_download_component():
                                      id="download-surveillance-files-btn"),
                 dbc.DropdownMenuItem("Visualized mutations index JSON",
                                      id="download-mutation-index-btn"),
-                dbc.DropdownMenuItem("All mutations index JSON",
+                dbc.DropdownMenuItem("All mutations index JSON "
+                                     "(large file)",
                                      className="text-danger",
                                      id="download-full-mutation-index-btn")
             ]
