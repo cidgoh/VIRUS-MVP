@@ -35,6 +35,10 @@ def get_run_info_row():
                      )]
                 ),
                 html.Div(
+                  [html.B("Data acknowledgment: "),
+                   RUN_INFO_DICT["data_acknowledgment"]]
+                ),
+                html.Div(
                     [html.B("Reference genome: "),
                      "%s (%s)" % (RUN_INFO_DICT["reference_description"],
                                   RUN_INFO_DICT["reference_accession"]),]
@@ -46,10 +50,6 @@ def get_run_info_row():
                 html.Div(
                     [html.B("Genomes processed in this run: "),
                      RUN_INFO_DICT["new_sequences_in_run"]]
-                ),
-                html.Div(html.B("Notes:")),
-                html.Ul(
-                    [html.Li(e) for e in RUN_INFO_DICT["notes"]]
                 ),
                 html.Div(
                     ["➡️ Download the annotated mutation data in JSON format ",
