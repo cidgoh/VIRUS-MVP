@@ -20,33 +20,42 @@ def get_toolbar_row(data):
     ret = dbc.Row(
         [
             dbc.Col(
-                dbc.ButtonGroup(
+                dbc.Row(
                     [
-                        get_select_lineages_toolbar_btn(),
-                        # This loading displays during user uploads
-                        dcc.Loading(
-                            get_file_upload_component(),
-                            id="upload-loading",
-                            type="circle"
+                        dbc.Col(
+                            dbc.ButtonGroup(
+                                [
+                                    get_select_lineages_toolbar_btn(),
+                                    # This loading displays during user uploads
+                                    dcc.Loading(
+                                        get_file_upload_component(),
+                                        id="upload-loading",
+                                        type="circle"
+                                    ),
+                                    dcc.Loading(
+                                        get_file_download_component(),
+                                        id="download-loading",
+                                        type="circle"
+                                    ),
+                                    get_jump_to_btn(),
+                                    # TODO deactivating for now; back later?
+                                    # get_help_dropdown_menu()
+                                ],
+                            ),
+                            className="ml-1 ml-xl-5 pr-0 px-xl-0",
+                            width="auto"
                         ),
-                        dcc.Loading(
-                            get_file_download_component(),
-                            id="download-loading",
-                            type="circle"
+                        dbc.Col(
+                            dbc.Input(type="number",
+                                      id="jump-to-nt-pos-val",
+                                      placeholder="Jump to nucleotide "
+                                                  "position"),
+                            className="px-0"
                         ),
-                        get_jump_to_btn(),
-                        # TODO deactivating for now; bring back later?
-                        # get_help_dropdown_menu()
-                    ],
-                    className="pl-4 pl-xl-5 pr-0"
+                    ]
                 ),
+                className="pr-0",
                 width="auto"
-            ),
-            dbc.Col(
-                dbc.Input(type="number",
-                          id="jump-to-nt-pos-val",
-                          placeholder="Jump to nucleotide position"),
-                className="px-0"
             ),
             dbc.Col(
                 [
@@ -63,26 +72,36 @@ def get_toolbar_row(data):
                         type="dot"
                     )
                 ],
+                className="px-0 mr-3",
                 id="loading-col",
                 width=1
             ),
             dbc.Col(
-                get_mutation_freq_slider(data),
-                className="my-auto",
-                id="mutation-freq-slider-col",
-                width=2
-            ),
-            dbc.Col(
-                get_clade_defining_mutations_switch_form_group(),
-                className="my-auto pl-xl-5",
-                width=2
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            get_mutation_freq_slider(data),
+                            className="my-auto px-0",
+                            id="mutation-freq-slider-col",
+                            xl=2,
+                            width=4
+                        ),
+                        dbc.Col(
+                            get_clade_defining_mutations_switch_form_group(),
+                            className="my-auto ml-3 px-0",
+                            width="auto"
+                        ),
+                    ],
+                    justify="end"
+                ),
+                className="mr-1 mr-xl-5"
             ),
             get_select_lineages_modal(data),
             get_confirm_strain_del_modal(),
             get_jump_to_modal(),
             get_readme_modal()
         ],
-        className="mt-3 ml-xl-3"
+        className="mt-3"
     )
     return ret
 
@@ -96,7 +115,7 @@ def get_select_lineages_toolbar_btn():
     """
     return dbc.Button("Select groups",
                       id="open-select-lineages-modal-btn",
-                      className="mr-2")
+                      className="mr-1")
 
 
 def get_select_lineages_modal(data):
@@ -273,7 +292,7 @@ def get_file_download_component():
             ]
         ),
         dcc.Download(id="download-file-data"),
-    ], className="mr-2")
+    ], className="mr-1")
 
 
 def get_jump_to_btn():
@@ -288,7 +307,7 @@ def get_jump_to_btn():
                       color="secondary",
                       outline=True,
                       id="jump-to-btn",
-                      className="mr-2")
+                      className="mr-1")
 
 
 def get_jump_to_modal():
