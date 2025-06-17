@@ -115,12 +115,6 @@ heatmap view.
 
 [legend]: assets/screenshots/legend.png
 
-This legend can be toggled through the help dropdown menu ![help_btn]. This
-menu also contains options for opening an in-app view of this README, and the
-VIRUS-MVP Github page.
-
-[help_btn]: assets/screenshots/help_btn.png
-
 ### Heatmap view
 
 The left axis encodes viral lineages. Lineages belonging to VOC are in
