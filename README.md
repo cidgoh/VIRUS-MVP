@@ -90,7 +90,7 @@ should use a socket proxy prior to deployment.
 
 **One currently unresolved issue:** If you upload a file while the application
 is deployed through Docker, and then later attempt to upload a file while the
-application is deployed locally, the application will likely run into
+application is deployed natively, the application will likely run into
 permission issues related to the _nf-ncov-voc_ cache. You can fix this by
 removing all cache files in the `nf-ncov-voc/` directory:
 
