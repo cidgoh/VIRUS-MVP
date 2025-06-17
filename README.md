@@ -100,6 +100,14 @@ You may have to use `sudo`.
 
 ## Usage
 
+A navbar at the top of the application has links to both this repository and the
+underlying genomics workflow. Clicking the "TUTORIAL" link will display this
+README in-app.
+
+![navbar]
+
+[navbar]: assets/screenshots/navbar.png
+
 A legend at the top of application provides a detailed explanation of the
 heatmap view.
 
