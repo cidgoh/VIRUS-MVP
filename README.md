@@ -192,6 +192,10 @@ Clicking the "jump to mutation" JUMP TO button allows you to search for
 specific mutations by name, and automatically scroll the heatmap to that
 mutation.
 
+Typing a nucleotide position in the "jump to nucleotide position" textbox
+TEXTBOX will automatically scroll the heatmap to that specific nucleotide
+position.
+
 The mutation frequency slider allows you to filter heatmap cells by mutation
 frequency.
 
