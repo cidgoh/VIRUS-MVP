@@ -16,7 +16,7 @@ I have unparallelized some callbacks, which allows certain callbacks to
 run faster.
 """
 from base64 import b64decode
-from json import loads
+from json import dumps, loads
 from os import mkdir, path, remove, walk
 from pathlib import Path
 from shutil import copyfile, copytree, make_archive, rmtree
@@ -27,18 +27,19 @@ from uuid import uuid4
 import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
+import dash_html_components as html
 from dash.dependencies import (ALL, MATCH, ClientsideFunction, Input, Output,
                                State)
 from dash.exceptions import PreventUpdate
 from flask_caching import Cache
 
-from data_parser import get_data
+from data_parser import get_data, get_full_mutation_index_dict
 from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR,
                          NF_NCOV_VOC_DIR, REFERENCE_SURVEILLANCE_REPORTS_DIR,
                          USER_SURVEILLANCE_REPORTS_DIR)
 from generators import (heatmap_generator, histogram_generator,
-                        legend_generator, table_generator, toast_generator,
-                        toolbar_generator, footer_generator)
+                        legend_generator, navbar_generator, table_generator,
+                        toast_generator, toolbar_generator, run_info_generator)
 
 
 # This is the only global variable Dash plays nice with, and it
@@ -149,6 +150,10 @@ def launch_app(_):
     data_ = read_data(get_data_args, last_data_mtime)
 
     return [
+        # Bootstrap row containing navbar
+        navbar_generator.get_navbar_row(
+            app.get_asset_url("cidgoh_logo.png")
+        ),
         # Bootstrap collapse containing legend
         legend_generator.get_legend_collapse(),
         # Bootstrap row containing tools
@@ -159,12 +164,12 @@ def launch_app(_):
         heatmap_generator.get_heatmap_row(data_),
         # Bootstrap row containing histogram
         histogram_generator.get_histogram_row(data_),
-        # Bootstrap row containing table
-        table_generator.get_table_row_div(data_),
-        # Bootstrap row containing footer
-        footer_generator.get_footer_row_div(
-            app.get_asset_url("cidgoh_logo.png")
-        ),
+        # TODO deactivating this for now; maybe later?
+        # # Bootstrap row containing table
+        # table_generator.get_table_row_div(data_),
+        # Bootstrap row containing run info
+        html.Hr(),
+        run_info_generator.get_run_info_row(),
         # These are in-browser variables that Dash can treat as Inputs
         # and Outputs, in addition to more conventional Dash components
         # like HTML divs and Plotly figures. ``get-data-args`` are the
@@ -201,6 +206,7 @@ def launch_app(_):
         dcc.Store(id="make-select-lineages-modal-checkboxes-draggable"),
         dcc.Store(id="make-histogram-rel-pos-bar-dynamic"),
         dcc.Store(id="allow-jumps-from-histogram"),
+        dcc.Store(id="allow-jumps-from-nt-pos-input"),
         dcc.Store(id="link-heatmap-cells-y-scrolling")
     ], None
 
@@ -458,51 +464,81 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
 @app.callback(
     Output("download-file-data", "data"),
     Output("download-loading", "children"),
-    Input("download-file-btn", "n_clicks"),
+    Input("download-surveillance-files-btn", "n_clicks"),
+    Input("download-mutation-index-btn", "n_clicks"),
+    Input("download-mutation-index-link", "n_clicks"),
+    Input("download-full-mutation-index-btn", "n_clicks"),
+    Input("download-full-mutation-index-link", "n_clicks"),
     State("get-data-args", "data"),
     State("last-data-mtime", "data"),
     prevent_initial_call=True
 )
-def trigger_download(_, get_data_args, last_data_mtime):
-    """Send download file when user clicks download btn.
+def trigger_download(_, __, ___, ____, _____, get_data_args, last_data_mtime):
+    """Send download file when user clicks a download btn.
 
-    This is a zip object of surveillance reports for visible strains.
+    This is either a zip object of surveillance reports for visible
+    strains, or JSON of non-hidden strains mutation index.
 
     :param _: Unused input variable that monitors when download btn is
         clicked.
+    :param __: Unused input variable that monitors when download btn is
+        clicked.
+    :param ___: Unused input variable that monitors when download link
+        is clicked.
+    :param ____: Unused input variable that monitors when download btn
+        is clicked.
+    :param _____: Unused input variable that monitors when download link
+        is clicked.
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
     :param last_data_mtime: Last mtime across all data files
     :type last_data_mtime: float
     :return: Fires dash function that triggers file download
     """
-    # Ignores non-visible strains during `copytree`
-    def ignore_fn(dir_, contents):
-        reference_nested_dir = \
-            str(Path(dir_).parent) == REFERENCE_SURVEILLANCE_REPORTS_DIR
-        user_dir = \
-            dir_ == USER_SURVEILLANCE_REPORTS_DIR
-        if reference_nested_dir or user_dir:
-            data = read_data(get_data_args, last_data_mtime)
-            visible_strains = data["heatmap_y_strains"]
-            visible_filenames = \
-                {data["strain_filenames_dict"][e] for e in visible_strains}
-            return [e for e in contents
-                    if Path(e).stem not in visible_filenames]
-        # All other conditions, ignore nothing
-        return []
+    trigger = dash.callback_context.triggered[0]["prop_id"]
 
-    with TemporaryDirectory() as dir_name:
-        reports_path = path.join(dir_name, "surveillance_reports")
-        copytree(REFERENCE_SURVEILLANCE_REPORTS_DIR,
-                 path.join(reports_path, "reference_surveillance_reports"),
-                 ignore=ignore_fn)
-        copytree(USER_SURVEILLANCE_REPORTS_DIR,
-                 path.join(reports_path, "user_surveillance_reports"),
-                 ignore=ignore_fn)
-        make_archive(reports_path, "zip", reports_path)
+    if trigger == "download-surveillance-files-btn.n_clicks":
+        # Ignores non-visible strains during `copytree`
+        def ignore_fn(dir_, contents):
+            reference_nested_dir = \
+                str(Path(dir_).parent) == REFERENCE_SURVEILLANCE_REPORTS_DIR
+            user_dir = \
+                dir_ == USER_SURVEILLANCE_REPORTS_DIR
+            if reference_nested_dir or user_dir:
+                data = read_data(get_data_args, last_data_mtime)
+                visible_strains = data["heatmap_y_strains"]
+                visible_filenames = \
+                    {data["strain_filenames_dict"][e] for e in visible_strains}
+                return [e for e in contents
+                        if Path(e).stem not in visible_filenames]
+            # All other conditions, ignore nothing
+            return []
+
+        with TemporaryDirectory() as dir_name:
+            reports_path = path.join(dir_name, "surveillance_reports")
+            copytree(REFERENCE_SURVEILLANCE_REPORTS_DIR,
+                     path.join(reports_path, "reference_surveillance_reports"),
+                     ignore=ignore_fn)
+            copytree(USER_SURVEILLANCE_REPORTS_DIR,
+                     path.join(reports_path, "user_surveillance_reports"),
+                     ignore=ignore_fn)
+            make_archive(reports_path, "zip", reports_path)
+            download_component = toolbar_generator.get_file_download_component()
+            return dcc.send_file(reports_path + ".zip"), download_component
+    elif trigger in {"download-full-mutation-index-btn.n_clicks",
+                     "download-full-mutation-index-link.n_clicks"}:
+        dirs = [REFERENCE_DATA_DIR, USER_DATA_DIR]
+        content = dumps(get_full_mutation_index_dict(dirs))
+        filename = "full_mutation_index.json"
         download_component = toolbar_generator.get_file_download_component()
-        return dcc.send_file(reports_path + ".zip"), download_component
+        return {"content": content, "filename": filename}, download_component
+    else:
+        # Current ``get_data`` return val
+        data = read_data(get_data_args, last_data_mtime)
+        content = dumps(data["mutation_index_dict"])
+        filename = "mutation_index.json"
+        download_component = toolbar_generator.get_file_download_component()
+        return {"content": content, "filename": filename}, download_component
 
 
 @app.callback(
@@ -815,6 +851,29 @@ def toggle_jump_to_modal(_, __, ___, get_data_args, last_data_mtime):
         return True, data["jump_to_dropdown_search_options"]
     else:
         return False, []
+
+
+@app.callback(
+    Output("readme-modal", "is_open"),
+    # TODO currently deactivated
+    # Input("toggle-readme-btn", "n_clicks"),
+    Input("toggle-readme-link", "n_clicks"),
+    Input("readme-modal-close-btn", "n_clicks"),
+    prevent_initial_call=True
+)
+def toggle_readme_modal(_, __):
+    """Open or close modal for viewing README in app.
+
+    :param _: User clicked link in navbar for opening modal
+    :param __: User clicked close btn in modal
+    :return: Whether modal is open
+    :rtype: bool
+    """
+    ctx = dash.callback_context.triggered[0]["prop_id"]
+    if ctx == "readme-modal-close-btn.n_clicks":
+        return False
+    else:
+        return True
 
 
 @app.callback(
@@ -1416,6 +1475,9 @@ def update_table(get_data_args, click_data, last_data_mtime):
         selected strain.
     :rtype: plotly.graph_objects.Figure
     """
+    # TODO deactivating this for now; maybe return later
+    raise PreventUpdate
+
     # Current ``get_data`` return val
     data = read_data(get_data_args, last_data_mtime)
 
@@ -1509,6 +1571,16 @@ app.clientside_callback(
     ),
     Output("allow-jumps-from-histogram", "data"),
     Input("last-histogram-point-clicked", "data"),
+    State("data", "data"),
+    prevent_initial_call=True
+)
+app.clientside_callback(
+    ClientsideFunction(
+        namespace="clientside",
+        function_name="jumpToHeatmapPosAfterNtPosInput"
+    ),
+    Output("allow-jumps-from-nt-pos-input", "data"),
+    Input("jump-to-nt-pos-val", "value"),
     State("data", "data"),
     prevent_initial_call=True
 )

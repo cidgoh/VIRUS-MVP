@@ -16,7 +16,7 @@ def get_legend_collapse():
     ret = dbc.Collapse(
         get_legend_rows(),
         id="legend-collapse",
-        is_open=False
+        is_open=True
     )
     return ret
 
@@ -80,9 +80,10 @@ def get_legend_rows():
             no_gutters=True
         ),
         dbc.Row(
-            dbc.Col(html.B("Click on a gene/region in the bar below the "
-                           "histogram to automatically scroll to the "
-                           "beginning of that gene/region in the heatmap."),
+            dbc.Col(html.B("Click the \"Search for mutations\" button to "
+                           "search for mutations by name, and then "
+                           "automatically scroll the heatmap to a specific "
+                           "mutation."),
                     className="border-bottom border-left border-right "
                               "border-dark p-1",
                     width={"offset": 1, "size": 10}),
