@@ -1,0 +1,13 @@
+{
+    "run_id": "20250429-001",
+    "last_updated": "2025-04-29T15:43:00Z",
+    "total_sequences_processed": 1782394,
+    "new_sequences_in_run": 32147,
+    "reference_accession": "NC_045512.2",
+    "reference_description": "SARS-CoV-2 isolate Wuhan-Hu-1, complete genome",
+    "data_source_name": "VirusSeq Data Portal",
+    "data_source_url": "https://virusseq-dataportal.ca/releases",
+    "data_acknowledgment": "This dataset is provided by the VirusSeq Data Portal, please see detailed acknowledgments at ",
+    "data_acknowledgment_url": "https://virusseq-dataportal.ca/acknowledgements",
+    "data_access_date": "2025-04-28"
+}

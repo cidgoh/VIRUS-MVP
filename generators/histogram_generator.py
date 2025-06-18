@@ -39,6 +39,15 @@ def get_histogram_row(data):
                         width={"offset": 1, "size": 10}
                     ),
                     no_gutters=True
+                ),
+                dbc.Row(
+                    dbc.Col(
+                        html.B("Click on a gene in the above bar to "
+                               "automatically scroll the heatmap to the "
+                               "beginning of that clicked gene."),
+                        className="text-center",
+                        width={"offset": 1, "size": 10}
+                    )
                 )
             ]
         ), no_gutters=True)
