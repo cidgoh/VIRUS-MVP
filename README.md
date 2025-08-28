@@ -1,5 +1,7 @@
 # VIRUS-MVP
 
+[![DOI](https://zenodo.org/badge/344328365.svg)](https://doi.org/10.5281/zenodo.16988789)
+
 VIRUS-MVP is a heatmap-centric visualization web application that encodes
 mutational information across viral populations e.g., SARS-CoV-2 & MPOX.
 You can find deployed versions of VIRUS-MVP (without user upload functionality)
