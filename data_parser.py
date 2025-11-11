@@ -7,6 +7,7 @@ from copy import deepcopy
 import csv
 from itertools import compress, islice
 import os
+from pathlib import Path
 
 from definitions import (GENE_POSITIONS_DICT, NSP_POSITIONS_DICT,
                          DEFAULT_REFERENCE_HIDDEN_STRAINS,
@@ -120,7 +121,7 @@ def parse_gvf_sample_variants(path):
             if pos not in ret["mutations"]:
                 ret["mutations"][pos] = []
 
-            mutation_name = attrs["Name"]
+            mutation_name = attrs["original_mutation_description"]
             cond = attrs["alias"] not in {"n/a", mutation_name}
             mutation_alias = attrs["alias"] if cond else ""
             alt = attrs["Variant_seq"]
@@ -163,14 +164,14 @@ def parse_gvf_sample_variants(path):
                 ret["mutations"][pos].append(mutation_dict)
 
             fn_dict = mutation_dict["functions"]
-            fn_category = attrs["function_category"].strip('"')
+            fn_category = attrs["measured_variant_functional_effect"].strip('"')
             if not fn_category or fn_category == "n/a":
                 continue
             if fn_category not in fn_dict:
                 fn_dict[fn_category] = {}
 
-            fn_desc = attrs["function_description"].strip('"')
-            fn_source = attrs["source"].strip('"')
+            fn_desc = attrs["variant_functional_effect_description"].strip('"')
+            fn_source = attrs["URL"].strip('"')
             fn_citation = attrs["citation"].strip('"')
             fn_dict[fn_category][fn_desc] = \
                 {"source": fn_source, "citation": fn_citation}
@@ -288,12 +289,17 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
             return len(strain_order_dict), strain
 
     dir_strains_dict = {}
+    strain_filenames_dict = {}
     parsed_gvf_dirs = {}
     for dir_ in dirs:
         dir_entry_paths = \
             [e.path for e in os.scandir(dir_) if e.path.endswith(".gvf")]
         dir_entry_strains = \
             [parse_gvf_sample_name(e) for e in dir_entry_paths]
+        dir_entry_filenames = [Path(e).stem for e in dir_entry_paths]
+        strain_filenames_dict = \
+            {**strain_filenames_dict,
+             **dict(zip(dir_entry_strains, dir_entry_filenames))}
         strain_paths_dict = dict(zip(dir_entry_strains, dir_entry_paths))
         sorted_strain_paths_dict = \
             dict(sorted(strain_paths_dict.items(), key=strain_path_sort_key))
@@ -353,6 +359,8 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
             get_histogram_x(visible_parsed_mutations),
         "dir_strains_dict":
             dir_strains_dict,
+        "strain_filenames_dict":
+            strain_filenames_dict,
         "hidden_strains":
             hidden_strains,
         "voc_strains":
@@ -395,7 +403,8 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
         "heatmap_x_nsps":
             get_heatmap_x_nsps(intra_col_mutation_pos_dict),
         "jump_to_info_dict":
-            get_jump_to_info_dict(visible_parsed_mutations)
+            get_jump_to_info_dict(visible_parsed_mutations),
+        "mutation_index_dict": parsed_mutations
     }
     ret["heatmap_x_tickvals"] = \
         get_heatmap_x_tickvals(ret["heatmap_cells_tickvals"])
@@ -410,6 +419,35 @@ def get_data(dirs, show_clade_defining=False, hidden_strains=None,
         get_jump_to_dropdown_search_options(ret["jump_to_info_dict"])
 
     return ret
+
+
+def get_full_mutation_index_dict(dirs):
+    """Get mutation index dict for every lineage.
+
+    `get_data` only processes visible lineages, which savings launch
+    time. But if a user wants to download the full mutation index, we
+    can do the whole process again for every lineage. It will be slow,
+    but that is fine.
+
+    :param dirs: List of paths to folders to obtain data from
+    :type dirs: list[str]
+    :return: Mutation index dict for every gvf file in `dirs`.
+    :rtype: dict
+    """
+    parsed_gvf_dirs = {}
+    for dir_ in dirs:
+        dir_entry_paths = \
+            [e.path for e in os.scandir(dir_) if e.path.endswith(".gvf")]
+        dir_entry_strains = \
+            [parse_gvf_sample_name(e) for e in dir_entry_paths]
+        strains_path_zip_obj = zip(dir_entry_strains, dir_entry_paths)
+        parsed_gvf_dir = \
+            {s: parse_gvf_sample_variants(p) for s, p in strains_path_zip_obj}
+        parsed_gvf_dirs = {**parsed_gvf_dirs, **parsed_gvf_dir}
+
+    parsed_mutations = \
+        {k: v["mutations"] for k, v in parsed_gvf_dirs.items()}
+    return parsed_mutations
 
 
 def get_mutation_freq_slider_vals(parsed_mutations):
@@ -580,15 +618,18 @@ def get_heatmap_x_aa_pos(heatmap_x_nt_pos, heatmap_x_genes):
     """
     gene_start_positions = \
         {k: GENE_POSITIONS_DICT[k]["start"] for k in GENE_POSITIONS_DICT}
-    last_gene_seen = "3'UTR"
+    last_gene_seen = heatmap_x_genes[-1]
     ret = ["" for _ in heatmap_x_nt_pos]
     # Iterate through nt pos in reverse
     for i, pos in enumerate(reversed(heatmap_x_nt_pos)):
         # Negative index
         _i = -1 - i
         gene = heatmap_x_genes[_i]
-        if gene in {FIRST_REGION, LAST_REGION}:
-            ret[_i] = gene
+        if FIRST_REGION[0] <= int(pos) <= FIRST_REGION[1]:
+            ret[_i] = ""
+            continue
+        if LAST_REGION[0] <= int(pos) <= LAST_REGION[1]:
+            ret[_i] = ""
             continue
         if gene == "INTERGENIC":
             last_gene_start_pos = gene_start_positions[last_gene_seen]

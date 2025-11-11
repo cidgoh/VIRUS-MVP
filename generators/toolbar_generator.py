@@ -6,7 +6,7 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 
-from definitions import REFERENCE_DATA_DIR
+from definitions import REFERENCE_DATA_DIR, README_PATH
 
 
 def get_toolbar_row(data):
@@ -20,22 +20,42 @@ def get_toolbar_row(data):
     ret = dbc.Row(
         [
             dbc.Col(
-                dbc.ButtonGroup(
+                dbc.Row(
                     [
-                        get_select_lineages_toolbar_btn(),
-                        # This loading displays during user uploads
-                        dcc.Loading(
-                            get_file_upload_component(),
-                            id="upload-loading",
-                            type="circle"
+                        dbc.Col(
+                            dbc.ButtonGroup(
+                                [
+                                    get_select_lineages_toolbar_btn(),
+                                    # This loading displays during user uploads
+                                    dcc.Loading(
+                                        get_file_upload_component(),
+                                        id="upload-loading",
+                                        type="circle"
+                                    ),
+                                    dcc.Loading(
+                                        get_file_download_component(),
+                                        id="download-loading",
+                                        type="circle"
+                                    ),
+                                    get_jump_to_btn(),
+                                    # TODO deactivating for now; back later?
+                                    # get_help_dropdown_menu()
+                                ],
+                            ),
+                            className="ml-1 ml-xl-5 pr-0 px-xl-0",
+                            width="auto"
                         ),
-                        get_file_download_component(),
-                        get_jump_to_btn(),
-                        get_legend_toggle_component()
-                    ],
-                    className="pl-4 pl-xl-5"
+                        dbc.Col(
+                            dbc.Input(type="number",
+                                      id="jump-to-nt-pos-val",
+                                      placeholder="Jump to nucleotide "
+                                                  "position"),
+                            className="px-0"
+                        ),
+                    ]
                 ),
-                width=7
+                className="pr-0",
+                width="auto"
             ),
             dbc.Col(
                 [
@@ -52,25 +72,36 @@ def get_toolbar_row(data):
                         type="dot"
                     )
                 ],
+                className="px-0 mr-3",
                 id="loading-col",
                 width=1
             ),
             dbc.Col(
-                get_mutation_freq_slider(data),
-                className="my-auto",
-                id="mutation-freq-slider-col",
-                width=2
-            ),
-            dbc.Col(
-                get_clade_defining_mutations_switch_form_group(),
-                className="my-auto pl-xl-5",
-                width=2
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            get_mutation_freq_slider(data),
+                            className="my-auto px-0",
+                            id="mutation-freq-slider-col",
+                            xl=2,
+                            width=4
+                        ),
+                        dbc.Col(
+                            get_clade_defining_mutations_switch_form_group(),
+                            className="my-auto ml-3 px-0",
+                            width="auto"
+                        ),
+                    ],
+                    justify="end"
+                ),
+                className="mr-1 mr-xl-5"
             ),
             get_select_lineages_modal(data),
             get_confirm_strain_del_modal(),
-            get_jump_to_modal()
+            get_jump_to_modal(),
+            get_readme_modal()
         ],
-        className="mt-3 ml-xl-3"
+        className="mt-3"
     )
     return ret
 
@@ -84,7 +115,7 @@ def get_select_lineages_toolbar_btn():
     """
     return dbc.Button("Select groups",
                       id="open-select-lineages-modal-btn",
-                      className="mr-2")
+                      className="mr-1")
 
 
 def get_select_lineages_modal(data):
@@ -232,42 +263,51 @@ def get_file_upload_component():
         component inside.
     :rtype: dcc.Upload
     """
-    icon = html.I(className="bi-cloud-upload-fill", style={"font-size": 16})
     return dcc.Upload(
-        dbc.Button(icon, color="success", outline=True),
+        dbc.Button("Upload", color="success"),
         id="upload-file",
         className="mr-1"
     )
 
 
 def get_file_download_component():
-    """Get dash component for download button.
+    """Get dash component for download dropdown menu.
 
-    :return: Dash html div with button and download component inside.
+    :return: Dash html div with dropdown menu and download component
     :rtype: html.Div
     """
-    icon = html.I(className="bi-cloud-download-fill", style={"font-size": 16})
     return html.Div([
-        dbc.Button(icon,
-                   color="primary",
-                   outline=True,
-                   id="download-file-btn"),
+        dbc.DropdownMenu(
+            label="Download",
+            color="primary",
+            children=[
+                dbc.DropdownMenuItem("Surveillance reports",
+                                     id="download-surveillance-files-btn"),
+                dbc.DropdownMenuItem("Visualized mutations index JSON",
+                                     id="download-mutation-index-btn"),
+                dbc.DropdownMenuItem("All mutations index JSON "
+                                     "(large file)",
+                                     className="text-danger",
+                                     id="download-full-mutation-index-btn")
+            ]
+        ),
         dcc.Download(id="download-file-data"),
-    ], className="mr-2")
+    ], className="mr-1")
 
 
 def get_jump_to_btn():
     """Returns button for opening modal for jumping to mutations.
+    TODO rename references "Jump to" in code to "Search for mutations"
 
     :return: Dash Bootstrap Components button with appropriate label
         for jumping to mutations.
     :rtype: dbc.Button
     """
-    return dbc.Button("Jump to...",
+    return dbc.Button("Search for mutations",
                       color="secondary",
                       outline=True,
                       id="jump-to-btn",
-                      className="mr-2")
+                      className="mr-1")
 
 
 def get_jump_to_modal():
@@ -307,15 +347,61 @@ def get_jump_to_modal():
     ], id="jump-to-modal")
 
 
-def get_legend_toggle_component():
-    """Get dash component for toggling heatmap legend.
+def get_help_dropdown_menu():
+    """Returns dropdown menu for getting help.
 
-    :return: Dash Bootstrap Components button with appropriate label
-    :rtype: dbc.Button
+    :return: Help dropdown menu
+    :rtype: dbc.DropdownMenu
     """
-    return dbc.Button("HELP",
-                      color="info",
-                      id="toggle-legend-btn")
+    return dbc.DropdownMenu(
+        label="HELP",
+        color="info",
+        children=[
+            dbc.DropdownMenuItem(
+                "Toggle legend",
+                id="toggle-legend-btn"
+            ),
+            dbc.DropdownMenuItem(
+                "README",
+                id="toggle-readme-btn"
+            ),
+            html.A(
+                dbc.DropdownMenuItem("Github"),
+                href="https://github.com/cidgoh/VIRUS-MVP",
+                target="_blank",
+                # https://bit.ly/3qQjB7Y
+                rel="noopener noreferrer"
+            )
+        ]
+    )
+
+
+def get_readme_modal():
+    """Returns modal for viewing README.
+
+    :return: README modal
+    :rtype: dbc.Modal
+    """
+    readme_str = ""
+    with open(README_PATH) as fp:
+        readme_str = fp.read()
+    return dbc.Modal(
+        [
+            dbc.ModalHeader("README"),
+            dbc.ModalBody(
+                dcc.Markdown(readme_str)
+            ),
+            dbc.ModalFooter(
+                dbc.Button("Close",
+                           className="mr-1",
+                           color="secondary",
+                           id=""
+                              "readme-modal-close-btn"),
+            ),
+        ],
+        id="readme-modal",
+        scrollable=True,
+        size="xl")
 
 
 def get_mutation_freq_slider(data):

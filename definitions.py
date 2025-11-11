@@ -7,6 +7,7 @@ USER_DATA_DIRS = os.path.join(ROOT_DIR, "user_data")
 ASSETS_DIR = os.path.join(ROOT_DIR, "assets")
 NF_NCOV_VOC_DIR = os.path.join(ROOT_DIR, "nf-ncov-voc")
 GENOME_CONFIG_PATH = os.path.join(ASSETS_DIR, "genome_config.json")
+RUN_INFO_PATH = os.path.join(ASSETS_DIR, "run_info.json")
 DEFAULT_REFERENCE_HIDDEN_STRAINS_PATH = \
     os.path.join(ASSETS_DIR, "default_reference_hidden_strains.json")
 DEFAULT_REFERENCE_STRAIN_ORDER_PATH = \
@@ -16,16 +17,12 @@ REFERENCE_SURVEILLANCE_REPORTS_DIR = \
 USER_SURVEILLANCE_REPORTS_DIRS = \
     os.path.join(ROOT_DIR, "user_surveillance_reports")
 USER_PWD_PATH = os.path.join(ROOT_DIR, "users.json")
+README_PATH = os.path.join(ROOT_DIR, "README.md")
 
 with open(GENOME_CONFIG_PATH) as fp:
     GENOME_CONFIG_DICT = json.load(fp)
 
 GENOME_LEN = GENOME_CONFIG_DICT["Src"]["end"]
-
-FIRST_REGION = {k for k, v in GENOME_CONFIG_DICT.items()
-                if k != "Src" and "start" in v and v["start"] == 1}.pop()
-LAST_REGION = {k for k, v in GENOME_CONFIG_DICT.items()
-                if k != "Src" and "end" in v and v["end"] == GENOME_LEN}.pop()
 
 gene_bar_components = \
     [e for e in GENOME_CONFIG_DICT if GENOME_CONFIG_DICT[e]["type"]
@@ -36,12 +33,29 @@ GENE_POSITIONS_DICT = \
     {k: {x: GENOME_CONFIG_DICT[k][x] for x in ["start", "end"]}
      for k in gene_bar_components[:-1]}
 
+first_component = min(GENE_POSITIONS_DICT,
+                   key=lambda k: GENE_POSITIONS_DICT[k]["start"])
+if GENE_POSITIONS_DICT[first_component]["start"] == 1:
+    FIRST_REGION = [1, GENE_POSITIONS_DICT[first_component]["end"]]
+else:
+    FIRST_REGION = [1, GENE_POSITIONS_DICT[first_component]["start"]-1]
+
+last_component = max(GENE_POSITIONS_DICT,
+                  key=lambda k: GENE_POSITIONS_DICT[k]["end"])
+if GENE_POSITIONS_DICT[last_component]["end"] == GENOME_LEN:
+    LAST_REGION = [GENE_POSITIONS_DICT[last_component]["start"], GENOME_LEN]
+else:
+    LAST_REGION = [GENE_POSITIONS_DICT[last_component]["end"]+1, GENOME_LEN]
+
 nsp_bar_components = \
     [e for e in GENOME_CONFIG_DICT
      if GENOME_CONFIG_DICT[e]["type"] == "mature_protein_region_of_CDS"]
 NSP_POSITIONS_DICT = \
     {k: {x: GENOME_CONFIG_DICT[k][x] for x in ["start", "end"]}
      for k in nsp_bar_components}
+
+with open(RUN_INFO_PATH) as fp:
+    RUN_INFO_DICT = json.load(fp)
 
 with open(DEFAULT_REFERENCE_HIDDEN_STRAINS_PATH) as fp:
     DEFAULT_REFERENCE_HIDDEN_STRAINS = json.load(fp)
