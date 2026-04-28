@@ -67,7 +67,10 @@ def get_virus_reference_segment_navs():
     selected_reference = session.get("reference")
     reference_dropdown_item_list = []
     for reference in references_dict:
-        reference_dropdown_item = dbc.DropdownMenuItem(reference)
+        reference_dropdown_item = dbc.DropdownMenuItem(
+            reference,
+            id={"type": "reference-dropdown-menu-item", "index": reference}
+        )
         if reference == selected_reference:
             reference_dropdown_item.active = True
         reference_dropdown_item_list.append(reference_dropdown_item)

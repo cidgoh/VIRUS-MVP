@@ -358,20 +358,28 @@ def read_data(get_data_args, last_data_mtime):
     Output("reference-dropdown-menu", "children"),
     Output("segment-dropdown-menu", "children"),
     Input({"type": "virus-dropdown-menu-item", "index": ALL},"n_clicks"),
+    Input({"type": "reference-dropdown-menu-item", "index": ALL},"n_clicks"),
     prevent_initial_call=True
 )
-def update_virus_reference_segment_navs(_):
+def update_virus_reference_segment_navs(_, __):
     """TODO"""
     ctx = dash.callback_context
     triggered_prop_id = ctx.triggered[0]["prop_id"]
-    selected_virus = loads(triggered_prop_id.split(".")[0])["index"]
+    triggered_prop_id_type = loads(triggered_prop_id.rsplit(".", 1)[0])["type"]
+    selection = loads(triggered_prop_id.rsplit(".", 1)[0])["index"]
 
-    session["virus"] = selected_virus
-    references_dict = VIRUS_REFERENCE_SEGMENT_DICT[selected_virus]
-    new_reference = next(iter(references_dict))
-    session["reference"] = new_reference
-    segments_list = references_dict[new_reference]
-    session["segment"] = segments_list[0] if segments_list else None
+    if triggered_prop_id_type == "virus-dropdown-menu-item":
+        session["virus"] = selection
+        references_dict = VIRUS_REFERENCE_SEGMENT_DICT[selection]
+        new_reference = next(iter(references_dict))
+        session["reference"] = new_reference
+        segments_list = references_dict[new_reference]
+        session["segment"] = segments_list[0] if segments_list else None
+    elif triggered_prop_id_type == "reference-dropdown-menu-item":
+        session["reference"] = selection
+        references_dict = VIRUS_REFERENCE_SEGMENT_DICT[session.get("virus")]
+        segments_list = references_dict[selection]
+        session["segment"] = segments_list[0] if segments_list else None
 
     [virus_dropdown, reference_dropdown, segment_dropdown] = \
         navbar_generator.get_virus_reference_segment_navs()
