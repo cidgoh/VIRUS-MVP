@@ -31,12 +31,14 @@ import dash_html_components as html
 from dash.dependencies import (ALL, MATCH, ClientsideFunction, Input, Output,
                                State)
 from dash.exceptions import PreventUpdate
+from flask import session
 from flask_caching import Cache
 
 from data_parser import get_data, get_full_mutation_index_dict
 from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR,
                          NF_NCOV_VOC_DIR, REFERENCE_SURVEILLANCE_REPORTS_DIR,
-                         USER_SURVEILLANCE_REPORTS_DIR)
+                         USER_SURVEILLANCE_REPORTS_DIR,
+                         VIRUS_REFERENCE_SEGMENT_DICT)
 from generators import (heatmap_generator, histogram_generator,
                         legend_generator, navbar_generator, table_generator,
                         toast_generator, toolbar_generator, run_info_generator)
@@ -69,6 +71,8 @@ app = dash.Dash(
 )
 # server instance used for gunicorn deployment
 server = app.server
+# Used for sessions TODO env file?
+server.secret_key = 'a_very_secret_random_string'
 
 # Cache specifications
 cache = Cache(server, config={
@@ -135,6 +139,15 @@ def launch_app(_):
     this callback. The ultimate purpose of this is to replace the blank
     loading screen when the app is first loaded.
     """
+    first_listed_virus = next(iter(VIRUS_REFERENCE_SEGMENT_DICT))
+    reference_dict = VIRUS_REFERENCE_SEGMENT_DICT[first_listed_virus]
+    first_listed_reference = next(iter(reference_dict))
+    segment_list = reference_dict[first_listed_reference]
+    first_listed_segment = segment_list[0] if segment_list else None
+    session["virus"] = first_listed_virus
+    session["reference"] = first_listed_reference
+    session["segment"] = first_listed_segment
+
     # Some default vals
     get_data_args = {
         "show_clade_defining": False,

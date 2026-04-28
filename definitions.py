@@ -6,6 +6,8 @@ REFERENCE_DATA_DIR = os.path.join(ROOT_DIR, "reference_data")
 USER_DATA_DIR = os.path.join(ROOT_DIR, "user_data")
 ASSETS_DIR = os.path.join(ROOT_DIR, "assets")
 NF_NCOV_VOC_DIR = os.path.join(ROOT_DIR, "nf-ncov-voc")
+VIRUS_REFERENCE_SEGMENT_PATH = \
+    os.path.join(ASSETS_DIR, "virus_reference_segment.json")
 GENOME_CONFIG_PATH = os.path.join(ASSETS_DIR, "genome_config.json")
 RUN_INFO_PATH = os.path.join(ASSETS_DIR, "run_info.json")
 DEFAULT_REFERENCE_HIDDEN_STRAINS_PATH = \
@@ -17,6 +19,9 @@ REFERENCE_SURVEILLANCE_REPORTS_DIR = \
 USER_SURVEILLANCE_REPORTS_DIR = \
     os.path.join(ROOT_DIR, "user_surveillance_reports")
 README_PATH = os.path.join(ROOT_DIR, "README.md")
+
+with open(VIRUS_REFERENCE_SEGMENT_PATH) as fp:
+    VIRUS_REFERENCE_SEGMENT_DICT = json.load(fp)
 
 with open(GENOME_CONFIG_PATH) as fp:
     GENOME_CONFIG_DICT = json.load(fp)
