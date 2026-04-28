@@ -10,6 +10,15 @@ def get_navbar_row(cidgoh_logo_path):
     :rtype: dbc.Row
     """
     ret = dbc.Nav([
+        dbc.DropdownMenu(
+            label="VIRUS/SEGMENT",
+            children=[
+                dbc.DropdownMenuItem('ham', active=True),
+                dbc.DropdownMenuItem('spam'),
+                dbc.DropdownMenuItem('eggs')
+            ],
+            nav=True
+        ),
         dbc.NavItem(
             dbc.NavLink("TUTORIAL",
                         id="toggle-readme-link",
