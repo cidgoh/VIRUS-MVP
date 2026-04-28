@@ -35,10 +35,11 @@ from flask import session
 from flask_caching import Cache
 
 from data_parser import get_data, get_full_mutation_index_dict
-from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR,
-                         NF_NCOV_VOC_DIR, REFERENCE_SURVEILLANCE_REPORTS_DIR,
+from definitions import (ASSETS_DIR, USER_DATA_DIR, NF_NCOV_VOC_DIR,
+                         REFERENCE_SURVEILLANCE_REPORTS_DIR,
                          USER_SURVEILLANCE_REPORTS_DIR,
-                         VIRUS_REFERENCE_SEGMENT_DICT)
+                         VIRUS_REFERENCE_SEGMENT_DICT,
+                         get_reference_data_dir)
 from generators import (heatmap_generator, histogram_generator,
                         legend_generator, navbar_generator, table_generator,
                         toast_generator, toolbar_generator, run_info_generator)
@@ -156,10 +157,13 @@ def launch_app(_):
         "min_mutation_freq": None,
         "max_mutation_freq": None
     }
+
+    reference_data_dir = get_reference_data_dir()
     last_data_mtime = max([
-        max(path.getmtime(root) for root, _, _ in walk(REFERENCE_DATA_DIR)),
+        max(path.getmtime(root) for root, _, _ in walk(reference_data_dir)),
         max(path.getmtime(root) for root, _, _ in walk(USER_DATA_DIR))
     ])
+
     data_ = read_data(get_data_args, last_data_mtime)
 
     return [
@@ -235,13 +239,16 @@ def launch_app(_):
         Input("new-upload", "data"),
         Input("hidden-strains", "data"),
         Input("strain-order", "data"),
-        Input("mutation-freq-slider", "value")
+        Input("mutation-freq-slider", "value"),
+        Input("virus-dropdown-menu", "children"),
+        Input("reference-dropdown-menu", "children"),
+        Input("segment-dropdown-menu", "children"),
     ],
     prevent_initial_call=True
 )
 def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
-                         strain_order, mutation_freq_vals):
-    """Update ``get-data-args`` variables in dcc.Store.
+                         strain_order, mutation_freq_vals, _, __, ___):
+    """Update ``get-data-args`` variables in dcc.Store.TODO
 
     This is a central callback. Updating ``get-data-args`` triggers a
     change to the ``get-data-args`` variable in dcc.Store, which
@@ -301,8 +308,9 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     }
 
     # Update ``last-data-mtime`` too
+    reference_data_dir = get_reference_data_dir()
     last_data_mtime = max([
-        max(path.getmtime(root) for root, _, _ in walk(REFERENCE_DATA_DIR)),
+        max(path.getmtime(root) for root, _, _ in walk(reference_data_dir)),
         max(path.getmtime(root) for root, _, _ in walk(USER_DATA_DIR))
     ])
 
@@ -344,7 +352,7 @@ def read_data(get_data_args, last_data_mtime):
     :type last_data_mtime: float
     """
     ret = get_data(
-        [REFERENCE_DATA_DIR, USER_DATA_DIR],
+        [get_reference_data_dir(), USER_DATA_DIR],
         show_clade_defining=get_data_args["show_clade_defining"],
         hidden_strains=get_data_args["hidden_strains"],
         strain_order=get_data_args["strain_order"],
@@ -578,7 +586,7 @@ def trigger_download(_, __, ___, ____, _____, get_data_args, last_data_mtime):
             return dcc.send_file(reports_path + ".zip"), download_component
     elif trigger in {"download-full-mutation-index-btn.n_clicks",
                      "download-full-mutation-index-link.n_clicks"}:
-        dirs = [REFERENCE_DATA_DIR, USER_DATA_DIR]
+        dirs = [get_reference_data_dir(), USER_DATA_DIR]
         content = dumps(get_full_mutation_index_dict(dirs))
         filename = "full_mutation_index.json"
         download_component = toolbar_generator.get_file_download_component()

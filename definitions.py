@@ -1,6 +1,8 @@
 import json
 import os
 
+from flask import session
+
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 REFERENCE_DATA_DIR = os.path.join(ROOT_DIR, "reference_data")
 USER_DATA_DIR = os.path.join(ROOT_DIR, "user_data")
@@ -19,6 +21,16 @@ REFERENCE_SURVEILLANCE_REPORTS_DIR = \
 USER_SURVEILLANCE_REPORTS_DIR = \
     os.path.join(ROOT_DIR, "user_surveillance_reports")
 README_PATH = os.path.join(ROOT_DIR, "README.md")
+
+def get_reference_data_dir():
+    """TODO"""
+    virus = session.get("virus")
+    reference = session.get("reference")
+    segment = session.get("segment")
+    if segment:
+        return os.path.join(REFERENCE_DATA_DIR, virus, reference, segment)
+    else:
+        return os.path.join(REFERENCE_DATA_DIR, virus, reference)
 
 with open(VIRUS_REFERENCE_SEGMENT_PATH) as fp:
     VIRUS_REFERENCE_SEGMENT_DICT = json.load(fp)
