@@ -353,6 +353,32 @@ def read_data(get_data_args, last_data_mtime):
     )
     return ret
 
+@app.callback(
+    Output("virus-dropdown-menu", "children"),
+    Output("reference-dropdown-menu", "children"),
+    Output("segment-dropdown-menu", "children"),
+    Input({"type": "virus-dropdown-menu-item", "index": ALL},"n_clicks"),
+    prevent_initial_call=True
+)
+def update_virus_reference_segment_navs(_):
+    """TODO"""
+    ctx = dash.callback_context
+    triggered_prop_id = ctx.triggered[0]["prop_id"]
+    selected_virus = loads(triggered_prop_id.split(".")[0])["index"]
+
+    session["virus"] = selected_virus
+    references_dict = VIRUS_REFERENCE_SEGMENT_DICT[selected_virus]
+    new_reference = next(iter(references_dict))
+    session["reference"] = new_reference
+    segments_list = references_dict[new_reference]
+    session["segment"] = segments_list[0] if segments_list else None
+
+    [virus_dropdown, reference_dropdown, segment_dropdown] = \
+        navbar_generator.get_virus_reference_segment_navs()
+    return (virus_dropdown.children,
+            reference_dropdown.children,
+            segment_dropdown.children)
+
 
 @app.callback(
     Output("show-clade-defining", "data"),

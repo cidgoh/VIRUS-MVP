@@ -55,7 +55,10 @@ def get_virus_reference_segment_navs():
     selected_virus = session.get("virus")
     virus_dropdown_item_list = []
     for virus in VIRUS_REFERENCE_SEGMENT_DICT:
-        virus_dropdown_item = dbc.DropdownMenuItem(virus)
+        virus_dropdown_item = dbc.DropdownMenuItem(
+            virus,
+            id={"type": "virus-dropdown-menu-item", "index": virus}
+        )
         if virus == selected_virus:
             virus_dropdown_item.active = True
         virus_dropdown_item_list.append(virus_dropdown_item)
@@ -70,7 +73,7 @@ def get_virus_reference_segment_navs():
         reference_dropdown_item_list.append(reference_dropdown_item)
 
     segments_list = references_dict[selected_reference]
-    selected_segment = session.get("session")
+    selected_segment = session.get("segment")
     segment_dropdown_item_list = []
     for segment in segments_list:
         segment_dropdown_item = dbc.DropdownMenuItem(segment)
@@ -80,12 +83,15 @@ def get_virus_reference_segment_navs():
 
     virus_dropdown = dbc.DropdownMenu(label="VIRUS",
                                       children=virus_dropdown_item_list,
-                                      nav=True)
+                                      nav=True,
+                                      id="virus-dropdown-menu")
     reference_dropdown = dbc.DropdownMenu(label="REFERENCE",
                                           children=reference_dropdown_item_list,
-                                          nav=True)
+                                          nav=True,
+                                          id="reference-dropdown-menu")
     segment_dropdown = dbc.DropdownMenu(label="SEGMENT",
                                         children=segment_dropdown_item_list,
-                                        nav=True)
+                                        nav=True,
+                                        id="segment-dropdown-menu")
 
     return [virus_dropdown, reference_dropdown, segment_dropdown]
