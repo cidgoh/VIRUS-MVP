@@ -359,9 +359,10 @@ def read_data(get_data_args, last_data_mtime):
     Output("segment-dropdown-menu", "children"),
     Input({"type": "virus-dropdown-menu-item", "index": ALL},"n_clicks"),
     Input({"type": "reference-dropdown-menu-item", "index": ALL},"n_clicks"),
+    Input({"type": "segment-dropdown-menu-item", "index": ALL},"n_clicks"),
     prevent_initial_call=True
 )
-def update_virus_reference_segment_navs(_, __):
+def update_virus_reference_segment_navs(_, __, ___):
     """TODO"""
     ctx = dash.callback_context
     triggered_prop_id = ctx.triggered[0]["prop_id"]
@@ -380,6 +381,9 @@ def update_virus_reference_segment_navs(_, __):
         references_dict = VIRUS_REFERENCE_SEGMENT_DICT[session.get("virus")]
         segments_list = references_dict[selection]
         session["segment"] = segments_list[0] if segments_list else None
+    # segment-dropdown-menu-item
+    else:
+        session["segment"] = selection
 
     [virus_dropdown, reference_dropdown, segment_dropdown] = \
         navbar_generator.get_virus_reference_segment_navs()

@@ -79,7 +79,10 @@ def get_virus_reference_segment_navs():
     selected_segment = session.get("segment")
     segment_dropdown_item_list = []
     for segment in segments_list:
-        segment_dropdown_item = dbc.DropdownMenuItem(segment)
+        segment_dropdown_item = dbc.DropdownMenuItem(
+            segment,
+            id={"type": "segment-dropdown-menu-item", "index": segment}
+        )
         if segment == selected_segment:
             segment_dropdown_item.active = True
         segment_dropdown_item_list.append(segment_dropdown_item)
