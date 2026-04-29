@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 from flask import session
 
@@ -69,22 +70,30 @@ with open(DEFAULT_REFERENCE_HIDDEN_STRAINS_PATH) as fp:
 with open(DEFAULT_REFERENCE_STRAIN_ORDER_PATH) as fp:
     DEFAULT_REFERENCE_STRAIN_ORDER = json.load(fp)
 
-def get_nested_dir(root):
+def safe_path_segment_name(s):
+    s = re.sub(r"[\\/]+", "_", s)
+    s = re.sub(r"\.\.+", "_", s)
+    s = re.sub(r"[^a-zA-Z0-9._-]", "_", s)
+    return s.strip("_")
+
+def get_nested_dir(root, fail_if_empty=False):
     """TODO"""
-    virus = session.get("virus")
-    reference = session.get("reference")
+    virus = safe_path_segment_name(session.get("virus"))
+    reference = safe_path_segment_name(session.get("reference"))
     segment = session.get("segment")
     if segment:
-        ret_path = os.path.join(root, virus, reference, segment)
+        ret_path = os.path.join(root, virus, reference,
+                                safe_path_segment_name(str(segment)))
     else:
         ret_path = os.path.join(root, virus, reference)
-    if not os.path.exists(ret_path):
-        os.makedirs(ret_path)
+    os.makedirs(ret_path, exist_ok=True)
+    if fail_if_empty and not os.listdir(ret_path):
+        raise RuntimeError(ret_path + " is empty")
     return ret_path
 
 def get_reference_data_dir():
     """TODO"""
-    return get_nested_dir(REFERENCE_DATA_DIR)
+    return get_nested_dir(REFERENCE_DATA_DIR, True)
 
 def get_user_data_dir():
     """TODO"""
