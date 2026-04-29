@@ -91,7 +91,7 @@ def get_virus_reference_segment_navs():
                                       children=virus_dropdown_item_list,
                                       nav=True,
                                       id="virus-dropdown-menu")
-    reference_dropdown = dbc.DropdownMenu(label="REFERENCE",
+    reference_dropdown = dbc.DropdownMenu(label="REFERENCE GENOME",
                                           children=reference_dropdown_item_list,
                                           nav=True,
                                           id="reference-dropdown-menu")
