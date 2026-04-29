@@ -36,10 +36,9 @@ from flask_caching import Cache
 
 from data_parser import get_data, get_full_mutation_index_dict
 from definitions import (ASSETS_DIR, NF_NCOV_VOC_DIR,
-                         REFERENCE_SURVEILLANCE_REPORTS_DIR,
-                         USER_SURVEILLANCE_REPORTS_DIR,
                          VIRUS_REFERENCE_SEGMENT_DICT, get_reference_data_dir,
-                         get_user_data_dir)
+                         get_reference_surveillance_reports_dir,
+                         get_user_data_dir, get_user_surveillance_reports_dir)
 from generators import (heatmap_generator, histogram_generator,
                         legend_generator, navbar_generator, table_generator,
                         toast_generator, toolbar_generator, run_info_generator)
@@ -503,7 +502,8 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
             copyfile(gvf_file,
                      path.join(get_user_data_dir(), sample_name + ".gvf"))
 
-            reports_dir = path.join(USER_SURVEILLANCE_REPORTS_DIR, sample_name)
+            reports_dir = path.join(get_user_surveillance_reports_dir(),
+                                    sample_name)
             if path.exists(reports_dir):
                 rmtree(reports_dir)
             mkdir(reports_dir)
@@ -558,13 +558,17 @@ def trigger_download(_, __, ___, ____, _____, get_data_args, last_data_mtime):
     """
     trigger = dash.callback_context.triggered[0]["prop_id"]
 
+    reference_surveillance_reports_dir = \
+        get_reference_surveillance_reports_dir()
+    user_surveillance_reports_dir = get_user_surveillance_reports_dir()
+
     if trigger == "download-surveillance-files-btn.n_clicks":
         # Ignores non-visible strains during `copytree`
         def ignore_fn(dir_, contents):
             reference_nested_dir = \
-                str(Path(dir_).parent) == REFERENCE_SURVEILLANCE_REPORTS_DIR
+                str(Path(dir_).parent) == reference_surveillance_reports_dir
             user_dir = \
-                dir_ == USER_SURVEILLANCE_REPORTS_DIR
+                dir_ == user_surveillance_reports_dir
             if reference_nested_dir or user_dir:
                 data = read_data(get_data_args, last_data_mtime)
                 visible_strains = data["heatmap_y_strains"]
@@ -577,10 +581,10 @@ def trigger_download(_, __, ___, ____, _____, get_data_args, last_data_mtime):
 
         with TemporaryDirectory() as dir_name:
             reports_path = path.join(dir_name, "surveillance_reports")
-            copytree(REFERENCE_SURVEILLANCE_REPORTS_DIR,
+            copytree(reference_surveillance_reports_dir,
                      path.join(reports_path, "reference_surveillance_reports"),
                      ignore=ignore_fn)
-            copytree(USER_SURVEILLANCE_REPORTS_DIR,
+            copytree(user_surveillance_reports_dir,
                      path.join(reports_path, "user_surveillance_reports"),
                      ignore=ignore_fn)
             make_archive(reports_path, "zip", reports_path)
@@ -968,7 +972,8 @@ def update_deleted_strain(_, strain_to_del, get_data_args, last_data_mtime):
 
     strain_to_del_filename = data["strain_filenames_dict"][strain_to_del]
     remove(path.join(get_user_data_dir(), strain_to_del_filename + ".gvf"))
-    rmtree(path.join(USER_SURVEILLANCE_REPORTS_DIR, strain_to_del_filename))
+    rmtree(path.join(get_user_surveillance_reports_dir(),
+                     strain_to_del_filename))
     return strain_to_del
 
 
