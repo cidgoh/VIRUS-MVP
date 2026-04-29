@@ -22,35 +22,6 @@ USER_SURVEILLANCE_REPORTS_DIR = \
     os.path.join(ROOT_DIR, "user_surveillance_reports")
 README_PATH = os.path.join(ROOT_DIR, "README.md")
 
-def get_nested_dir(root):
-    """TODO"""
-    virus = session.get("virus")
-    reference = session.get("reference")
-    segment = session.get("segment")
-    if segment:
-        ret_path = os.path.join(root, virus, reference, segment)
-    else:
-        ret_path = os.path.join(root, virus, reference)
-    if not os.path.exists(ret_path):
-        os.makedirs(ret_path)
-    return ret_path
-
-def get_reference_data_dir():
-    """TODO"""
-    return get_nested_dir(REFERENCE_DATA_DIR)
-
-def get_user_data_dir():
-    """TODO"""
-    return get_nested_dir(USER_DATA_DIR)
-
-def get_reference_surveillance_reports_dir():
-    """TODO"""
-    return get_nested_dir(REFERENCE_SURVEILLANCE_REPORTS_DIR)
-
-def get_user_surveillance_reports_dir():
-    """TODO"""
-    return get_nested_dir(USER_SURVEILLANCE_REPORTS_DIR)
-
 with open(VIRUS_REFERENCE_SEGMENT_PATH) as fp:
     VIRUS_REFERENCE_SEGMENT_DICT = json.load(fp)
 
@@ -97,3 +68,32 @@ with open(DEFAULT_REFERENCE_HIDDEN_STRAINS_PATH) as fp:
 
 with open(DEFAULT_REFERENCE_STRAIN_ORDER_PATH) as fp:
     DEFAULT_REFERENCE_STRAIN_ORDER = json.load(fp)
+
+def get_nested_dir(root):
+    """TODO"""
+    virus = session.get("virus")
+    reference = session.get("reference")
+    segment = session.get("segment")
+    if segment:
+        ret_path = os.path.join(root, virus, reference, segment)
+    else:
+        ret_path = os.path.join(root, virus, reference)
+    if not os.path.exists(ret_path):
+        os.makedirs(ret_path)
+    return ret_path
+
+def get_reference_data_dir():
+    """TODO"""
+    return get_nested_dir(REFERENCE_DATA_DIR)
+
+def get_user_data_dir():
+    """TODO"""
+    return get_nested_dir(USER_DATA_DIR)
+
+def get_reference_surveillance_reports_dir():
+    """TODO"""
+    return get_nested_dir(REFERENCE_SURVEILLANCE_REPORTS_DIR)
+
+def get_user_surveillance_reports_dir():
+    """TODO"""
+    return get_nested_dir(USER_SURVEILLANCE_REPORTS_DIR)
