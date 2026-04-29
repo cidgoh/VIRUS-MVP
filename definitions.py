@@ -22,31 +22,26 @@ USER_SURVEILLANCE_REPORTS_DIR = \
     os.path.join(ROOT_DIR, "user_surveillance_reports")
 README_PATH = os.path.join(ROOT_DIR, "README.md")
 
-def get_reference_data_dir():
+def get_nested_path(root):
     """TODO"""
     virus = session.get("virus")
     reference = session.get("reference")
     segment = session.get("segment")
     if segment:
-        ret_path = os.path.join(REFERENCE_DATA_DIR, virus, reference, segment)
+        ret_path = os.path.join(root, virus, reference, segment)
     else:
-        ret_path = os.path.join(REFERENCE_DATA_DIR, virus, reference)
+        ret_path = os.path.join(root, virus, reference)
     if not os.path.exists(ret_path):
         os.mkdir(ret_path)
     return ret_path
 
+def get_reference_data_dir():
+    """TODO"""
+    return get_nested_path(REFERENCE_DATA_DIR)
+
 def get_user_data_dir():
     """TODO"""
-    virus = session.get("virus")
-    reference = session.get("reference")
-    segment = session.get("segment")
-    if segment:
-        ret_path = os.path.join(USER_DATA_DIR, virus, reference, segment)
-    else:
-        ret_path = os.path.join(USER_DATA_DIR, virus, reference)
-    if not os.path.exists(ret_path):
-        os.mkdir(ret_path)
-    return ret_path
+    return get_nested_path(USER_DATA_DIR)
 
 with open(VIRUS_REFERENCE_SEGMENT_PATH) as fp:
     VIRUS_REFERENCE_SEGMENT_DICT = json.load(fp)
