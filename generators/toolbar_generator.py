@@ -6,7 +6,7 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 
-from definitions import USER_DATA_DIR, README_PATH
+from definitions import README_PATH, get_reference_data_dir, get_user_data_dir
 
 
 def get_toolbar_row(data):
@@ -150,8 +150,19 @@ def get_select_lineages_modal_body(data):
     :rtype: list
     """
     modal_body = []
+    reference_data_dir = get_reference_data_dir()
+    user_data_dir = get_user_data_dir()
+    dir_labels = {
+        reference_data_dir: "Reference data",
+        user_data_dir: "User data"
+    }
+
     for dir_ in reversed(data["dir_strains_dict"]):
-        title = dbc.Row(dbc.Col(os.path.basename(dir_)))
+        if dir_ in dir_labels:
+            dir_label = dir_labels[dir_]
+        else:
+            dir_label = dir_
+        title = dbc.Row(dbc.Col(dir_label))
 
         all_none_btns = dbc.ButtonGroup([
                 dbc.Button(
@@ -184,7 +195,7 @@ def get_select_lineages_modal_body(data):
                 dbc.Col(checkbox, width=1),
                 dbc.Col(strain)
             ]
-            if dir_ == USER_DATA_DIR:
+            if dir_ == user_data_dir:
                 cols.append(
                     dbc.Col(
                         dbc.Badge("Delete",

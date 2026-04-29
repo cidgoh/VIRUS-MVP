@@ -32,6 +32,16 @@ def get_reference_data_dir():
     else:
         return os.path.join(REFERENCE_DATA_DIR, virus, reference)
 
+def get_user_data_dir():
+    """TODO"""
+    virus = session.get("virus")
+    reference = session.get("reference")
+    segment = session.get("segment")
+    if segment:
+        return os.path.join(USER_DATA_DIR, virus, reference, segment)
+    else:
+        return os.path.join(USER_DATA_DIR, virus, reference)
+
 with open(VIRUS_REFERENCE_SEGMENT_PATH) as fp:
     VIRUS_REFERENCE_SEGMENT_DICT = json.load(fp)
 

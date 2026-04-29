@@ -35,11 +35,11 @@ from flask import session
 from flask_caching import Cache
 
 from data_parser import get_data, get_full_mutation_index_dict
-from definitions import (ASSETS_DIR, USER_DATA_DIR, NF_NCOV_VOC_DIR,
+from definitions import (ASSETS_DIR, NF_NCOV_VOC_DIR,
                          REFERENCE_SURVEILLANCE_REPORTS_DIR,
                          USER_SURVEILLANCE_REPORTS_DIR,
-                         VIRUS_REFERENCE_SEGMENT_DICT,
-                         get_reference_data_dir)
+                         VIRUS_REFERENCE_SEGMENT_DICT, get_reference_data_dir,
+                         get_user_data_dir)
 from generators import (heatmap_generator, histogram_generator,
                         legend_generator, navbar_generator, table_generator,
                         toast_generator, toolbar_generator, run_info_generator)
@@ -159,9 +159,10 @@ def launch_app(_):
     }
 
     reference_data_dir = get_reference_data_dir()
+    user_data_dir = get_user_data_dir()
     last_data_mtime = max([
         max(path.getmtime(root) for root, _, _ in walk(reference_data_dir)),
-        max(path.getmtime(root) for root, _, _ in walk(USER_DATA_DIR))
+        max(path.getmtime(root) for root, _, _ in walk(user_data_dir))
     ])
 
     data_ = read_data(get_data_args, last_data_mtime)
@@ -309,9 +310,10 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
 
     # Update ``last-data-mtime`` too
     reference_data_dir = get_reference_data_dir()
+    user_data_dir = get_user_data_dir()
     last_data_mtime = max([
         max(path.getmtime(root) for root, _, _ in walk(reference_data_dir)),
-        max(path.getmtime(root) for root, _, _ in walk(USER_DATA_DIR))
+        max(path.getmtime(root) for root, _, _ in walk(user_data_dir))
     ])
 
     # We call ``read_data`` here, so it gets cached. Otherwise, the
@@ -352,7 +354,7 @@ def read_data(get_data_args, last_data_mtime):
     :type last_data_mtime: float
     """
     ret = get_data(
-        [get_reference_data_dir(), USER_DATA_DIR],
+        [get_reference_data_dir(), get_user_data_dir()],
         show_clade_defining=get_data_args["show_clade_defining"],
         hidden_strains=get_data_args["hidden_strains"],
         strain_order=get_data_args["strain_order"],
@@ -499,7 +501,7 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
             data_path = path.join(dir_name, rand_prefix, "FUNCTIONALANNOTATION")
             gvf_file = path.join(data_path, "%s.annotated.gvf" % sample_name)
             copyfile(gvf_file,
-                     path.join(USER_DATA_DIR, sample_name + ".gvf"))
+                     path.join(get_user_data_dir(), sample_name + ".gvf"))
 
             reports_dir = path.join(USER_SURVEILLANCE_REPORTS_DIR, sample_name)
             if path.exists(reports_dir):
@@ -586,7 +588,7 @@ def trigger_download(_, __, ___, ____, _____, get_data_args, last_data_mtime):
             return dcc.send_file(reports_path + ".zip"), download_component
     elif trigger in {"download-full-mutation-index-btn.n_clicks",
                      "download-full-mutation-index-link.n_clicks"}:
-        dirs = [get_reference_data_dir(), USER_DATA_DIR]
+        dirs = [get_reference_data_dir(), get_user_data_dir()]
         content = dumps(get_full_mutation_index_dict(dirs))
         filename = "full_mutation_index.json"
         download_component = toolbar_generator.get_file_download_component()
@@ -965,7 +967,7 @@ def update_deleted_strain(_, strain_to_del, get_data_args, last_data_mtime):
     data = read_data(get_data_args, last_data_mtime)
 
     strain_to_del_filename = data["strain_filenames_dict"][strain_to_del]
-    remove(path.join(USER_DATA_DIR, strain_to_del_filename + ".gvf"))
+    remove(path.join(get_user_data_dir(), strain_to_del_filename + ".gvf"))
     rmtree(path.join(USER_SURVEILLANCE_REPORTS_DIR, strain_to_del_filename))
     return strain_to_del
 
