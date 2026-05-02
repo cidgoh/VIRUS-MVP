@@ -116,6 +116,7 @@ def get_user_surveillance_reports_dir():
 def populate_nested_asset_dict(virus, reference, segment=None):
     """TODO"""
     ret_dict = {}
+
     nested_asset_dir = \
         get_nested_dir(ASSETS_DIR, virus, reference, segment, True)
     genome_config_path = os.path.join(nested_asset_dir, "genome_config.json")
@@ -123,7 +124,53 @@ def populate_nested_asset_dict(virus, reference, segment=None):
         raise RuntimeError(genome_config_path + " does not exist")
     with open(genome_config_path) as fp:
         genome_config_dict = json.load(fp)
-    ret_dict["genome_len"] = GENOME_CONFIG_DICT["Src"]["end"]
+
+    genome_len = genome_config_dict["Src"]["end"]
+    ret_dict["genome_len"] = genome_len
+
+    gene_bar_components = \
+        [e for e in genome_config_dict if genome_config_dict[e]["type"]
+         in ["CDS", "five_prime_UTR", "three_prime_UTR", "INTERGENIC"]]
+    ret_dict["gene_colors_dict"] = \
+        {k: genome_config_dict[k]["color"] for k in gene_bar_components}
+    gene_positions_dict = \
+        {k: {x: genome_config_dict[k][x] for x in ["start", "end"]}
+         for k in gene_bar_components[:-1]}
+    ret_dict["gene_positions_dict"] = gene_positions_dict
+
+    first_component = min(gene_positions_dict,
+                          key=lambda k: gene_positions_dict[k]["start"])
+    if gene_positions_dict[first_component]["start"] == 1:
+        ret_dict["first_region"] = [
+            1,
+            gene_positions_dict[first_component]["end"]
+        ]
+    else:
+        ret_dict["first_region"] = [
+            1,
+            gene_positions_dict[first_component]["start"] - 1
+        ]
+
+    last_component = max(gene_positions_dict,
+                         key=lambda k: gene_positions_dict[k]["end"])
+    if gene_positions_dict[last_component]["end"] == genome_len:
+        ret_dict["last_region"] = [
+            gene_positions_dict[last_component]["start"],
+            genome_len
+        ]
+    else:
+        ret_dict["last_region"] = [
+            gene_positions_dict[last_component]["end"] + 1,
+            genome_len
+        ]
+
+    nsp_bar_components = \
+        [e for e in genome_config_dict
+         if genome_config_dict[e]["type"] == "mature_protein_region_of_CDS"]
+    ret_dict["nsp_positions_dict"] = \
+        {k: {x: genome_config_dict[k][x] for x in ["start", "end"]}
+         for k in nsp_bar_components}
+
     return ret_dict
 
 NESTED_ASSET_DICT = {}
