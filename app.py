@@ -232,7 +232,8 @@ def launch_app(_):
     output=[
         Output("get-data-args", "data"),
         Output("last-data-mtime", "data"),
-        Output("data-loading", "data")
+        Output("data-loading", "data"),
+        Output("data", "data")
     ],
     inputs=[
         Input("show-clade-defining", "data"),
@@ -262,6 +263,12 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     returning it in this fn provides a spinner while this fn is being
     run.
 
+    We also update ``data`` here. It is only used by clientside
+    callbacks, as it is too large to be transported from server-side
+    callback to server-side callback. Updating it here instead of
+    another callback prevents race conditions where ``data`` has not
+    updated yet, but a clientside callback has been fired.
+
     :param show_clade_defining: ``update_show_clade-defining`` return
         value.
     :type show_clade_defining: bool
@@ -278,7 +285,7 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     :param gff3_annotations: ``parse_gff3_file`` return value
     :type gff3_annotations: dict
     :return: ``get_data`` return value, last mtime across all data
-        files, and ``data-loading`` children.
+        files, ``data-loading`` children, and ``data``.
     :rtype: tuple[dict, float, None]
     :raise PreventUpdate: New upload triggered this function, and that
         new upload failed.
@@ -318,9 +325,9 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     # We call ``read_data`` here, so it gets cached. Otherwise, the
     # callbacks that call ``read_data`` may do it in parallel--blocking
     # multiple processes.
-    read_data(args, last_data_mtime)
+    data = read_data(args, last_data_mtime)
 
-    return args, last_data_mtime, None
+    return args, last_data_mtime, None, data
 
 
 @cache.memoize(timeout=TIMEOUT)
@@ -1560,30 +1567,6 @@ def update_table(get_data_args, click_data, last_data_mtime):
         table_strain = data["heatmap_y_strains"][0]
 
     return table_generator.get_table_fig(data, table_strain)
-
-
-@app.callback(
-    Output("data", "data"),
-    Input("get-data-args", "data"),
-    State("last-data-mtime", "data"),
-    prevent_initial_call=True
-)
-def update_data(get_data_args, last_data_mtime):
-    """Update ``data`` in dcc.Store.
-
-    The output is only used in clientside callbacks. It is too large to
-    transport over the network.
-
-    :param get_data_args: Args for ``get_data``
-    :type get_data_args: dict
-    :param last_data_mtime: Last mtime across all data files
-    :type last_data_mtime: float
-    :return: ``get_data`` return val
-    :rtype: dict
-    """
-    # Current ``get_data`` return val
-    data = read_data(get_data_args, last_data_mtime)
-    return data
 
 
 # This is how Dash allows you to write callbacks in JavaScript
