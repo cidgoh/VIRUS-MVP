@@ -9,7 +9,7 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from definitions import GENE_COLORS_DICT, GENE_POSITIONS_DICT, get_asset_dict
+from definitions import GENE_POSITIONS_DICT, get_asset_dict
 
 
 def get_histogram_row(data):
@@ -222,13 +222,14 @@ def get_histogram_gene_bar_obj_list():
         histogram view.
     :rtype: list[go.Bar]
     """
+    gene_colors_dict = get_asset_dict()["gene_colors_dict"]
     ret = [go.Bar(name="",
                   x=[get_asset_dict()["genome_len"]],
                   y=["foo"],
                   base=1,
                   orientation="h",
                   marker={
-                      "color": GENE_COLORS_DICT["INTERGENIC"],
+                      "color": gene_colors_dict["INTERGENIC"],
                       "line": {"width": 0}
                   },
                   showlegend=False,
@@ -248,7 +249,7 @@ def get_histogram_gene_bar_obj_list():
                               insidetextanchor="middle",
                               insidetextfont={"color": "white"},
                               marker={
-                                  "color": GENE_COLORS_DICT[gene],
+                                  "color": gene_colors_dict[gene],
                                   "line": {"width": 0}
                               },
                               showlegend=False,
