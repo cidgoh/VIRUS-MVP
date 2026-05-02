@@ -9,7 +9,7 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from definitions import GENE_POSITIONS_DICT, get_asset_dict
+from definitions import get_asset_dict
 
 
 def get_histogram_row(data):
@@ -223,6 +223,7 @@ def get_histogram_gene_bar_obj_list():
     :rtype: list[go.Bar]
     """
     gene_colors_dict = get_asset_dict()["gene_colors_dict"]
+    gene_positions_dict = get_asset_dict()["gene_positions_dict"]
     ret = [go.Bar(name="",
                   x=[get_asset_dict()["genome_len"]],
                   y=["foo"],
@@ -234,9 +235,9 @@ def get_histogram_gene_bar_obj_list():
                   },
                   showlegend=False,
                   hoverinfo="skip")]
-    for gene in GENE_POSITIONS_DICT:
-        gene_start = GENE_POSITIONS_DICT[gene]["start"]
-        gene_end = GENE_POSITIONS_DICT[gene]["end"]
+    for gene in gene_positions_dict:
+        gene_start = gene_positions_dict[gene]["start"]
+        gene_end = gene_positions_dict[gene]["end"]
         gene_bar_len = gene_end - gene_start
         gene_bar_text = [gene] if gene_bar_len > 1000 else []
         gene_bar_obj = go.Bar(name=gene,

@@ -9,11 +9,9 @@ from itertools import compress, islice
 import os
 from pathlib import Path
 
-from definitions import (GENE_POSITIONS_DICT, NSP_POSITIONS_DICT,
-                         DEFAULT_REFERENCE_HIDDEN_STRAINS,
-                         DEFAULT_REFERENCE_STRAIN_ORDER,
-                         FIRST_REGION, LAST_REGION)
-
+from definitions import (NSP_POSITIONS_DICT, DEFAULT_REFERENCE_HIDDEN_STRAINS,
+                         DEFAULT_REFERENCE_STRAIN_ORDER, FIRST_REGION,
+                         LAST_REGION, get_asset_dict)
 
 def map_pos_to_gene(pos):
     """Map a nucleotide position to a gene.
@@ -23,9 +21,10 @@ def map_pos_to_gene(pos):
     :return: Gene at nucleotide position ``pos``
     :rtype: str
     """
-    for gene in GENE_POSITIONS_DICT:
-        start = GENE_POSITIONS_DICT[gene]["start"]
-        end = GENE_POSITIONS_DICT[gene]["end"]
+    gene_positions_dict = get_asset_dict()["gene_positions_dict"]
+    for gene in gene_positions_dict:
+        start = gene_positions_dict[gene]["start"]
+        end = gene_positions_dict[gene]["end"]
         if start <= pos <= end:
             return gene
     return "INTERGENIC"
@@ -616,8 +615,9 @@ def get_heatmap_x_aa_pos(heatmap_x_nt_pos, heatmap_x_genes):
         {downstream gene}.1-{number of nt upstream}.
     :rtype: list[str]
     """
+    gene_positions_dict = get_asset_dict()["gene_positions_dict"]
     gene_start_positions = \
-        {k: GENE_POSITIONS_DICT[k]["start"] for k in GENE_POSITIONS_DICT}
+        {k: gene_positions_dict[k]["start"] for k in gene_positions_dict}
     last_gene_seen = heatmap_x_genes[-1]
     ret = ["" for _ in heatmap_x_nt_pos]
     # Iterate through nt pos in reverse
