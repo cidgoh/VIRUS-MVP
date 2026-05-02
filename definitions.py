@@ -123,7 +123,7 @@ def populate_nested_asset_dict(virus, reference, segment=None):
         raise RuntimeError(genome_config_path + " does not exist")
     with open(genome_config_path) as fp:
         genome_config_dict = json.load(fp)
-    ret_dict[virus] = GENOME_CONFIG_DICT["Src"]["end"]
+    ret_dict["genome_len"] = GENOME_CONFIG_DICT["Src"]["end"]
     return ret_dict
 
 NESTED_ASSET_DICT = {}
