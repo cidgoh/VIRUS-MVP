@@ -115,6 +115,7 @@ def get_user_surveillance_reports_dir():
 
 def populate_nested_asset_dict(virus, reference, segment=None):
     """TODO"""
+    ret_dict = {}
     nested_asset_dir = \
         get_nested_dir(ASSETS_DIR, virus, reference, segment, True)
     genome_config_path = os.path.join(nested_asset_dir, "genome_config.json")
@@ -122,11 +123,19 @@ def populate_nested_asset_dict(virus, reference, segment=None):
         raise RuntimeError(genome_config_path + " does not exist")
     with open(genome_config_path) as fp:
         genome_config_dict = json.load(fp)
-    return {}
+    ret_dict[virus] = GENOME_CONFIG_DICT["Src"]["end"]
+    return ret_dict
 
 NESTED_ASSET_DICT = {}
 for virus_ in VIRUS_REFERENCE_SEGMENT_DICT:
     NESTED_ASSET_DICT[virus_] = {}
     for reference_ in VIRUS_REFERENCE_SEGMENT_DICT[virus_]:
-        NESTED_ASSET_DICT[virus_][reference_] = \
-            populate_nested_asset_dict(virus_, reference_)
+        segments_list = VIRUS_REFERENCE_SEGMENT_DICT[virus_][reference_]
+        if segments_list:
+            NESTED_ASSET_DICT[virus_][reference_] = {}
+            for segment in segments_list:
+                NESTED_ASSET_DICT[virus_][reference_][segment] = \
+                    populate_nested_asset_dict(virus_, reference_, segment)
+        else:
+            NESTED_ASSET_DICT[virus_][reference_] = \
+                populate_nested_asset_dict(virus_, reference_)
