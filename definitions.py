@@ -76,11 +76,10 @@ def safe_path_segment_name(s):
     s = re.sub(r"[^a-zA-Z0-9._-]", "_", s)
     return s.strip("_")
 
-def get_nested_dir(root, fail_if_empty=False):
+def get_nested_dir(root, virus, reference, segment, fail_if_empty=False):
     """TODO"""
-    virus = safe_path_segment_name(session.get("virus"))
-    reference = safe_path_segment_name(session.get("reference"))
-    segment = session.get("segment")
+    virus = safe_path_segment_name(virus)
+    reference = safe_path_segment_name(reference)
     if segment:
         ret_path = os.path.join(root, virus, reference,
                                 safe_path_segment_name(str(segment)))
@@ -91,18 +90,43 @@ def get_nested_dir(root, fail_if_empty=False):
         raise RuntimeError(ret_path + " is empty")
     return ret_path
 
+def get_nested_dir_with_session_vars(root, fail_if_empty=False):
+    """TODO"""
+    virus = session.get("virus")
+    reference = session.get("reference")
+    segment = session.get("segment")
+    return get_nested_dir(root, virus, reference, segment, fail_if_empty)
+
 def get_reference_data_dir():
     """TODO"""
-    return get_nested_dir(REFERENCE_DATA_DIR, True)
+    return get_nested_dir_with_session_vars(REFERENCE_DATA_DIR, True)
 
 def get_user_data_dir():
     """TODO"""
-    return get_nested_dir(USER_DATA_DIR)
+    return get_nested_dir_with_session_vars(USER_DATA_DIR)
 
 def get_reference_surveillance_reports_dir():
     """TODO"""
-    return get_nested_dir(REFERENCE_SURVEILLANCE_REPORTS_DIR)
+    return get_nested_dir_with_session_vars(REFERENCE_SURVEILLANCE_REPORTS_DIR)
 
 def get_user_surveillance_reports_dir():
     """TODO"""
-    return get_nested_dir(USER_SURVEILLANCE_REPORTS_DIR)
+    return get_nested_dir_with_session_vars(USER_SURVEILLANCE_REPORTS_DIR)
+
+def populate_nested_asset_dict(virus, reference, segment=None):
+    """TODO"""
+    nested_asset_dir = \
+        get_nested_dir(ASSETS_DIR, virus, reference, segment, True)
+    genome_config_path = os.path.join(nested_asset_dir, "genome_config.json")
+    if not os.path.exists(genome_config_path):
+        raise RuntimeError(genome_config_path + " does not exist")
+    with open(genome_config_path) as fp:
+        genome_config_dict = json.load(fp)
+    return {}
+
+NESTED_ASSET_DICT = {}
+for virus_ in VIRUS_REFERENCE_SEGMENT_DICT:
+    NESTED_ASSET_DICT[virus_] = {}
+    for reference_ in VIRUS_REFERENCE_SEGMENT_DICT[virus_]:
+        NESTED_ASSET_DICT[virus_][reference_] = \
+            populate_nested_asset_dict(virus_, reference_)
