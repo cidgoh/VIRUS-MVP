@@ -180,9 +180,19 @@ for virus_ in VIRUS_REFERENCE_SEGMENT_DICT:
         segments_list = VIRUS_REFERENCE_SEGMENT_DICT[virus_][reference_]
         if segments_list:
             NESTED_ASSET_DICT[virus_][reference_] = {}
-            for segment in segments_list:
-                NESTED_ASSET_DICT[virus_][reference_][segment] = \
-                    populate_nested_asset_dict(virus_, reference_, segment)
+            for segment_ in segments_list:
+                NESTED_ASSET_DICT[virus_][reference_][segment_] = \
+                    populate_nested_asset_dict(virus_, reference_, segment_)
         else:
             NESTED_ASSET_DICT[virus_][reference_] = \
                 populate_nested_asset_dict(virus_, reference_)
+
+def get_asset_dict():
+    """TODO"""
+    virus = session.get("virus")
+    reference = session.get("reference")
+    segment = session.get("segment")
+    if segment:
+        return NESTED_ASSET_DICT[virus][reference][segment]
+    else:
+        return NESTED_ASSET_DICT[virus][reference]
