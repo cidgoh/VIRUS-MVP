@@ -9,7 +9,7 @@ from itertools import compress, islice
 import os
 from pathlib import Path
 
-from definitions import (NSP_POSITIONS_DICT, DEFAULT_REFERENCE_HIDDEN_STRAINS,
+from definitions import (DEFAULT_REFERENCE_HIDDEN_STRAINS,
                          DEFAULT_REFERENCE_STRAIN_ORDER, get_asset_dict)
 
 def map_pos_to_gene(pos):
@@ -39,9 +39,10 @@ def map_pos_to_nsp(pos):
     :return: NSP at nucleotide position ``pos``
     :rtype: str
     """
-    for nsp in NSP_POSITIONS_DICT:
-        start = NSP_POSITIONS_DICT[nsp]["start"]
-        end = NSP_POSITIONS_DICT[nsp]["end"]
+    nsp_positions_dict = get_asset_dict()["nsp_positions_dict"]
+    for nsp in nsp_positions_dict:
+        start = nsp_positions_dict[nsp]["start"]
+        end = nsp_positions_dict[nsp]["end"]
         if start <= pos <= end:
             return nsp
     return "n/a"
