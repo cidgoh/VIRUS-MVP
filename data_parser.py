@@ -10,8 +10,7 @@ import os
 from pathlib import Path
 
 from definitions import (NSP_POSITIONS_DICT, DEFAULT_REFERENCE_HIDDEN_STRAINS,
-                         DEFAULT_REFERENCE_STRAIN_ORDER, FIRST_REGION,
-                         LAST_REGION, get_asset_dict)
+                         DEFAULT_REFERENCE_STRAIN_ORDER, get_asset_dict)
 
 def map_pos_to_gene(pos):
     """Map a nucleotide position to a gene.
@@ -615,6 +614,8 @@ def get_heatmap_x_aa_pos(heatmap_x_nt_pos, heatmap_x_genes):
         {downstream gene}.1-{number of nt upstream}.
     :rtype: list[str]
     """
+    first_region = get_asset_dict()["first_region"]
+    last_region = get_asset_dict()["last_region"]
     gene_positions_dict = get_asset_dict()["gene_positions_dict"]
     gene_start_positions = \
         {k: gene_positions_dict[k]["start"] for k in gene_positions_dict}
@@ -625,10 +626,10 @@ def get_heatmap_x_aa_pos(heatmap_x_nt_pos, heatmap_x_genes):
         # Negative index
         _i = -1 - i
         gene = heatmap_x_genes[_i]
-        if FIRST_REGION[0] <= int(pos) <= FIRST_REGION[1]:
+        if first_region[0] <= int(pos) <= first_region[1]:
             ret[_i] = ""
             continue
-        if LAST_REGION[0] <= int(pos) <= LAST_REGION[1]:
+        if last_region[0] <= int(pos) <= last_region[1]:
             ret[_i] = ""
             continue
         if gene == "INTERGENIC":
