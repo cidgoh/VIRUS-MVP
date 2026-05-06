@@ -90,7 +90,7 @@ First, add your UID and GID.
 
 Then, **if you are using Linux**, add your Docker group ID.
 
-`$echo "DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)" >> .env`
+`$ echo "DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)" >> .env`
 
 Then, the process is simple.
 
