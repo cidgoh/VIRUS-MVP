@@ -81,7 +81,18 @@ _Note: Run the app from the **root project directory** to ensure all assets
 
 ## Docker installation steps
 
-It is a relatively simple setup. Just make sure you have Docker installed.
+You need to create an `.env` file to resolve permissions issues when switching
+between a native and Docker installation.
+
+First, add your UID and GID.
+
+`$ echo -e "UID=$(id -u)\nGID=$(id -g)" > .env`
+
+Then, **if you are using Linux**, add your Docker group ID.
+
+`$echo "DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)" >> .env`
+
+Then, the process is simple.
 
 `$ docker-compose build`
 
@@ -89,16 +100,6 @@ It is a relatively simple setup. Just make sure you have Docker installed.
 
 **Warning:** our docker setup bind mounts the host socket to the container. You
 should use a socket proxy prior to deployment.
-
-**One currently unresolved issue:** If you upload a file while the application
-is deployed through Docker, and then later attempt to upload a file while the
-application is deployed natively, the application will likely run into
-permission issues related to the _nf-ncov-voc_ cache. You can fix this by
-removing all cache files in the `nf-ncov-voc/` directory:
-
-`$ rm -r results work .nextflow .nextflow.log* capsule  framework  plugins  secrets  tmp`
-
-You may have to use `sudo`.
 
 ## Usage
 
