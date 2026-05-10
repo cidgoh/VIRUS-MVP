@@ -36,7 +36,8 @@ from flask_caching import Cache
 
 from data_parser import get_data, get_full_mutation_index_dict
 from definitions import (ASSETS_DIR, NF_NCOV_VOC_DIR,
-                         VIRUS_REFERENCE_SEGMENT_DICT, get_reference_data_dir,
+                         VIRUS_REFERENCE_SEGMENT_DICT, get_asset_dict,
+                         get_reference_data_dir,
                          get_reference_surveillance_reports_dir,
                          get_user_data_dir, get_user_surveillance_reports_dir)
 from generators import (heatmap_generator, histogram_generator,
@@ -211,6 +212,7 @@ def launch_app(_):
         dcc.Store(id="strain-to-del"),
         dcc.Store(id="deleted-strain"),
         dcc.Store(id="positions-jumped-to"),
+        dcc.Store(id="invalid-vrs-selection-msg"),
         # TODO starting gene should be part of a config file
         dcc.Store(id="default-starting-gene", data="S"),
         # Used to update certain figures only when necessary
@@ -373,6 +375,7 @@ def read_data(get_data_args, last_data_mtime):
     Output("virus-dropdown-menu", "children"),
     Output("reference-dropdown-menu", "children"),
     Output("segment-dropdown-menu", "children"),
+    Output("invalid-vrs-selection-msg", "data"),
     Input({"type": "virus-dropdown-menu-item", "index": ALL},"n_clicks"),
     Input({"type": "reference-dropdown-menu-item", "index": ALL},"n_clicks"),
     Input({"type": "segment-dropdown-menu-item", "index": ALL},"n_clicks"),
@@ -385,27 +388,38 @@ def update_virus_reference_segment_navs(_, __, ___):
     triggered_prop_id_type = loads(triggered_prop_id.rsplit(".", 1)[0])["type"]
     selection = loads(triggered_prop_id.rsplit(".", 1)[0])["index"]
 
+    virus = session.get("virus")
+    reference = session.get("reference")
+
     if triggered_prop_id_type == "virus-dropdown-menu-item":
-        session["virus"] = selection
+        virus = selection
         references_dict = VIRUS_REFERENCE_SEGMENT_DICT[selection]
-        new_reference = next(iter(references_dict))
-        session["reference"] = new_reference
-        segments_list = references_dict[new_reference]
-        session["segment"] = segments_list[0] if segments_list else None
+        reference = next(iter(references_dict))
+        segments_list = references_dict[reference]
+        segment = segments_list[0] if segments_list else None
     elif triggered_prop_id_type == "reference-dropdown-menu-item":
-        session["reference"] = selection
+        reference = selection
         references_dict = VIRUS_REFERENCE_SEGMENT_DICT[session.get("virus")]
         segments_list = references_dict[selection]
-        session["segment"] = segments_list[0] if segments_list else None
+        segment = segments_list[0] if segments_list else None
     # segment-dropdown-menu-item
     else:
-        session["segment"] = selection
+        segment = selection
+
+    if not get_asset_dict(virus, reference, segment):
+        msg = "Missing genome config file"
+        return dash.no_update, dash.no_update, dash.no_update, msg
+
+    session["virus"] = virus
+    session["reference"] = reference
+    session["segment"] = segment
 
     [virus_dropdown, reference_dropdown, segment_dropdown] = \
         navbar_generator.get_virus_reference_segment_navs()
     return (virus_dropdown.children,
             reference_dropdown.children,
-            segment_dropdown.children)
+            segment_dropdown.children,
+            dash.no_update)
 
 
 @app.callback(
@@ -618,10 +632,11 @@ def trigger_download(_, __, ___, ____, _____, get_data_args, last_data_mtime):
     Input("new-upload", "data"),
     Input("mutation-freq-slider", "marks"),
     Input("positions-jumped-to", "data"),
+    Input("invalid-vrs-selection-msg", "data"),
     prevent_initial_call=True
 )
-def toggle_toast(new_upload, _, positions_jumped_to):
-    """Update ``toast-col`` div.
+def toggle_toast(new_upload, _, positions_jumped_to, invald_vrs_selection_msg):
+    """Update ``toast-col`` div.TODO
 
     This function shows appropriate toasts when there was following a
     user upload, re-rendering of mutation frequency vals, or the
@@ -668,6 +683,13 @@ def toggle_toast(new_upload, _, positions_jumped_to):
             msg,
             "Info",
             "info",
+            10000
+        )
+    elif "invalid-vrs-selection-msg.data" in triggers:
+        return toast_generator.get_toast(
+            invald_vrs_selection_msg,
+            "Error",
+            "danger",
             10000
         )
 

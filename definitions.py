@@ -82,10 +82,10 @@ def populate_nested_asset_dict(virus, reference, segment=None):
     ret_dict = {}
 
     nested_asset_dir = \
-        get_nested_dir(ASSETS_DIR, virus, reference, segment, True)
+        get_nested_dir(ASSETS_DIR, virus, reference, segment)
     genome_config_path = os.path.join(nested_asset_dir, "genome_config.json")
     if not os.path.exists(genome_config_path):
-        raise RuntimeError(genome_config_path + " does not exist")
+        return {}
     with open(genome_config_path) as fp:
         genome_config_dict = json.load(fp)
 
@@ -151,11 +151,14 @@ for virus_ in VIRUS_REFERENCE_SEGMENT_DICT:
             NESTED_ASSET_DICT[virus_][reference_] = \
                 populate_nested_asset_dict(virus_, reference_)
 
-def get_asset_dict():
+def get_asset_dict(virus=None, reference=None, segment=None):
     """TODO"""
-    virus = session.get("virus")
-    reference = session.get("reference")
-    segment = session.get("segment")
+    if virus is None:
+        virus = session.get("virus")
+    if reference is None:
+        reference = session.get("reference")
+    if segment is None:
+        segment = session.get("segment")
     if segment:
         return NESTED_ASSET_DICT[virus][reference][segment]
     else:
