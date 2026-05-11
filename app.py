@@ -17,7 +17,7 @@ run faster.
 """
 from base64 import b64decode
 from json import dumps, loads
-from os import mkdir, path, remove, walk
+from os import listdir, mkdir, path, remove, walk
 from pathlib import Path
 from shutil import copyfile, copytree, make_archive, rmtree
 from subprocess import run
@@ -414,6 +414,10 @@ def update_virus_reference_segment_navs(_, __, ___):
 
     if not get_asset_dict(virus, segment, reference):
         msg = "Missing genome config file"
+        return dash.no_update, dash.no_update, dash.no_update, msg
+
+    if not listdir(get_reference_data_dir(virus, segment, reference)):
+        msg = "Missing reference data"
         return dash.no_update, dash.no_update, dash.no_update, msg
 
     session["virus"] = virus

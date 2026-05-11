@@ -62,7 +62,7 @@ def safe_path_segment_name(s):
     return s.strip("_")
 
 
-def get_nested_dir(root, virus, segment, reference, fail_if_empty=False):
+def get_nested_dir(root, virus, segment, reference, warn_if_empty=False):
     """TODO"""
     virus = safe_path_segment_name(virus)
     reference = safe_path_segment_name(reference)
@@ -76,22 +76,28 @@ def get_nested_dir(root, virus, segment, reference, fail_if_empty=False):
                                 virus,
                                 reference)
     os.makedirs(ret_path, exist_ok=True)
-    if fail_if_empty and not os.listdir(ret_path):
-        raise RuntimeError(ret_path + " is empty")
+    if warn_if_empty and not os.listdir(ret_path):
+        warn(ret_path + " is empty")
     return ret_path
 
 
-def get_nested_dir_with_session_vars(root, fail_if_empty=False):
+def get_nested_dir_with_session_vars(root, warn_if_empty=False):
     """TODO"""
     virus = session.get("virus")
     segment = session.get("segment")
     reference = session.get("reference")
-    return get_nested_dir(root, virus, segment, reference, fail_if_empty)
+    return get_nested_dir(root, virus, segment, reference, warn_if_empty)
 
 
-def get_reference_data_dir():
+def get_reference_data_dir(virus=None, segment=None, reference=None):
     """TODO"""
-    return get_nested_dir_with_session_vars(REFERENCE_DATA_DIR, True)
+    if virus is None:
+        virus = session.get("virus")
+    if segment is None:
+        segment = session.get("segment")
+    if reference is None:
+        reference = session.get("reference")
+    return get_nested_dir(REFERENCE_DATA_DIR, virus, segment, reference, True)
 
 
 def get_user_data_dir():
