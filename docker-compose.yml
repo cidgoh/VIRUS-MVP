@@ -9,6 +9,12 @@ services:
       dockerfile: ./dockerConf/Dockerfile
       args:
         WORKDIR: $PWD
+        UID: ${UID}
+        GID: ${GID}
+        DOCKER_GID: ${DOCKER_GID}
+    entrypoint: "./dockerConf/start.sh"
+    environment:
+      NXF_HOME: $PWD/nf-ncov-voc
     image: virus_mvp_app
     ports:
       - "8050:8050"
@@ -19,3 +25,4 @@ services:
       - ./reference_surveillance_reports:$PWD/reference_surveillance_reports
       - ./user_data:$PWD/user_data
       - ./user_surveillance_reports:$PWD/user_surveillance_reports
+      - ./cache_directory:$PWD/cache_directory

@@ -1,17 +1,24 @@
-FROM python:latest
+FROM python:3.11
 
 ARG WORKDIR
+ARG UID
+ARG GID
+ARG DOCKER_GID
 
 WORKDIR $WORKDIR
 
 COPY . .
 COPY --from=docker:20.10 /usr/local/bin/docker .local/bin/
 
-RUN mkdir "cache_directory" \
+ENV NXF_VER=24.04.1
+
+RUN groupadd -g $GID appgroup \
+    && useradd -u $UID -g $GID -m appuser \
+    && groupadd -g $DOCKER_GID docker \
+    && usermod -aG docker appuser \
     && mkdir -p ".local/bin" \
     && apt-get update -y \
-    && apt-get install openjdk-17-jre-headless -y \
-    && curl -s https://github.com/nextflow-io/nextflow/releases/download/v24.04.1/nextflow-24.04.1-all \
+    && apt-get install openjdk-21-jre-headless -y \
     && wget -qO- https://get.nextflow.io | bash \
     && chmod +x nextflow \
     && mv nextflow .local/bin \
@@ -23,5 +30,6 @@ RUN mkdir "cache_directory" \
 
 ENV PATH="$PATH:/$WORKDIR/.local/bin"
 
-ENTRYPOINT ["./dockerConf/start.sh"]
+USER appuser
+
 EXPOSE 8050

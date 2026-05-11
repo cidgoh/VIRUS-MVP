@@ -17,7 +17,7 @@ run faster.
 """
 from base64 import b64decode
 from json import dumps, loads
-from os import mkdir, path, remove, walk
+from os import listdir, mkdir, path, remove, walk
 from pathlib import Path
 from shutil import copyfile, copytree, make_archive, rmtree
 from subprocess import run
@@ -31,12 +31,16 @@ import dash_html_components as html
 from dash.dependencies import (ALL, MATCH, ClientsideFunction, Input, Output,
                                State)
 from dash.exceptions import PreventUpdate
+from flask import session
 from flask_caching import Cache
 
 from data_parser import get_data, get_full_mutation_index_dict
-from definitions import (ASSETS_DIR, REFERENCE_DATA_DIR, USER_DATA_DIR,
-                         NF_NCOV_VOC_DIR, REFERENCE_SURVEILLANCE_REPORTS_DIR,
-                         USER_SURVEILLANCE_REPORTS_DIR)
+from definitions import (ASSETS_DIR, NF_NCOV_VOC_DIR,
+                         VIRUS_SEGMENT_REFERENCE_DICT, get_asset_dict,
+                         get_reference_data_dir,
+                         get_reference_surveillance_reports_dir,
+                         get_user_data_dir, get_user_surveillance_reports_dir,
+                         is_segmented)
 from generators import (heatmap_generator, histogram_generator,
                         legend_generator, navbar_generator, table_generator,
                         toast_generator, toolbar_generator, run_info_generator)
@@ -69,6 +73,8 @@ app = dash.Dash(
 )
 # server instance used for gunicorn deployment
 server = app.server
+# Used for sessions TODO env file?
+server.secret_key = 'a_very_secret_random_string'
 
 # Cache specifications
 cache = Cache(server, config={
@@ -135,6 +141,19 @@ def launch_app(_):
     this callback. The ultimate purpose of this is to replace the blank
     loading screen when the app is first loaded.
     """
+    first_virus = next(iter(VIRUS_SEGMENT_REFERENCE_DICT))
+    if is_segmented(first_virus):
+        first_segment = \
+            next(iter(VIRUS_SEGMENT_REFERENCE_DICT[first_virus]))
+        first_reference = \
+            VIRUS_SEGMENT_REFERENCE_DICT[first_virus][first_segment][0]
+    else:
+        first_segment = None
+        first_reference = VIRUS_SEGMENT_REFERENCE_DICT[first_virus][0]
+    session["virus"] = first_virus
+    session["reference"] = first_reference
+    session["segment"] = first_segment
+
     # Some default vals
     get_data_args = {
         "show_clade_defining": False,
@@ -143,10 +162,14 @@ def launch_app(_):
         "min_mutation_freq": None,
         "max_mutation_freq": None
     }
+
+    reference_data_dir = get_reference_data_dir()
+    user_data_dir = get_user_data_dir()
     last_data_mtime = max([
-        max(path.getmtime(root) for root, _, _ in walk(REFERENCE_DATA_DIR)),
-        max(path.getmtime(root) for root, _, _ in walk(USER_DATA_DIR))
+        max(path.getmtime(root) for root, _, _ in walk(reference_data_dir)),
+        max(path.getmtime(root) for root, _, _ in walk(user_data_dir))
     ])
+
     data_ = read_data(get_data_args, last_data_mtime)
 
     return [
@@ -194,6 +217,7 @@ def launch_app(_):
         dcc.Store(id="strain-to-del"),
         dcc.Store(id="deleted-strain"),
         dcc.Store(id="positions-jumped-to"),
+        dcc.Store(id="invalid-vrs-selection-msg"),
         # TODO starting gene should be part of a config file
         dcc.Store(id="default-starting-gene", data="S"),
         # Used to update certain figures only when necessary
@@ -215,20 +239,24 @@ def launch_app(_):
     output=[
         Output("get-data-args", "data"),
         Output("last-data-mtime", "data"),
-        Output("data-loading", "data")
+        Output("data-loading", "data"),
+        Output("data", "data")
     ],
     inputs=[
         Input("show-clade-defining", "data"),
         Input("new-upload", "data"),
         Input("hidden-strains", "data"),
         Input("strain-order", "data"),
-        Input("mutation-freq-slider", "value")
+        Input("mutation-freq-slider", "value"),
+        Input("virus-dropdown-menu", "children"),
+        Input("reference-dropdown-menu", "children"),
+        Input("segment-dropdown-menu", "children"),
     ],
     prevent_initial_call=True
 )
 def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
-                         strain_order, mutation_freq_vals):
-    """Update ``get-data-args`` variables in dcc.Store.
+                         strain_order, mutation_freq_vals, _, __, ___):
+    """Update ``get-data-args`` variables in dcc.Store.TODO
 
     This is a central callback. Updating ``get-data-args`` triggers a
     change to the ``get-data-args`` variable in dcc.Store, which
@@ -241,6 +269,12 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     the case of ``data-loading``, we keep the value as ``None``, but
     returning it in this fn provides a spinner while this fn is being
     run.
+
+    We also update ``data`` here. It is only used by clientside
+    callbacks, as it is too large to be transported from server-side
+    callback to server-side callback. Updating it here instead of
+    another callback prevents race conditions where ``data`` has not
+    updated yet, but a clientside callback has been fired.
 
     :param show_clade_defining: ``update_show_clade-defining`` return
         value.
@@ -258,7 +292,7 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     :param gff3_annotations: ``parse_gff3_file`` return value
     :type gff3_annotations: dict
     :return: ``get_data`` return value, last mtime across all data
-        files, and ``data-loading`` children.
+        files, ``data-loading`` children, and ``data``.
     :rtype: tuple[dict, float, None]
     :raise PreventUpdate: New upload triggered this function, and that
         new upload failed.
@@ -288,17 +322,19 @@ def update_get_data_args(show_clade_defining, new_upload, hidden_strains,
     }
 
     # Update ``last-data-mtime`` too
+    reference_data_dir = get_reference_data_dir()
+    user_data_dir = get_user_data_dir()
     last_data_mtime = max([
-        max(path.getmtime(root) for root, _, _ in walk(REFERENCE_DATA_DIR)),
-        max(path.getmtime(root) for root, _, _ in walk(USER_DATA_DIR))
+        max(path.getmtime(root) for root, _, _ in walk(reference_data_dir)),
+        max(path.getmtime(root) for root, _, _ in walk(user_data_dir))
     ])
 
     # We call ``read_data`` here, so it gets cached. Otherwise, the
     # callbacks that call ``read_data`` may do it in parallel--blocking
     # multiple processes.
-    read_data(args, last_data_mtime)
+    data = read_data(args, last_data_mtime)
 
-    return args, last_data_mtime, None
+    return args, last_data_mtime, None, data
 
 
 @cache.memoize(timeout=TIMEOUT)
@@ -331,7 +367,7 @@ def read_data(get_data_args, last_data_mtime):
     :type last_data_mtime: float
     """
     ret = get_data(
-        [REFERENCE_DATA_DIR, USER_DATA_DIR],
+        [get_reference_data_dir(), get_user_data_dir()],
         show_clade_defining=get_data_args["show_clade_defining"],
         hidden_strains=get_data_args["hidden_strains"],
         strain_order=get_data_args["strain_order"],
@@ -339,6 +375,61 @@ def read_data(get_data_args, last_data_mtime):
         max_mutation_freq=get_data_args["max_mutation_freq"]
     )
     return ret
+
+
+@app.callback(
+    Output("virus-dropdown-menu", "children"),
+    Output("segment-dropdown-menu", "children"),
+    Output("reference-dropdown-menu", "children"),
+    Output("invalid-vrs-selection-msg", "data"),
+    Input({"type": "virus-dropdown-menu-item", "index": ALL},"n_clicks"),
+    Input({"type": "segment-dropdown-menu-item", "index": ALL},"n_clicks"),
+    Input({"type": "reference-dropdown-menu-item", "index": ALL},"n_clicks"),
+    prevent_initial_call=True
+)
+def update_virus_reference_segment_navs(_, __, ___):
+    """TODO"""
+    ctx = dash.callback_context
+    triggered_prop_id = ctx.triggered[0]["prop_id"]
+    triggered_prop_id_type = loads(triggered_prop_id.rsplit(".", 1)[0])["type"]
+    selection = loads(triggered_prop_id.rsplit(".", 1)[0])["index"]
+
+    virus = session.get("virus")
+    segment = session.get("segment")
+
+    if triggered_prop_id_type == "virus-dropdown-menu-item":
+        virus = selection
+        if is_segmented(virus):
+            segment = next(iter(VIRUS_SEGMENT_REFERENCE_DICT[virus]))
+            reference = VIRUS_SEGMENT_REFERENCE_DICT[virus][segment][0]
+        else:
+            segment = None
+            reference = VIRUS_SEGMENT_REFERENCE_DICT[virus][0]
+    elif triggered_prop_id_type == "segment-dropdown-menu-item":
+        segment = selection
+        reference = VIRUS_SEGMENT_REFERENCE_DICT[virus][segment][0]
+    # reference-dropdown-menu-item
+    else:
+        reference = selection
+
+    if not get_asset_dict(virus, segment, reference):
+        msg = "Missing genome config file"
+        return dash.no_update, dash.no_update, dash.no_update, msg
+
+    if not listdir(get_reference_data_dir(virus, segment, reference)):
+        msg = "Missing reference data"
+        return dash.no_update, dash.no_update, dash.no_update, msg
+
+    session["virus"] = virus
+    session["segment"] = segment
+    session["reference"] = reference
+
+    [virus_dropdown, segment_dropdown, reference_dropdown] = \
+        navbar_generator.get_virus_reference_segment_navs()
+    return (virus_dropdown.children,
+            segment_dropdown.children,
+            reference_dropdown.children,
+            dash.no_update)
 
 
 @app.callback(
@@ -440,9 +531,10 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
             data_path = path.join(dir_name, rand_prefix, "FUNCTIONALANNOTATION")
             gvf_file = path.join(data_path, "%s.annotated.gvf" % sample_name)
             copyfile(gvf_file,
-                     path.join(USER_DATA_DIR, sample_name + ".gvf"))
+                     path.join(get_user_data_dir(), sample_name + ".gvf"))
 
-            reports_dir = path.join(USER_SURVEILLANCE_REPORTS_DIR, sample_name)
+            reports_dir = path.join(get_user_surveillance_reports_dir(),
+                                    sample_name)
             if path.exists(reports_dir):
                 rmtree(reports_dir)
             mkdir(reports_dir)
@@ -497,13 +589,17 @@ def trigger_download(_, __, ___, ____, _____, get_data_args, last_data_mtime):
     """
     trigger = dash.callback_context.triggered[0]["prop_id"]
 
+    reference_surveillance_reports_dir = \
+        get_reference_surveillance_reports_dir()
+    user_surveillance_reports_dir = get_user_surveillance_reports_dir()
+
     if trigger == "download-surveillance-files-btn.n_clicks":
         # Ignores non-visible strains during `copytree`
         def ignore_fn(dir_, contents):
             reference_nested_dir = \
-                str(Path(dir_).parent) == REFERENCE_SURVEILLANCE_REPORTS_DIR
+                str(Path(dir_).parent) == reference_surveillance_reports_dir
             user_dir = \
-                dir_ == USER_SURVEILLANCE_REPORTS_DIR
+                dir_ == user_surveillance_reports_dir
             if reference_nested_dir or user_dir:
                 data = read_data(get_data_args, last_data_mtime)
                 visible_strains = data["heatmap_y_strains"]
@@ -516,10 +612,10 @@ def trigger_download(_, __, ___, ____, _____, get_data_args, last_data_mtime):
 
         with TemporaryDirectory() as dir_name:
             reports_path = path.join(dir_name, "surveillance_reports")
-            copytree(REFERENCE_SURVEILLANCE_REPORTS_DIR,
+            copytree(reference_surveillance_reports_dir,
                      path.join(reports_path, "reference_surveillance_reports"),
                      ignore=ignore_fn)
-            copytree(USER_SURVEILLANCE_REPORTS_DIR,
+            copytree(user_surveillance_reports_dir,
                      path.join(reports_path, "user_surveillance_reports"),
                      ignore=ignore_fn)
             make_archive(reports_path, "zip", reports_path)
@@ -527,7 +623,7 @@ def trigger_download(_, __, ___, ____, _____, get_data_args, last_data_mtime):
             return dcc.send_file(reports_path + ".zip"), download_component
     elif trigger in {"download-full-mutation-index-btn.n_clicks",
                      "download-full-mutation-index-link.n_clicks"}:
-        dirs = [REFERENCE_DATA_DIR, USER_DATA_DIR]
+        dirs = [get_reference_data_dir(), get_user_data_dir()]
         content = dumps(get_full_mutation_index_dict(dirs))
         filename = "full_mutation_index.json"
         download_component = toolbar_generator.get_file_download_component()
@@ -546,10 +642,11 @@ def trigger_download(_, __, ___, ____, _____, get_data_args, last_data_mtime):
     Input("new-upload", "data"),
     Input("mutation-freq-slider", "marks"),
     Input("positions-jumped-to", "data"),
+    Input("invalid-vrs-selection-msg", "data"),
     prevent_initial_call=True
 )
-def toggle_toast(new_upload, _, positions_jumped_to):
-    """Update ``toast-col`` div.
+def toggle_toast(new_upload, _, positions_jumped_to, invald_vrs_selection_msg):
+    """Update ``toast-col`` div.TODO
 
     This function shows appropriate toasts when there was following a
     user upload, re-rendering of mutation frequency vals, or the
@@ -596,6 +693,13 @@ def toggle_toast(new_upload, _, positions_jumped_to):
             msg,
             "Info",
             "info",
+            10000
+        )
+    elif "invalid-vrs-selection-msg.data" in triggers:
+        return toast_generator.get_toast(
+            invald_vrs_selection_msg,
+            "Error",
+            "danger",
             10000
         )
 
@@ -906,8 +1010,9 @@ def update_deleted_strain(_, strain_to_del, get_data_args, last_data_mtime):
     data = read_data(get_data_args, last_data_mtime)
 
     strain_to_del_filename = data["strain_filenames_dict"][strain_to_del]
-    remove(path.join(USER_DATA_DIR, strain_to_del_filename + ".gvf"))
-    rmtree(path.join(USER_SURVEILLANCE_REPORTS_DIR, strain_to_del_filename))
+    remove(path.join(get_user_data_dir(), strain_to_del_filename + ".gvf"))
+    rmtree(path.join(get_user_surveillance_reports_dir(),
+                     strain_to_del_filename))
     return strain_to_del
 
 
@@ -1494,30 +1599,6 @@ def update_table(get_data_args, click_data, last_data_mtime):
         table_strain = data["heatmap_y_strains"][0]
 
     return table_generator.get_table_fig(data, table_strain)
-
-
-@app.callback(
-    Output("data", "data"),
-    Input("get-data-args", "data"),
-    State("last-data-mtime", "data"),
-    prevent_initial_call=True
-)
-def update_data(get_data_args, last_data_mtime):
-    """Update ``data`` in dcc.Store.
-
-    The output is only used in clientside callbacks. It is too large to
-    transport over the network.
-
-    :param get_data_args: Args for ``get_data``
-    :type get_data_args: dict
-    :param last_data_mtime: Last mtime across all data files
-    :type last_data_mtime: float
-    :return: ``get_data`` return val
-    :rtype: dict
-    """
-    # Current ``get_data`` return val
-    data = read_data(get_data_args, last_data_mtime)
-    return data
 
 
 # This is how Dash allows you to write callbacks in JavaScript

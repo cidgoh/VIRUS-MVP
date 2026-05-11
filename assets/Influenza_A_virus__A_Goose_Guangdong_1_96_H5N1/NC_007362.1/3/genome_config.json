@@ -1,0 +1,116 @@
+{
+    "Src": {
+        "type": "region",
+        "start": 1,
+        "end": 1760,
+        "ID": "NC_007362.1:1..1760",
+        "Dbxref": "taxon:93838",
+        "Name": "4",
+        "gbkey": "Src",
+        "genome": "genomic",
+        "mol_type": "viral cRNA",
+        "old-name": "Influenza A virus (A/Goose/Guangdong/1/96(H5N1))",
+        "segment": "4",
+        "serotype": "H5N1",
+        "strain": "A/goose/Guangdong/1/1996",
+        "species": "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=93838",
+        "accession": "NC_007362.1"
+    },
+    "gene-FLUAVH5N1_s4gp1": {
+        "type": "gene",
+        "start": 22,
+        "end": 1728,
+        "ID": "gene-FLUAVH5N1_s4gp1",
+        "Dbxref": "GeneID:3654620",
+        "Name": "HA",
+        "gbkey": "Gene",
+        "gene": "HA",
+        "gene_biotype": "protein_coding",
+        "locus_tag": "FLUAVH5N1_s4gp1",
+        "gene_name": {
+            "label": "hemagglutinin gene H5 (Influenza A)",
+            "uri": "GENEPIO:0102000"
+        },
+        "gene_symbol": {
+            "label": "HA gene H5",
+            "uri": "GENEPIO:0102001"
+        },
+        "strand_orientation": {
+            "label": "negative strand orientation",
+            "uri": "GENEPIO:0700003"
+        },
+        "gene_orientation": {
+            "label": "forward gene orientation",
+            "uri": "GENEPIO:0700004"
+        }
+    },
+    "HA": {
+        "type": "CDS",
+        "start": 22,
+        "end": 1728,
+        "ID": "cds-YP_308669.1",
+        "Parent": "gene-FLUAVH5N1_s4gp1",
+        "Dbxref": "GenBank:YP_308669.1,GeneID:3654620",
+        "Name": "YP_308669.1",
+        "gbkey": "CDS",
+        "gene": "HA",
+        "locus_tag": "FLUAVH5N1_s4gp1",
+        "product": "hemagglutinin",
+        "protein_id": "YP_308669.1",
+        "aa_start": 1,
+        "aa_end": 568,
+        "color": "rgba(96, 170, 158, 1)",
+        "protein_alias": "HA",
+        "protein_name": {
+            "label": "hemagglutinin precursor H5 (HA0)",
+            "uri": "GENEPIO:0102002"
+        },
+        "protein_symbol": {
+            "label": "HA0 protein H5",
+            "uri": "GENEPIO:0102003"
+        }
+    },
+    "id-YP_308669.1:1..16": {
+        "type": "signal_peptide_region_of_CDS",
+        "start": 22,
+        "end": 69,
+        "ID": "id-YP_308669.1:1..16",
+        "Parent": "cds-YP_308669.1",
+        "gbkey": "Prot",
+        "aa_start": 1,
+        "aa_end": 16,
+        "color": "rgb(128, 0, 128)"
+    },
+    "HA1": {
+        "type": "mature_protein_region_of_CDS",
+        "start": 70,
+        "end": 1059,
+        "ID": "id-YP_308669.1:17..346",
+        "Parent": "cds-YP_308669.1",
+        "gbkey": "Prot",
+        "product": "HA1",
+        "protein_id": "YP_529486.1",
+        "aa_start": 17,
+        "aa_end": 346,
+        "color": "rgb(70, 130, 180)",
+        "protein_alias": "HA1"
+    },
+    "HA2": {
+        "type": "mature_protein_region_of_CDS",
+        "start": 1060,
+        "end": 1725,
+        "ID": "id-YP_308669.1:347..568",
+        "Parent": "cds-YP_308669.1",
+        "gbkey": "Prot",
+        "product": "HA2",
+        "protein_id": "YP_529487.1",
+        "aa_start": 347,
+        "aa_end": 568,
+        "color": "rgb(220, 20, 60)",
+        "protein_alias": "HA2"
+    },
+    "INTERGENIC": {
+        "type": "INTERGENIC",
+        "color": "rgb(128,128,128)"
+    }
+}

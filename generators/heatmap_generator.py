@@ -12,7 +12,7 @@ import dash_html_components as html
 import dash_core_components as dcc
 import plotly.graph_objects as go
 
-from definitions import GENE_COLORS_DICT
+from definitions import get_asset_dict
 
 
 def get_color_scale():
@@ -448,12 +448,13 @@ def get_heatmap_gene_bar_graph_obj(data):
 
     bar_len = 0
     last_gene_seen = ""
+    gene_colors_dict = get_asset_dict()["gene_colors_dict"]
     for i, gene in enumerate(data["heatmap_x_genes"]):
         if i == 0:
             last_gene_seen = gene
         if gene != last_gene_seen:
             ret_x.append(bar_len)
-            ret_color.append(GENE_COLORS_DICT[last_gene_seen])
+            ret_color.append(gene_colors_dict[last_gene_seen])
             if bar_len > 2:
                 ret_text.append(last_gene_seen)
             else:
@@ -465,7 +466,7 @@ def get_heatmap_gene_bar_graph_obj(data):
         if i == (len(data["heatmap_x_genes"]) - 1):
             ret_x.append(bar_len)
             ret_text.append(gene)
-            ret_color.append(GENE_COLORS_DICT[gene])
+            ret_color.append(gene_colors_dict[gene])
 
     ret = go.Bar(
         x=ret_x,

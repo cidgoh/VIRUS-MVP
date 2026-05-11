@@ -9,7 +9,7 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from definitions import GENOME_LEN, GENE_COLORS_DICT, GENE_POSITIONS_DICT
+from definitions import get_asset_dict
 
 
 def get_histogram_row(data):
@@ -143,13 +143,13 @@ def get_histogram_fig(np_histogram):
     ret.add_trace(get_histogram_graph_obj(np_histogram), row=1, col=1)
     for bar_obj in get_histogram_gene_bar_obj_list():
         ret.add_trace(bar_obj, row=2, col=1)
+    genome_len = get_asset_dict()["genome_len"]
     ret.update_layout(
         margin={"t": 0, "b": 0, "l": 0, "r": 0, "pad": 0},
         plot_bgcolor="white",
         font={"size": 16},
-        # TODO hardcoding genome length here because I'm lazy
-        xaxis1={"visible": False, "range": [1, GENOME_LEN], "fixedrange": True},
-        xaxis2={"visible": False, "range": [1, GENOME_LEN], "fixedrange": True},
+        xaxis1={"visible": False, "range": [1, genome_len], "fixedrange": True},
+        xaxis2={"visible": False, "range": [1, genome_len], "fixedrange": True},
         yaxis1={"visible": False, "fixedrange": True},
         yaxis2={"visible": False, "fixedrange": True},
         barmode="overlay"
@@ -222,20 +222,22 @@ def get_histogram_gene_bar_obj_list():
         histogram view.
     :rtype: list[go.Bar]
     """
+    gene_colors_dict = get_asset_dict()["gene_colors_dict"]
+    gene_positions_dict = get_asset_dict()["gene_positions_dict"]
     ret = [go.Bar(name="",
-                  x=[GENOME_LEN],
+                  x=[get_asset_dict()["genome_len"]],
                   y=["foo"],
                   base=1,
                   orientation="h",
                   marker={
-                      "color": GENE_COLORS_DICT["INTERGENIC"],
+                      "color": gene_colors_dict["INTERGENIC"],
                       "line": {"width": 0}
                   },
                   showlegend=False,
                   hoverinfo="skip")]
-    for gene in GENE_POSITIONS_DICT:
-        gene_start = GENE_POSITIONS_DICT[gene]["start"]
-        gene_end = GENE_POSITIONS_DICT[gene]["end"]
+    for gene in gene_positions_dict:
+        gene_start = gene_positions_dict[gene]["start"]
+        gene_end = gene_positions_dict[gene]["end"]
         gene_bar_len = gene_end - gene_start
         gene_bar_text = [gene] if gene_bar_len > 1000 else []
         gene_bar_obj = go.Bar(name=gene,
@@ -248,7 +250,7 @@ def get_histogram_gene_bar_obj_list():
                               insidetextanchor="middle",
                               insidetextfont={"color": "white"},
                               marker={
-                                  "color": GENE_COLORS_DICT[gene],
+                                  "color": gene_colors_dict[gene],
                                   "line": {"width": 0}
                               },
                               showlegend=False,
