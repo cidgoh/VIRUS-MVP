@@ -36,10 +36,11 @@ from flask_caching import Cache
 
 from data_parser import get_data, get_full_mutation_index_dict
 from definitions import (ASSETS_DIR, NF_NCOV_VOC_DIR,
-                         VIRUS_REFERENCE_SEGMENT_DICT, get_asset_dict,
+                         VIRUS_SEGMENT_REFERENCE_DICT, get_asset_dict,
                          get_reference_data_dir,
                          get_reference_surveillance_reports_dir,
-                         get_user_data_dir, get_user_surveillance_reports_dir)
+                         get_user_data_dir, get_user_surveillance_reports_dir,
+                         is_segmented)
 from generators import (heatmap_generator, histogram_generator,
                         legend_generator, navbar_generator, table_generator,
                         toast_generator, toolbar_generator, run_info_generator)
@@ -140,14 +141,18 @@ def launch_app(_):
     this callback. The ultimate purpose of this is to replace the blank
     loading screen when the app is first loaded.
     """
-    first_listed_virus = next(iter(VIRUS_REFERENCE_SEGMENT_DICT))
-    reference_dict = VIRUS_REFERENCE_SEGMENT_DICT[first_listed_virus]
-    first_listed_reference = next(iter(reference_dict))
-    segment_list = reference_dict[first_listed_reference]
-    first_listed_segment = segment_list[0] if segment_list else None
-    session["virus"] = first_listed_virus
-    session["reference"] = first_listed_reference
-    session["segment"] = first_listed_segment
+    first_virus = next(iter(VIRUS_SEGMENT_REFERENCE_DICT))
+    if is_segmented(first_virus):
+        first_segment = \
+            next(iter(VIRUS_SEGMENT_REFERENCE_DICT[first_virus]))
+        first_reference = \
+            VIRUS_SEGMENT_REFERENCE_DICT[first_virus][first_segment][0]
+    else:
+        first_segment = None
+        first_reference = VIRUS_SEGMENT_REFERENCE_DICT[first_virus][0]
+    session["virus"] = first_virus
+    session["reference"] = first_reference
+    session["segment"] = first_segment
 
     # Some default vals
     get_data_args = {
@@ -371,14 +376,15 @@ def read_data(get_data_args, last_data_mtime):
     )
     return ret
 
+
 @app.callback(
     Output("virus-dropdown-menu", "children"),
-    Output("reference-dropdown-menu", "children"),
     Output("segment-dropdown-menu", "children"),
+    Output("reference-dropdown-menu", "children"),
     Output("invalid-vrs-selection-msg", "data"),
     Input({"type": "virus-dropdown-menu-item", "index": ALL},"n_clicks"),
-    Input({"type": "reference-dropdown-menu-item", "index": ALL},"n_clicks"),
     Input({"type": "segment-dropdown-menu-item", "index": ALL},"n_clicks"),
+    Input({"type": "reference-dropdown-menu-item", "index": ALL},"n_clicks"),
     prevent_initial_call=True
 )
 def update_virus_reference_segment_navs(_, __, ___):
@@ -389,36 +395,36 @@ def update_virus_reference_segment_navs(_, __, ___):
     selection = loads(triggered_prop_id.rsplit(".", 1)[0])["index"]
 
     virus = session.get("virus")
-    reference = session.get("reference")
+    segment = session.get("segment")
 
     if triggered_prop_id_type == "virus-dropdown-menu-item":
         virus = selection
-        references_dict = VIRUS_REFERENCE_SEGMENT_DICT[selection]
-        reference = next(iter(references_dict))
-        segments_list = references_dict[reference]
-        segment = segments_list[0] if segments_list else None
-    elif triggered_prop_id_type == "reference-dropdown-menu-item":
-        reference = selection
-        references_dict = VIRUS_REFERENCE_SEGMENT_DICT[session.get("virus")]
-        segments_list = references_dict[selection]
-        segment = segments_list[0] if segments_list else None
-    # segment-dropdown-menu-item
-    else:
+        if is_segmented(virus):
+            segment = next(iter(VIRUS_SEGMENT_REFERENCE_DICT[virus]))
+            reference = VIRUS_SEGMENT_REFERENCE_DICT[virus][segment][0]
+        else:
+            segment = None
+            reference = VIRUS_SEGMENT_REFERENCE_DICT[virus][0]
+    elif triggered_prop_id_type == "segment-dropdown-menu-item":
         segment = selection
+        reference = VIRUS_SEGMENT_REFERENCE_DICT[virus][segment][0]
+    # reference-dropdown-menu-item
+    else:
+        reference = selection
 
-    if not get_asset_dict(virus, reference, segment):
+    if not get_asset_dict(virus, segment, reference):
         msg = "Missing genome config file"
         return dash.no_update, dash.no_update, dash.no_update, msg
 
     session["virus"] = virus
-    session["reference"] = reference
     session["segment"] = segment
+    session["reference"] = reference
 
-    [virus_dropdown, reference_dropdown, segment_dropdown] = \
+    [virus_dropdown, segment_dropdown, reference_dropdown] = \
         navbar_generator.get_virus_reference_segment_navs()
     return (virus_dropdown.children,
-            reference_dropdown.children,
             segment_dropdown.children,
+            reference_dropdown.children,
             dash.no_update)
 
 
