@@ -1,0 +1,7 @@
+dash
+plotly
+numpy
+dash-bootstrap-components
+Flask-Caching
+gunicorn
+Werkzeug

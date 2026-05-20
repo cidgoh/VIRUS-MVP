@@ -40,14 +40,14 @@ systems, with minimal dependency errors. This consistency is especially useful
 when deploying the application, as variability between testing and production
 environments will be reduced.
 
-## Native installation steps
+## Native installation steps with pip
 
 ### 0. _(If uploading your own data)_ Install [Nextflow][nf] + [Docker][docker]
 
 File uploads trigger the [nf-ncov-voc][nf-ncov-voc] workflow written in
 [Nextflow][nf].
 
-[nf]: https://www.nextflow.io/docs/latest/getstarted.html
+[nf]: https://docs.seqera.io/nextflow/install
 [docker]: https://docs.docker.com/get-docker/
 
 ### 1. Clone the repository and its submodules
@@ -75,6 +75,44 @@ install natively on your operating system.
 `(myenv) $ python app.py`
 
 Go to http://0.0.0.0:8050/.
+
+_Note: Run the app from the **root project directory** to ensure all assets
+(e.g., JavaScript) load correctly._
+
+## Native installation steps with uv
+
+### 0. _(If uploading your own data)_ Install [Nextflow][nf] + [Docker][docker]
+
+File uploads trigger the [nf-ncov-voc][nf-ncov-voc] workflow written in
+[Nextflow][nf].
+
+[nf]: https://docs.seqera.io/nextflow/install
+[docker]: https://docs.docker.com/get-docker/
+
+### 1. Clone the repository and its submodules
+
+`$ git clone git@github.com:cidgoh/VIRUS-MVP.git --recurse-submodules`
+
+### 2. Setup a `uv` environment
+`$ cd VIRUS-MVP`
+
+- Make sure the Docker Server is running before proceeding.
+`$ docker info`
+
+- VIRUS-MVP requires the use of the Nextflow v1 parser. 
+- **For Nextflow version 25.10.2 or later:**
+`$ export NXF_SYNTAX_PARSER=v1`
+
+`$ uv sync`
+### 3. Run the application
+
+`$ uv run app.py`
+
+Go to http://0.0.0.0:8050/.
+
+To run the application locally / in a browser:
+
+Go to http://127.0.0.1:8050/ or http://localhost:8050/. 
 
 _Note: Run the app from the **root project directory** to ensure all assets
 (e.g., JavaScript) load correctly._
