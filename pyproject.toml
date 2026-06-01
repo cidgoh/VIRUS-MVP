@@ -1,0 +1,35 @@
+[project]
+name = "VIRUS-MVP"
+version = "0.1.0"
+readme = "README.md"
+requires-python = "==3.11.*"
+dependencies = [
+    "dash == 1.20.0",
+    "dash-bootstrap-components == 0.11.3",
+    "flask-caching == 1.10.1",
+    "gunicorn == 20.1.0",
+    "numpy == 1.26.4",
+    "plotly == 5.24.1",
+    "setuptools == 81.0.0"
+    "werkzeug == 2.0.2",
+]
+
+[build-system]
+requires = ["setuptools == 81.0.0"]
+build-backend = "setuptools.build_meta:__legacy__"
+
+[tool.pixi.workspace]
+channels = ["conda-forge", "bioconda"]
+platforms = ["osx-64"]
+
+[tool.pixi.dependencies]
+python = "3.11.*"
+# Bioconda: Nextflow syntax parser v1 (legacy) by default
+nextflow = "==25.10.4"
+# pkg_resources is required (use older version of setuptools)
+setuptools = "==81.0.0"
+
+[tool.pixi.pypi-dependencies]
+virus_mvp = { path = ".", editable = true }
+
+[tool.pixi.tasks]
