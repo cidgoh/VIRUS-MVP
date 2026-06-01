@@ -1,17 +1,19 @@
 [workspace]
 channels = ["conda-forge", "bioconda"]
-name = "VIRUS-MVP"
-platforms = ["osx-64"]
+# Bioconda supports only Linux (64-bit and AArch64) and macOS (x86_64 and ARM64)
+platforms = ["linux-64", "linux-aarch64", "osx-64", "osx-arm64"]
 version = "0.1.0"
 
 [tasks]
 
 [dependencies]
 python = "3.11.*"
-# Bioconda: Nextflow syntax parser v1 (legacy) by default
+# Nextflow is a Bioconda package
+# VIRUS-MVP requires Nextflow syntax parser v1 (legacy)
 nextflow = "==25.10.4"
 # pkg_resources is required (use older version of setuptools)
 setuptools = "==81.0.0"
+ca-certificates = ">=2026.5.20,<2027"
 
 [pypi-dependencies]
 dash = "==1.20.0"

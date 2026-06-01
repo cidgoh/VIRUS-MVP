@@ -40,14 +40,14 @@ systems, with minimal dependency errors. This consistency is especially useful
 when deploying the application, as variability between testing and production
 environments will be reduced.
 
-## Native installation steps
+## Native installation steps with pip
 
 ### 0. _(If uploading your own data)_ Install [Nextflow][nf] + [Docker][docker]
 
 File uploads trigger the [nf-ncov-voc][nf-ncov-voc] workflow written in
 [Nextflow][nf].
 
-[nf]: https://www.nextflow.io/docs/latest/getstarted.html
+[nf]: https://docs.seqera.io/nextflow/install
 [docker]: https://docs.docker.com/get-docker/
 
 ### 1. Clone the repository and its submodules
@@ -78,6 +78,44 @@ Go to http://0.0.0.0:8050/.
 
 _Note: Run the app from the **root project directory** to ensure all assets
 (e.g., JavaScript) load correctly._
+
+## Native installation steps with Pixi
+
+**Supported platforms:** Bioconda supports only Linux (64-bit and AArch64) and macOS (x86_64 and ARM64)
+
+### 0. _(If uploading your own data)_ Install [Docker][docker]
+
+File uploads trigger the [nf-ncov-voc][nf-ncov-voc] workflow written in
+[Nextflow][nf]. The Bioconda Nextflow package will be resolved by Pixi.
+
+[nf]: https://docs.seqera.io/nextflow/install
+[docker]: https://docs.docker.com/get-docker/
+
+### 1. Clone the repository and its submodules
+
+`$ git clone git@github.com:cidgoh/VIRUS-MVP.git --recurse-submodules`
+
+### 2. Setup a `Pixi` environment
+`$ cd VIRUS-MVP`
+
+- Make sure the Docker Server is running before proceeding.
+  `$ docker info`
+
+`$ pixi install`
+### 3. Run the application
+
+`$ pixi run python app.py`
+
+Go to http://0.0.0.0:8050/.
+
+To run the application locally / in a browser:
+
+Go to http://127.0.0.1:8050/ or http://localhost:8050/.
+
+_Note: Run the app from the **root project directory** to ensure all assets
+(e.g., JavaScript) load correctly._
+
+
 
 ## Docker installation steps
 
