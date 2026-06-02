@@ -1,6 +1,6 @@
 [project]
 name = "VIRUS-MVP"
-version = "0.1.0"
+dynamic = ["version"]
 readme = "README.md"
 requires-python = "==3.11.*"
 dependencies = [
@@ -10,7 +10,6 @@ dependencies = [
     "gunicorn == 20.1.0",
     "numpy == 1.26.4",
     "plotly == 5.24.1",
-    "setuptools == 81.0.0"
     "werkzeug == 2.0.2",
 ]
 
@@ -20,17 +19,20 @@ build-backend = "setuptools.build_meta:__legacy__"
 
 [tool.pixi.workspace]
 channels = ["conda-forge", "bioconda"]
-# Bioconda is required to install Nextflow
-# Bioconda supports only Linux (64-bit and AArch64) and macOS (x86_64 and ARM64)
-platforms = ["linux-64", "linux-aarch64", "osx-64", "osx-arm64"]
+platforms = [
+    "linux-64",
+    "linux-aarch64",
+    "osx-64",
+    "osx-arm64",
+]
 
 [tool.pixi.dependencies]
 python = "3.11.*"
-# Nextflow is a Bioconda package
-# VIRUS-MVP requires Nextflow syntax parser v1 (legacy)
-nextflow = "==25.10.4"
-# pkg_resources is required (use older version of setuptools)
+# pkg_resources is required
 setuptools = "==81.0.0"
+# Nextflow syntax parser v1 (legacy) is required
+nextflow = "==25.10.4"
+ca-certificates = ">=2026.5.20,<2027"
 
 [tool.pixi.pypi-dependencies]
 virus_mvp = { path = ".", editable = true }
