@@ -40,53 +40,12 @@ systems, with minimal dependency errors. This consistency is especially useful
 when deploying the application, as variability between testing and production
 environments will be reduced.
 
-## Native installation steps with pip
-
-### 0. _(If uploading your own data)_ Install [Nextflow][nf] + [Docker][docker]
-
-File uploads trigger the [nf-ncov-voc][nf-ncov-voc] workflow written in
-[Nextflow][nf].
-
-[nf]: https://docs.seqera.io/nextflow/install
-[docker]: https://docs.docker.com/get-docker/
-
-### 1. Clone the repository and its submodules
-
-`$ git clone git@github.com:cidgoh/VIRUS-MVP.git --recurse-submodules`
-
-### 2. Setup a `venv` environment
-
-This does not provide the same performance overhead of a Docker container, as
-all `venv` will do is create a unique folder for the dependencies you will
-install natively on your operating system.
-
-`$ cd VIRUS-MVP`
-
-`$ python3 -m venv myenv`
-
-`$ source myenv/bin/activate`
-
-`(myenv) $ pip install -r requirements.txt`
-
-[venv]: https://docs.python.org/3/library/venv.html
-
-### 3. Run the application
-
-`(myenv) $ python app.py`
-
-Go to http://0.0.0.0:8050/.
-
-_Note: Run the app from the **root project directory** to ensure all assets
-(e.g., JavaScript) load correctly._
-
-## Native installation steps with Pixi
-
-**Supported platforms:** Bioconda supports only Linux (64-bit and AArch64) and macOS (x86_64 and ARM64)
+## Native installation steps
 
 ### 0. _(If uploading your own data)_ Install [Docker][docker]
 
 File uploads trigger the [nf-ncov-voc][nf-ncov-voc] workflow written in
-[Nextflow][nf]. The Bioconda Nextflow package will be resolved by Pixi.
+[Nextflow][nf]. The Bioconda Nextflow package will be resolved natively by Pixi.
 
 [nf]: https://docs.seqera.io/nextflow/install
 [docker]: https://docs.docker.com/get-docker/
@@ -96,26 +55,19 @@ File uploads trigger the [nf-ncov-voc][nf-ncov-voc] workflow written in
 `$ git clone git@github.com:cidgoh/VIRUS-MVP.git --recurse-submodules`
 
 ### 2. Setup a `Pixi` environment
-`$ cd VIRUS-MVP`
 
-- Make sure the Docker Server is running before proceeding.
-  `$ docker info`
+`$ cd VIRUS-MVP`
 
 `$ pixi install`
 ### 3. Run the application
+_Make sure your Docker Engine is running before proceeding._
 
-`$ pixi run python app.py`
-
-Go to http://0.0.0.0:8050/.
-
-To run the application locally / in a browser:
-
-Go to http://127.0.0.1:8050/ or http://localhost:8050/.
-
-_Note: Run the app from the **root project directory** to ensure all assets
+_Run the app from the **root project directory** to ensure all assets
 (e.g., JavaScript) load correctly._
 
+`$ pixi run start`
 
+Go to http://0.0.0.0:8050/.
 
 ## Docker installation steps
 
