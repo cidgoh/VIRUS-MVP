@@ -22,7 +22,7 @@ platforms = [
 ]
 
 [tool.pixi.dependencies]
-# Nextflow syntax parser v1 (legacy) is required
+# Nextflow syntax parser v1 is required
 nextflow = "==25.10.4"
 ca-certificates = ">=2026.5.20,<2027"
 
