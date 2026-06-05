@@ -37,3 +37,4 @@ ca-certificates = ">=2026.5.20,<2027"
 virus_mvp = { path = ".", editable = true }
 
 [tool.pixi.tasks]
+start = "python app.py"
