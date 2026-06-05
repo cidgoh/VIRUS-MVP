@@ -26,8 +26,6 @@ platforms = [
 nextflow = "==25.10.4"
 ca-certificates = ">=2026.5.20,<2027"
 
-[tool.pixi.pypi-dependencies]
-virus_mvp = { path = ".", editable = true }
 
 [tool.pixi.tasks]
 start = "python app.py"
