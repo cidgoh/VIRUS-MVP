@@ -8,8 +8,8 @@ dependencies = [
     "gunicorn == 20.1.0",
     "numpy == 1.26.4",
     "plotly == 5.24.1",
-    "setuptools == 81.0.0",
     "werkzeug == 2.0.2",
+    "setuptools == 81.0.0",
 ]
 
 [tool.pixi.workspace]
@@ -22,8 +22,10 @@ platforms = [
 ]
 
 [tool.pixi.dependencies]
-# Nextflow syntax parser v1 is required
+# Nextflow syntax parser v1 (legacy) is required
 nextflow = "==25.10.4"
+ca-certificates = ">=2026.5.20,<2027"
+
 
 [tool.pixi.tasks]
 start = "python app.py"
