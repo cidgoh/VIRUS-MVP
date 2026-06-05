@@ -22,9 +22,6 @@ platforms = [
 ]
 
 [tool.pixi.dependencies]
-python = "3.11.*"
-# pkg_resources is required
-setuptools = "==81.0.0"
 # Nextflow syntax parser v1 (legacy) is required
 nextflow = "==25.10.4"
 ca-certificates = ">=2026.5.20,<2027"
