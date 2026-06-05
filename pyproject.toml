@@ -12,10 +12,6 @@ dependencies = [
     "setuptools == 81.0.0",
 ]
 
-[build-system]
-requires = ["setuptools == 81.0.0"]
-build-backend = "setuptools.build_meta:__legacy__"
-
 [tool.pixi.workspace]
 channels = ["conda-forge", "bioconda"]
 platforms = [
