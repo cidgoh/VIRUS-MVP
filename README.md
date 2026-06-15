@@ -29,8 +29,8 @@ components of this project:
 
 VIRUS-MVP can be installed natively, or built through Docker.
 
-A **native installation** will provide optimal performance on Windows and Mac
-machines, as there are varying performance costs associated with the Linux
+A **native installation** will provide optimal performance on Linux and Mac
+systems, as there are varying performance costs associated with the Linux
 virtualization layer used to build Docker containers. VIRUS-MVP docker
 containers also use port mapping, which incurs additional performance costs.
 
@@ -39,6 +39,9 @@ through Docker maintains a consistent and reproducible environment across
 systems, with minimal dependency errors. This consistency is especially useful
 when deploying the application, as variability between testing and production
 environments will be reduced.
+
+Native installation is recommended for Linux and Mac systems,
+and Docker installation is recommended for Windows systems.
 
 ## Native installation steps
 
