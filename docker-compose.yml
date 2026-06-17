@@ -11,7 +11,7 @@ services:
         WORKDIR: $PWD
     image: virus_mvp_app
     ports:
-      - "8050:8050"
+      - "80:8050"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - $PWD/nf-ncov-voc:$PWD/nf-ncov-voc
@@ -19,3 +19,9 @@ services:
       - ./reference_surveillance_reports:$PWD/reference_surveillance_reports
       - ./user_data:$PWD/user_data
       - ./user_surveillance_reports:$PWD/user_surveillance_reports
+      # - /var/run/docker.sock:/var/run/docker.sock
+      # - ./nf-ncov-voc:/home/ubuntu/VIRUS-MVP/nf-ncov-voc
+      # - ./reference_data:/home/ubuntu/VIRUS-MVP/reference_data
+      # - ./reference_surveillance_reports:/home/ubuntu/VIRUS-MVP/reference_surveillance_reports
+      # - ./user_data:/home/ubuntu/VIRUS-MVP/user_data
+      # - ./user_surveillance_reports:/home/ubuntu/VIRUS-MVP/user_surveillance_reports

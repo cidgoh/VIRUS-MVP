@@ -385,7 +385,6 @@ def update_show_clade_defining(switches_value):
     """
     return len(switches_value) > 0
 
-
 @app.callback(
     Output("new-upload", "data"),
     Output("upload-loading", "children"),
@@ -401,45 +400,12 @@ def update_show_clade_defining(switches_value):
 )
 def update_new_upload(file_contents, filename, get_data_args, last_data_mtime,
                       user_data_dir, user_surveillance_reports_dir):
-    """Update ``new_upload`` variable in dcc.Store.TODO
-
-    If a valid file is uploaded, it will be written to ``user_data``.
-    But regardless of whether a valid file is uploaded, this function
-    will return a dict describing the name of the file the user
-    attempted to upload, status of upload, and name of uploaded strain.
-
-    We also re-render the uploading btn after the file is processed. We
-    do this because the btn is in a loading container, so a spinner
-    will display in place of the button while the file is being
-    processed. Which is useful feedback, and keeps uploads linear at a
-    single endpoint.
-
-    We also write the surveillance reports to disk.
-
-    TODO eventually write to database instead of disk
-
-    :param file_contents: Contents of uploaded file, formatted by Dash
-        into a base64 string.
-    :type file_contents: str
-    :param filename: Name of uploaded file
-    :type filename: str
-    :param get_data_args: Args for ``get_data``
-    :type get_data_args: dict
-    :param last_data_mtime: Last mtime across all data files
-    :type last_data_mtime: float
-    :return: Dictionary describing upload attempt
-    :rtype: dict
-    """
-    # Current ``get_data`` return val
+    """Update ``new_upload`` variable in dcc.Store."""
     old_data = read_data(get_data_args, last_data_mtime)
-
     posix_path = Path(filename)
     sample_name = posix_path.stem
-    # https://stackoverflow.com/a/35188296
     ext = "".join(posix_path.suffixes)[1:]
 
-    # TODO more thorough validation, maybe once we finalize data
-    # standards.
     accepted_exts = {"VCF", "fasta", "fa", "fna", "fa.gz", "fna.gz", "fasta.gz"}
     if ext not in accepted_exts:
         status = "error"
@@ -448,46 +414,61 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime,
         status = "error"
         msg = "Filename must not conflict with existing variant."
     else:
-        # Dash splits MIME type and the actual str with a comma
         _, base64_str = file_contents.split(",")
-        # Run pipeline, but output contents into temporary dir. Then
-        # copy appropriate output file to relevant dir.
         with TemporaryDirectory(dir=NF_NCOV_VOC_DIR) as dir_name:
             user_file = path.join(dir_name, filename)
             rand_prefix = "u" + str(uuid4())
             with open(user_file, "w") as fp:
                 fp.write(b64decode(base64_str).decode("utf-8"))
-            run(["nextflow", "run", "main.nf", "-profile", "docker",
+
+            result = run(
+                ["nextflow", "run", "main.nf", "-profile", "docker",
                  "--prefix", rand_prefix, "--mode", "user",
                  "--skip_variantannotation", "--skip_postprocessing", "true",
-                 "--skip_posting", "true", "skip_harmonize", "true",
+                 "--skip_posting", "true", "--skip_harmonize", "true",
                  "--seq", user_file, "--outdir", dir_name],
-                cwd=NF_NCOV_VOC_DIR)
+                cwd=NF_NCOV_VOC_DIR,
+                capture_output=True,
+                text=True
+            )
 
-            data_path = path.join(dir_name, rand_prefix, "FUNCTIONALANNOTATION")
-            gvf_file = path.join(data_path, "%s.annotated.gvf" % sample_name)
-            copyfile(gvf_file,
-                     path.join(user_data_dir, sample_name + ".gvf"))
+            print("Nextflow stdout:", result.stdout)
+            print("Nextflow stderr:", result.stderr)
+            print("Nextflow return code:", result.returncode)
 
-            reports_dir = path.join(user_surveillance_reports_dir, sample_name)
-            if path.exists(reports_dir):
-                rmtree(reports_dir)
-            mkdir(reports_dir)
-            surveillance_path = path.join(dir_name, rand_prefix, "SURVEILLANCE")
-            copytree(path.join(surveillance_path, "PDF"),
-                     path.join(reports_dir, "PDF"))
-            copytree(path.join(surveillance_path, "TSV"),
-                     path.join(reports_dir, "TSV"))
-        status = "ok"
-        msg = "%s uploaded successfully." % filename
+            if result.returncode != 0:
+                status = "error"
+                msg = f"Pipeline failed: {result.stderr}"
+            else:
+                data_path = path.join(dir_name, rand_prefix, "FUNCTIONALANNOTATION")
+                gvf_file = path.join(data_path, f"{sample_name}.annotated.gvf")
+
+                if not path.exists(gvf_file):
+                    status = "error"
+                    msg = "No mutations were found in the uploaded sequence. The pipeline completed but produced no variants."
+                else:
+                    copyfile(gvf_file, path.join(user_data_dir, sample_name + ".gvf"))
+
+                    reports_dir = path.join(user_surveillance_reports_dir, sample_name)
+                    if path.exists(reports_dir):
+                        rmtree(reports_dir)
+                    mkdir(reports_dir)
+                    surveillance_path = path.join(dir_name, rand_prefix, "SURVEILLANCE")
+                    copytree(path.join(surveillance_path, "PDF"),
+                             path.join(reports_dir, "PDF"))
+                    copytree(path.join(surveillance_path, "TSV"),
+                             path.join(reports_dir, "TSV"))
+
+                    status = "ok"
+                    msg = f"{filename} uploaded successfully."
+
     new_upload_data = {"filename": filename,
                        "msg": msg,
                        "status": status,
                        "strain": sample_name}
     upload_component = toolbar_generator.get_file_upload_component()
     return new_upload_data, upload_component, "", ""
-
-
+    
 @app.callback(
     Output("download-file-data", "data"),
     Output("download-loading", "children"),
