@@ -466,20 +466,27 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime,
 
             data_path = path.join(dir_name, rand_prefix, "FUNCTIONALANNOTATION")
             gvf_file = path.join(data_path, "%s.annotated.gvf" % sample_name)
-            copyfile(gvf_file,
-                     path.join(user_data_dir, sample_name + ".gvf"))
 
-            reports_dir = path.join(user_surveillance_reports_dir, sample_name)
-            if path.exists(reports_dir):
-                rmtree(reports_dir)
-            mkdir(reports_dir)
-            surveillance_path = path.join(dir_name, rand_prefix, "SURVEILLANCE")
-            copytree(path.join(surveillance_path, "PDF"),
-                     path.join(reports_dir, "PDF"))
-            copytree(path.join(surveillance_path, "TSV"),
-                     path.join(reports_dir, "TSV"))
-        status = "ok"
-        msg = "%s uploaded successfully." % filename
+            if path.exists(gvf_file):
+                copyfile(gvf_file,
+                         path.join(user_data_dir, sample_name + ".gvf"))
+                reports_dir = path.join(user_surveillance_reports_dir,
+                                        sample_name)
+                if path.exists(reports_dir):
+                    rmtree(reports_dir)
+                mkdir(reports_dir)
+                surveillance_path = path.join(dir_name, rand_prefix,
+                                              "SURVEILLANCE")
+                copytree(path.join(surveillance_path, "PDF"),
+                         path.join(reports_dir, "PDF"))
+                copytree(path.join(surveillance_path, "TSV"),
+                         path.join(reports_dir, "TSV"))
+                status = "ok"
+                msg = "%s uploaded successfully." % filename
+            else:
+                status = "error"
+                msg = ("nf-ncov-voc produced a malformed output for this input "
+                       "file. Please contact us for support.")
     new_upload_data = {"filename": filename,
                        "msg": msg,
                        "status": status,
