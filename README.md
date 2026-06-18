@@ -40,18 +40,19 @@ systems, with minimal dependency errors. This consistency is especially useful
 when deploying the application, as variability between testing and production
 environments will be reduced.
 
-Native installation is recommended for Linux and Mac systems,
-and Docker installation is recommended for Windows systems.
+Native installation is recommended for Linux and Mac systems.
+Docker installation is recommended for Windows systems.
 
 ## Native installation steps
 
-### 0. _(If uploading your own data)_ Install [Docker][docker]
+### 0. Install [Pixi][pixi] and [Docker][docker]
 
 File uploads trigger the [nf-ncov-voc][nf-ncov-voc] workflow written in
 [Nextflow][nf]. The Bioconda Nextflow package will be resolved natively by Pixi.
 
 [nf]: https://docs.seqera.io/nextflow/install
 [docker]: https://docs.docker.com/get-docker/
+[pixi]: https://pixi.prefix.dev/latest/installation/
 
 ### 1. Clone the repository and its submodules
 
