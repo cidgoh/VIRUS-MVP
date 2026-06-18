@@ -1,0 +1,29 @@
+[project]
+name = "VIRUS-MVP"
+requires-python = "==3.11.*"
+dependencies = [
+    "dash == 1.20.0",
+    "dash-bootstrap-components == 0.11.3",
+    "flask-caching == 1.10.1",
+    "gunicorn == 20.1.0",
+    "numpy == 1.26.4",
+    "plotly == 5.24.1",
+    "setuptools == 81.0.0",
+    "werkzeug == 2.0.2",
+]
+
+[tool.pixi.workspace]
+channels = ["conda-forge", "bioconda"]
+platforms = [
+    "linux-64",
+    "linux-aarch64",
+    "osx-64",
+    "osx-arm64",
+]
+
+[tool.pixi.dependencies]
+# Nextflow syntax parser v1 is required
+nextflow = "==25.10.4"
+
+[tool.pixi.tasks]
+start = "python app.py"

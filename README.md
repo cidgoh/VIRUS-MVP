@@ -29,8 +29,8 @@ components of this project:
 
 VIRUS-MVP can be installed natively, or built through Docker.
 
-A **native installation** will provide optimal performance on Windows and Mac
-machines, as there are varying performance costs associated with the Linux
+A **native installation** will provide optimal performance on Linux and Mac
+systems, as there are varying performance costs associated with the Linux
 virtualization layer used to build Docker containers. VIRUS-MVP docker
 containers also use port mapping, which incurs additional performance costs.
 
@@ -40,44 +40,38 @@ systems, with minimal dependency errors. This consistency is especially useful
 when deploying the application, as variability between testing and production
 environments will be reduced.
 
+Native installation is recommended for Linux and Mac systems.
+Docker installation is recommended for Windows systems.
+
 ## Native installation steps
 
-### 0. _(If uploading your own data)_ Install [Nextflow][nf] + [Docker][docker]
+### 0. Install [Pixi][pixi] and [Docker][docker]
 
 File uploads trigger the [nf-ncov-voc][nf-ncov-voc] workflow written in
-[Nextflow][nf].
+[Nextflow][nf]. The Bioconda Nextflow package will be resolved natively by Pixi.
 
-[nf]: https://www.nextflow.io/docs/latest/getstarted.html
+[nf]: https://docs.seqera.io/nextflow/install
 [docker]: https://docs.docker.com/get-docker/
+[pixi]: https://pixi.prefix.dev/latest/installation/
 
 ### 1. Clone the repository and its submodules
 
 `$ git clone git@github.com:cidgoh/VIRUS-MVP.git --recurse-submodules`
 
-### 2. Setup a `venv` environment
-
-This does not provide the same performance overhead of a Docker container, as
-all `venv` will do is create a unique folder for the dependencies you will
-install natively on your operating system.
+### 2. Setup a `Pixi` environment
 
 `$ cd VIRUS-MVP`
 
-`$ python3 -m venv myenv`
-
-`$ source myenv/bin/activate`
-
-`(myenv) $ pip install -r requirements.txt`
-
-[venv]: https://docs.python.org/3/library/venv.html
-
+`$ pixi install`
 ### 3. Run the application
+_Make sure your Docker Engine is running before proceeding._
 
-`(myenv) $ python app.py`
+_Run the app from the **root project directory** to ensure all assets
+(e.g., JavaScript) load correctly._
+
+`$ pixi run start`
 
 Go to http://0.0.0.0:8050/.
-
-_Note: Run the app from the **root project directory** to ensure all assets
-(e.g., JavaScript) load correctly._
 
 ## Docker installation steps
 
