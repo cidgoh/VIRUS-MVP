@@ -288,7 +288,10 @@ def get_file_download_component():
                 dbc.DropdownMenuItem("All mutations index JSON "
                                      "(large file)",
                                      className="text-danger",
-                                     id="download-full-mutation-index-btn")
+                                     id="download-full-mutation-index-btn"),
+                dbc.DropdownMenuItem(".nextflow.log",
+                                     className="text-info",
+                                     id="download-nf-log-btn")
             ]
         ),
         dcc.Download(id="download-file-data"),
