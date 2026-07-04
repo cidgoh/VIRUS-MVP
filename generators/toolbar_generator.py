@@ -289,7 +289,7 @@ def get_file_download_component():
                                      "(large file)",
                                      className="text-danger",
                                      id="download-full-mutation-index-btn"),
-                dbc.DropdownMenuItem(".nextflow.log",
+                dbc.DropdownMenuItem("Latest .nextflow.log",
                                      className="text-info",
                                      id="download-nf-log-btn")
             ]

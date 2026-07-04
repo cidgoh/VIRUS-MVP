@@ -473,7 +473,7 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
             if path.exists(log_file):
                 with open(log_file, "r") as fp:
                     nf_log_contents = fp.read()
-                msg += " Log file available for download."
+                msg += " Log file now available under download menu."
     new_upload_data = {"filename": filename,
                        "msg": msg,
                        "status": status,
@@ -623,14 +623,14 @@ def toggle_toast(new_upload, _, positions_jumped_to):
                 new_upload["msg"],
                 "Success",
                 "success",
-                5000
+                300000
             )
         if new_upload["status"] == "error":
             return toast_generator.get_toast(
                 new_upload["msg"],
                 "Error",
                 "danger",
-                5000
+                300000
             )
     elif "mutation-freq-slider.marks" in triggers:
         return toast_generator.get_toast(
