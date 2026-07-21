@@ -207,7 +207,9 @@ def launch_app(_):
         dcc.Store(id="make-histogram-rel-pos-bar-dynamic"),
         dcc.Store(id="allow-jumps-from-histogram"),
         dcc.Store(id="allow-jumps-from-nt-pos-input"),
-        dcc.Store(id="link-heatmap-cells-y-scrolling")
+        dcc.Store(id="link-heatmap-cells-y-scrolling"),
+        # Nextflow log, updated on nextflow runs
+        dcc.Store(id="nf-log-contents")
     ], None
 
 
@@ -367,6 +369,7 @@ def update_show_clade_defining(switches_value):
     Output("upload-loading", "children"),
     Output("upload-file", "contents"),
     Output("upload-file", "filename"),
+    Output("nf-log-contents", "data"),
     Input("upload-file", "contents"),
     Input("upload-file", "filename"),
     State("get-data-args", "data"),
@@ -388,6 +391,8 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
     single endpoint.
 
     We also write the surveillance reports to disk.
+
+    We also update ``nf-log-contents`` if a log file was generated.
 
     TODO eventually write to database instead of disk
 
@@ -411,6 +416,9 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
     # https://stackoverflow.com/a/35188296
     ext = "".join(posix_path.suffixes)[1:]
 
+    # Only update if workflow runs
+    nf_log_contents = ""
+
     # TODO more thorough validation, maybe once we finalize data
     # standards.
     accepted_exts = {"VCF", "fasta", "fa", "fna", "fa.gz", "fna.gz", "fasta.gz"}
@@ -428,9 +436,11 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
         with TemporaryDirectory(dir=NF_NCOV_VOC_DIR) as dir_name:
             user_file = path.join(dir_name, filename)
             rand_prefix = "u" + str(uuid4())
+            log_file = path.join(dir_name, ".nextflow.log")
             with open(user_file, "w") as fp:
                 fp.write(b64decode(base64_str).decode("utf-8"))
-            run(["nextflow", "run", "main.nf", "-profile", "docker",
+            run(["nextflow", "-log", log_file, "run", "main.nf",
+                 "-profile", "docker",
                  "--prefix", rand_prefix, "--mode", "user",
                  "--skip_variantannotation", "--skip_postprocessing", "true",
                  "--skip_posting", "true", "skip_harmonize", "true",
@@ -439,26 +449,54 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
 
             data_path = path.join(dir_name, rand_prefix, "FUNCTIONALANNOTATION")
             gvf_file = path.join(data_path, "%s.annotated.gvf" % sample_name)
-            copyfile(gvf_file,
-                     path.join(USER_DATA_DIR, sample_name + ".gvf"))
 
-            reports_dir = path.join(USER_SURVEILLANCE_REPORTS_DIR, sample_name)
-            if path.exists(reports_dir):
-                rmtree(reports_dir)
-            mkdir(reports_dir)
-            surveillance_path = path.join(dir_name, rand_prefix, "SURVEILLANCE")
-            copytree(path.join(surveillance_path, "PDF"),
-                     path.join(reports_dir, "PDF"))
-            copytree(path.join(surveillance_path, "TSV"),
-                     path.join(reports_dir, "TSV"))
-        status = "ok"
-        msg = "%s uploaded successfully." % filename
+            if path.exists(gvf_file):
+                copyfile(gvf_file,
+                         path.join(USER_DATA_DIR, sample_name + ".gvf"))
+                reports_dir = path.join(USER_SURVEILLANCE_REPORTS_DIR,
+                                        sample_name)
+                if path.exists(reports_dir):
+                    rmtree(reports_dir)
+                mkdir(reports_dir)
+                surveillance_path = path.join(dir_name, rand_prefix,
+                                              "SURVEILLANCE")
+                copytree(path.join(surveillance_path, "PDF"),
+                         path.join(reports_dir, "PDF"))
+                copytree(path.join(surveillance_path, "TSV"),
+                         path.join(reports_dir, "TSV"))
+                status = "ok"
+                msg = "%s uploaded successfully." % filename
+            else:
+                status = "error"
+                msg = "nf-ncov-voc produced a malformed output for this input."
+
+            if path.exists(log_file):
+                with open(log_file, "r") as fp:
+                    nf_log_contents = fp.read()
+                msg += " Log file now available under download menu."
     new_upload_data = {"filename": filename,
                        "msg": msg,
                        "status": status,
                        "strain": sample_name}
     upload_component = toolbar_generator.get_file_upload_component()
-    return new_upload_data, upload_component, "", ""
+    return new_upload_data, upload_component, "", "", nf_log_contents
+
+
+@app.callback(
+    Output("download-nf-log-btn", "style"),
+    Input("nf-log-contents", "data")
+)
+def toggle_download_nf_log_btn(nf_log_contents):
+    """Toggle ``nf-log-btn`` visibility.
+
+    If nextflow log contents are available, show the button.
+
+    :param nf_log_contents: Nextflow log contents were updated.
+    :type nf_log_contents: str
+    :return: Display visiblity of ``nf-log-btn``
+    :rtype: dict
+    """
+    return {"display": "block"} if nf_log_contents else {"display": "none"}
 
 
 @app.callback(
@@ -469,12 +507,15 @@ def update_new_upload(file_contents, filename, get_data_args, last_data_mtime):
     Input("download-mutation-index-link", "n_clicks"),
     Input("download-full-mutation-index-btn", "n_clicks"),
     Input("download-full-mutation-index-link", "n_clicks"),
+    Input("download-nf-log-btn", "n_clicks"),
     State("get-data-args", "data"),
     State("last-data-mtime", "data"),
+    State("nf-log-contents", "data"),
     prevent_initial_call=True
 )
-def trigger_download(_, __, ___, ____, _____, get_data_args, last_data_mtime):
-    """Send download file when user clicks a download btn.
+def trigger_download(_, __, ___, ____, _____, ______, get_data_args,
+                     last_data_mtime, nf_log_contents):
+    """Send download file when user clicks a download btn. TODO
 
     This is either a zip object of surveillance reports for visible
     strains, or JSON of non-hidden strains mutation index.
@@ -489,10 +530,14 @@ def trigger_download(_, __, ___, ____, _____, get_data_args, last_data_mtime):
         is clicked.
     :param _____: Unused input variable that monitors when download link
         is clicked.
+    :param ______: Unused input variable that monitors when download link
+        is clicked.
     :param get_data_args: Args for ``get_data``
     :type get_data_args: dict
     :param last_data_mtime: Last mtime across all data files
     :type last_data_mtime: float
+    :param nf_log_contents: Nextflow log contents
+    :type nf_log_contents: str
     :return: Fires dash function that triggers file download
     """
     trigger = dash.callback_context.triggered[0]["prop_id"]
@@ -530,6 +575,11 @@ def trigger_download(_, __, ___, ____, _____, get_data_args, last_data_mtime):
         dirs = [REFERENCE_DATA_DIR, USER_DATA_DIR]
         content = dumps(get_full_mutation_index_dict(dirs))
         filename = "full_mutation_index.json"
+        download_component = toolbar_generator.get_file_download_component()
+        return {"content": content, "filename": filename}, download_component
+    elif trigger == "download-nf-log-btn.n_clicks":
+        content = nf_log_contents
+        filename = ".nextflow.log"
         download_component = toolbar_generator.get_file_download_component()
         return {"content": content, "filename": filename}, download_component
     else:
@@ -573,14 +623,14 @@ def toggle_toast(new_upload, _, positions_jumped_to):
                 new_upload["msg"],
                 "Success",
                 "success",
-                5000
+                300000
             )
         if new_upload["status"] == "error":
             return toast_generator.get_toast(
                 new_upload["msg"],
                 "Error",
                 "danger",
-                5000
+                300000
             )
     elif "mutation-freq-slider.marks" in triggers:
         return toast_generator.get_toast(
